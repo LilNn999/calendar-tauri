@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { startOfWeek, endOfWeek, eachDayOfInterval, format } from 'date-fns'
+import { startOfWeek, endOfWeek, eachDayOfInterval, format, isSameMonth } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import { useCalendarStore } from '@/store/useCalendarStore'
 import { useTaskStore } from '@/store/useTaskStore'
@@ -9,6 +9,7 @@ import { useNotesStore } from '@/store/useNotesStore'
 import { TaskItemRow, CheckinPreviewRow } from './DayCellItem'
 import { toDateString, matchesCheckinFrequency } from '@/lib/utils'
 import { cn } from '@/lib/utils'
+import { getDayCellState } from '@/lib/dayCellState'
 import { Plus, FileText } from 'lucide-react'
 import type { CheckinDefinition } from '@shared/types'
 
@@ -41,6 +42,8 @@ export function WeekView({ definitions, onDayClick, onTaskToggle, onTaskClick, o
           const dateStr = toDateString(date)
           const isToday = dateStr === today
           const isSelected = selectedDate === dateStr
+          const isCurrentMonth = isSameMonth(date, currentDate)
+          const dayState = getDayCellState({ isSelected, isToday, isCurrentMonth })
           const PRIORITY_WEIGHT: Record<string, number> = { high: 3, medium: 2, low: 1, none: 0 }
           const tasks = allTasks
             .filter((t) => t.dueDate === dateStr)
@@ -68,13 +71,22 @@ export function WeekView({ definitions, onDayClick, onTaskToggle, onTaskClick, o
             <div
               key={dateStr}
               className={cn(
-                'flex flex-col border-r last:border-r-0 cursor-pointer group',
-                isToday && 'bg-primary/5',
-                isSelected && 'ring-2 ring-inset ring-primary/40 bg-primary/5',
-                'hover:bg-primary/5 transition-colors'
+                'relative flex flex-col border-r last:border-r-0 cursor-pointer group transition-colors',
+                dayState === 'selected'
+                  ? 'bg-day-selected/25 ring-1 ring-inset ring-day-ring/35'
+                  : dayState === 'today'
+                    ? 'bg-day-today'
+                    : dayState === 'outside'
+                      ? 'bg-day-outside'
+                      : '',
+                'hover:brightness-105 dark:hover:brightness-110'
               )}
               onClick={() => { setSelectedDate(dateStr); onDayClick(dateStr) }}
             >
+              {isToday && (
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-brand opacity-90" />
+              )}
+
               {/* 日期头部 */}
               <div className="flex items-center justify-between px-2 py-2 border-b border-border/60 bg-secondary/30">
                 <div className="flex flex-col items-center">
@@ -83,7 +95,13 @@ export function WeekView({ definitions, onDayClick, onTaskToggle, onTaskClick, o
                   </span>
                   <span className={cn(
                     'text-sm font-bold h-7 w-7 flex items-center justify-center rounded-full',
-                    isToday ? 'bg-gradient-brand text-primary-foreground shadow-glow' : 'text-foreground'
+                    isToday
+                      ? 'bg-gradient-brand text-primary-foreground shadow-glow'
+                      : isSelected
+                        ? 'text-primary font-semibold'
+                        : dayState === 'outside'
+                          ? 'text-muted-foreground/50'
+                          : 'text-foreground'
                   )}>
                     {date.getDate()}
                   </span>

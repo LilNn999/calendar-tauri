@@ -50,6 +50,8 @@ export const IPC = {
   SYSTEM_GET_AUTO_LAUNCH: 'system:getAutoLaunch',
   SYSTEM_GET_THEME: 'system:getTheme',
   SYSTEM_SET_THEME: 'system:setTheme',
+  SYSTEM_GET_SKIN: 'system:getSkin',
+  SYSTEM_SET_SKIN: 'system:setSkin',
   SYSTEM_GET_VERSION: 'system:getVersion',
   SYSTEM_SHOW_WIDGET: 'system:showWidget',
   SYSTEM_HIDE_WIDGET: 'system:hideWidget',
@@ -66,6 +68,7 @@ export const IPC = {
   PUSH_ACHIEVEMENT_UNLOCKED: 'push:achievementUnlocked',
   PUSH_WIDGET_DATA_REFRESH: 'push:widgetDataRefresh',
   PUSH_THEME_CHANGED: 'push:themeChanged',
+  PUSH_SKIN_CHANGED: 'push:skinChanged',
   PUSH_FULLSCREEN_CHANGED: 'push:fullscreenChanged',
 } as const
 

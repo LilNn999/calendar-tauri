@@ -36,7 +36,7 @@ export function CalendarHeader() {
         <Button variant="ghost" size="icon" onClick={goNext} className="h-8 w-8 rounded-full">
           <ChevronRight className="h-4 w-4" />
         </Button>
-        <Button variant="outline" size="sm" onClick={goToday} className="ml-0.5 rounded-full">
+        <Button variant="outline" size="sm" onClick={goToday} className="ml-0.5 rounded-full bg-accent text-accent-foreground border-accent-foreground/20 hover:bg-accent/80 hover:text-accent-foreground">
           今天
         </Button>
       </div>

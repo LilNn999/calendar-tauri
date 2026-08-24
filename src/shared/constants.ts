@@ -2,7 +2,7 @@ import type { Priority } from './types'
 
 export const PRIORITY_CONFIG: Record<Priority, { label: string; color: string; dot: string }> = {
   none: { label: '无', color: 'text-muted-foreground', dot: 'bg-muted-foreground/30' },
-  low: { label: '低', color: 'text-blue-500', dot: 'bg-blue-500' },
+  low: { label: '低', color: 'text-sky-500', dot: 'bg-sky-500' },
   medium: { label: '中', color: 'text-amber-500', dot: 'bg-amber-500' },
   high: { label: '高', color: 'text-red-500', dot: 'bg-red-500' },
 }

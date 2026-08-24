@@ -3,6 +3,7 @@ import { CalendarDays, BarChart3, Settings } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { isTauri } from '@/lib/db'
 import { SettingsDialog } from './SettingsDialog'
+import { SkinSwitcher } from './SkinSwitcher'
 import { WindowControls } from './WindowControls'
 
 type TabId = 'calendar' | 'analytics'
@@ -63,8 +64,9 @@ export function TabBar({ activeTab, onTabChange }: TabBarProps) {
           />
         </div>
 
-        {/* 右侧：设置按钮 */}
+        {/* 右侧：换肤 + 设置按钮 */}
         <div className="flex-1 flex items-center justify-end gap-1">
+          <SkinSwitcher />
           <button
             onClick={() => setSettingsOpen(true)}
             className="h-8 w-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"

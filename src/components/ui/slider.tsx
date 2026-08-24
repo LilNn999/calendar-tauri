@@ -30,7 +30,7 @@ function Slider({ value, onValueChange, min = 0, max = 100, step = 1, className 
         className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
       />
       <div
-        className="absolute block h-4 w-4 rounded-full border-2 border-primary bg-white shadow-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+        className="absolute block h-4 w-4 rounded-full border-2 border-primary bg-white shadow-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 pointer-events-none"
         style={{ left: `calc(${percentage}% - 8px)` }}
       />
     </div>

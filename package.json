@@ -4,8 +4,9 @@
   "version": "0.2.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
+    "dev": "vite --configLoader runner",
+    "build": "tsc -b && vite build --configLoader runner",
+    "test": "node --test --experimental-strip-types \"src/lib/*.test.ts\"",
     "preview": "vite preview",
     "tauri": "tauri",
     "icon": "tauri icon"

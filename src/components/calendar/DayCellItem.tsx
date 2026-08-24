@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { Check, X, RotateCcw, Pencil, Trash2, CheckCheck } from 'lucide-react'
+import { Check, X, RotateCcw, Pencil, Trash2, CheckCheck, CalendarCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PRIORITY_CONFIG, RECURRENCE_LABELS } from '@shared/constants'
 import type { Task, CheckinDefinition, CheckinEntry } from '@shared/types'
@@ -19,7 +19,7 @@ function getTaskBg(task: Task): string {
   switch (task.priority) {
     case 'high':   return 'bg-red-100/80 dark:bg-red-900/25'
     case 'medium': return 'bg-amber-100/80 dark:bg-amber-900/25'
-    case 'low':    return 'bg-blue-100/80 dark:bg-blue-900/25'
+    case 'low':    return 'bg-sky-200/70 dark:bg-sky-900/40'
     default:       return 'bg-slate-100  dark:bg-slate-700/40'
   }
 }
@@ -304,15 +304,23 @@ export function CheckinPreviewRow({ definition, entry, compact, onClick }: Check
   const hasValue = !!entry
 
   const renderValue = () => {
-    if (!entry) return <span className="text-[10px] text-muted-foreground/40 font-medium">待打卡</span>
     if (definition.type === 'boolean') {
-      const val = entry.value === 'true'
+      const val = entry?.value === 'true'
       return (
-        <span className={cn('text-[10px] font-bold px-1 py-px rounded', val ? 'text-success' : 'text-muted-foreground')}>
-          {val ? '✓' : '✗'}
+        <span
+          className={cn(
+            'shrink-0 h-[18px] w-[18px] rounded-full border-2 flex items-center justify-center',
+            val
+              ? 'bg-success border-success text-white'
+              : 'border-muted-foreground/40'
+          )}
+          title={val ? '已打卡' : '未打卡'}
+        >
+          {val && <Check className="h-2.5 w-2.5" strokeWidth={3.5} />}
         </span>
       )
     }
+    if (!entry) return <span className="text-[10px] text-muted-foreground/40 font-medium">待打卡</span>
     if (definition.type === 'numeric') {
       return (
         <span className="text-[10px] font-bold text-primary">
@@ -327,14 +335,14 @@ export function CheckinPreviewRow({ definition, entry, compact, onClick }: Check
   return (
     <div
       className={cn(
-        'flex items-center gap-1 rounded-md px-1 py-0.5',
-        hasValue ? 'bg-primary/5' : '',
+        'flex items-center gap-1 rounded-md border px-1 py-0.5',
+        hasValue ? 'border-primary/40 bg-primary/10' : 'border-primary/20 bg-primary/5',
         compact ? 'text-xs' : 'text-sm',
-        onClick && 'cursor-pointer hover:bg-primary/10 transition-colors'
+        onClick && 'cursor-pointer hover:bg-primary/15 transition-colors'
       )}
       onClick={(e) => { if (onClick) { e.stopPropagation(); onClick() } }}
     >
-      <div className={cn('shrink-0 w-[3px] self-stretch rounded-full my-0.5', hasValue ? 'bg-primary/60' : 'bg-muted-foreground/20')} />
+      <CalendarCheck className="shrink-0 h-2.5 w-2.5 text-primary/70" />
       <span className={cn('flex-1 truncate leading-tight', hasValue ? 'text-foreground font-medium' : 'text-muted-foreground')}>
         {definition.name}
       </span>

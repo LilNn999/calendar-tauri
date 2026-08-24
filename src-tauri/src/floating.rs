@@ -34,7 +34,8 @@ pub fn ensure(app: &AppHandle) -> tauri::Result<()> {
             .title("日历 · 悬浮")
             .inner_size(320.0, 480.0)
             .min_inner_size(260.0, 360.0)
-            .resizable(false)
+            // 支持边缘拖动缩放（前端提供 resize 手柄）
+            .resizable(true)
             .maximizable(false)
             .minimizable(false)
             .decorations(false)

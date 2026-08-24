@@ -26,6 +26,7 @@
     "core:window:allow-outer-position",
     "core:window:allow-set-size",
     "core:window:allow-inner-size",
+    "core:window:allow-start-resize-dragging",
     "core:webview:allow-get-all-webviews",
     "core:webview:allow-set-webview-zoom",
     "core:event:default",

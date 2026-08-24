@@ -19,7 +19,7 @@ import type { Task } from '@shared/types'
 export function CalendarPage() {
   const { viewMode, getVisibleRange, setSelectedDate } = useCalendarStore()
   const { fetchTasks, updateTask, updateOccurrence, getTasksForDate, tasks } = useTaskStore()
-  const { fetchDefinitions, fetchEntries, definitions, getEntryValue, upsertEntry } = useCheckinStore()
+  const { fetchDefinitions, fetchEntries, definitions } = useCheckinStore()
   const { detailPopupDate, setDetailPopupDate } = useUIStore()
   const { fetchNotesForRange } = useNotesStore()
   const [editTask, setEditTask] = useState<Task | null>(null)
@@ -99,15 +99,10 @@ export function CalendarPage() {
   const handleCheckinClick = useCallback((defId: number, date: string) => {
     const def = definitions.find((d) => d.id === defId)
     if (!def) return
-    // 开关型打卡：在日历格子上直接切换完成状态，无需打开弹窗
-    if (def.type === 'boolean') {
-      const current = getEntryValue(defId, date) === 'true'
-      upsertEntry(defId, date, current ? 'false' : 'true')
-      return
-    }
+    // 开关型打卡也打开打卡弹窗，在弹窗内完成，不在格子上直接切换
     setEditCheckinDefId(defId)
     setEditCheckinDate(date)
-  }, [definitions, getEntryValue, upsertEntry])
+  }, [definitions])
 
   const handleTaskClick = useCallback((taskId: number, date?: string) => {
     const task = tasks.find((t) => t.id === taskId && (!date || t.dueDate === date))

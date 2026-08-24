@@ -38,6 +38,7 @@ function removeAllListeners(channel: IpcChannel): void {
 
 // ==================== 设置持久化（settings 表，跨窗口共享） ====================
 const THEME_KEY = "theme";
+const SKIN_KEY = "skin";
 const WIDGET_PREFS_KEY = "widgetPrefs";
 
 const DEFAULT_WIDGET_PREFS: WidgetPrefs = {
@@ -291,6 +292,11 @@ async function invoke(channel: IpcChannel, ...args: unknown[]): Promise<unknown>
     case IPC.SYSTEM_SET_THEME:
       await db.setSetting(THEME_KEY, String(args[0]));
       return;
+    case IPC.SYSTEM_GET_SKIN:
+      return db.getSetting<string>(SKIN_KEY, "default");
+    case IPC.SYSTEM_SET_SKIN:
+      await db.setSetting(SKIN_KEY, String(args[0]));
+      return;
     case IPC.SYSTEM_SHOW_WIDGET: {
       const win = await getFloatingWindow();
       if (win) await win.show();
@@ -356,6 +362,7 @@ async function invoke(channel: IpcChannel, ...args: unknown[]): Promise<unknown>
     case IPC.PUSH_ACHIEVEMENT_UNLOCKED:
     case IPC.PUSH_FULLSCREEN_CHANGED:
     case IPC.PUSH_THEME_CHANGED:
+    case IPC.PUSH_SKIN_CHANGED:
       return;
 
     default: {
@@ -390,6 +397,7 @@ export async function initBridge(): Promise<void> {
       IPC.PUSH_ACHIEVEMENT_UNLOCKED,
       IPC.PUSH_TASKS_FAILED,
       IPC.PUSH_THEME_CHANGED,
+      IPC.PUSH_SKIN_CHANGED,
     ];
     for (const c of channels) {
       // 与源项目一致：只接收发往本窗口的事件（对应 Electron 的定向 webContents.send），避免收到自己发出的刷新信号

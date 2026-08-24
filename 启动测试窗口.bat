@@ -1,8 +1,19 @@
 @echo off
 chcp 65001 >nul
-title 日历 - 测试窗口
 cd /d "%~dp0"
 
+rem prefer pre-built exe (instant open)
+if exist "src-tauri\target\release\calendar-tauri.exe" goto :run_app
+
+goto :dev_mode
+
+:run_app
+start "" "src-tauri\target\release\calendar-tauri.exe"
+exit /b 0
+
+:dev_mode
+rem dev mode fallback (slow first compile)
+title 日历 - 测试窗口
 rem ===== 查找 Rust 工具链（cargo）=====
 set "CARGO_CMD="
 where cargo >nul 2>nul && set "CARGO_CMD=cargo"

@@ -29,20 +29,20 @@ export function MonthView({ definitions, onDayClick, onTaskToggle, onTaskClick, 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* 星期表头 */}
-      <div className="grid grid-cols-7 border-b border-border/60 shrink-0 bg-secondary/40 backdrop-blur-sm">
+      <div className="grid grid-cols-7 shrink-0 pt-2 pb-1">
         {WEEK_DAYS.map((day) => (
           <div
             key={day}
-            className="py-2 text-center text-xs font-bold tracking-wider text-muted-foreground border-r last:border-r-0"
+            className="py-1 text-center text-xs font-semibold tracking-wider text-muted-foreground"
           >
             {day}
           </div>
         ))}
       </div>
 
-      {/* 日期网格 */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="grid grid-cols-7 h-full">
+      {/* 日期网格：占满整个界面，扁平、挨着，发丝分隔线 */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden">
+        <div className="grid grid-cols-7 auto-rows-fr gap-px bg-border/60 h-full">
           {days.map((date) => (
             <DayCell
               key={date.toISOString()}

@@ -1,12 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Sun, Moon, Monitor, Power, Layers, Maximize, Minimize2, ZoomIn, ZoomOut, RefreshCw, LogOut, Sparkles, Info } from 'lucide-react'
-import { useTheme } from '@/lib/theme'
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle,
-} from '@/components/ui/dialog'
+import { Power, Maximize, Minimize2, ZoomIn, ZoomOut, RefreshCw, LogOut, Sparkles, Info } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
 import { systemApi } from '@/api'
 import { WhatsNewDialog } from '@/components/layout/WhatsNewDialog'
 
@@ -16,7 +12,6 @@ interface SettingsDialogProps {
 }
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
-  const { theme, setTheme } = useTheme()
   const [autoLaunch, setAutoLaunch] = useState(false)
   const [autoLaunchLoading, setAutoLaunchLoading] = useState(false)
   const [showWhatsNew, setShowWhatsNew] = useState(false)
@@ -39,12 +34,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     }
   }
 
-  const themes = [
-    { value: 'light', label: '浅色', icon: Sun },
-    { value: 'dark', label: '深色', icon: Moon },
-    { value: 'system', label: '跟随系统', icon: Monitor },
-  ]
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent onClose={() => onOpenChange(false)}>
@@ -53,31 +42,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
         </DialogHeader>
 
         <div className="flex flex-col gap-6 px-6 pb-6 pt-2">
-          {/* 外观主题 */}
-          <section className="flex flex-col gap-3">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
-              <Layers className="h-3.5 w-3.5" />
-              外观
-            </h4>
-            <div className="grid grid-cols-3 gap-2">
-              {themes.map(({ value, label, icon: Icon }) => (
-                <button
-                  key={value}
-                  onClick={() => setTheme(value)}
-                  className={cn(
-                    'flex flex-col items-center justify-center gap-2 py-3 rounded-2xl border-2 transition-all duration-200',
-                    theme === value
-                      ? 'border-primary bg-primary/10 text-primary shadow-glow'
-                      : 'border-border text-muted-foreground hover:border-primary/40 hover:text-foreground'
-                  )}
-                >
-                  <Icon className="h-5 w-5" />
-                  <span className="text-xs font-medium">{label}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-
           {/* 系统 */}
           <section className="flex flex-col gap-3">
             <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">

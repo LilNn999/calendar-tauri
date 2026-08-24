@@ -6,6 +6,7 @@
 //
 // 用法：
 //   legacy-migrate.exe                 安全模式：已导入过或新库有数据时拒绝
+//                                        （交互式终端下会提示是否清空新版数据后覆盖导入）
 //   legacy-migrate.exe --force         清空新库相关表后重新导入
 //   legacy-migrate.exe --dry-run       只统计预览，不写入
 //   legacy-migrate.exe --old <路径> --new <路径>  手动指定库路径
@@ -208,24 +209,50 @@ fn run(old_path: &PathBuf, new_path: &PathBuf, force: bool, dry_run: bool) -> i3
             )
             .is_ok();
     }
-    if marker && !force {
-        println!(
-            "[错误] 检测到已导入标记（legacy_imported_at）。已导入过一次，如需重导请加 --force。"
-        );
-        return 2;
+
+    // 新库已有数据检查
+    let mut has_data = false;
+    let mut data_tables: Vec<&str> = Vec::new();
+    for (_, table) in LEGACY_MAP {
+        if table_exists(&new, table) && count_rows(&new, table) > 0 {
+            has_data = true;
+            data_tables.push(table);
+        }
     }
 
-    // 新库已有数据则拒绝（除非 --force）
-    if !force {
-        for (_, table) in LEGACY_MAP {
-            if table_exists(&new, table) && count_rows(&new, table) > 0 {
-                println!(
-                    "[错误] 新库 {} 表已有 {} 行数据，为避免覆盖新版数据已中止。确认清空重导请加 --force。",
-                    table,
-                    count_rows(&new, table)
-                );
+    // 需要清空重导的情形：已导入过标记 或 新库已有数据（交互确认 / --force）
+    let mut confirm_clear = false;
+    if !force && (marker || has_data) {
+        let reason = if marker && has_data {
+            "检测到已导入过且新版数据库已有数据".to_string()
+        } else if marker {
+            "检测到已导入过".to_string()
+        } else {
+            format!("新版数据库已有数据（{} 等 {} 个表）", data_tables.join("、"), data_tables.len())
+        };
+        if dry_run {
+            println!("\n[注意] {}。dry-run 仅预览，不写入。", reason);
+        } else if io::stdin().is_terminal() {
+            println!("\n[提示] {}。", reason);
+            println!("继续导入会先清空新版相关数据，再写入旧版数据（此操作不可撤销）。");
+            print!("是否确认清空新版数据并覆盖导入？(Y/N): ");
+            let _ = io::stdout().flush();
+            let mut line = String::new();
+            let _ = io::stdin().read_line(&mut line);
+            let ans = line.trim().to_ascii_lowercase();
+            if ans == "y" || ans == "yes" {
+                confirm_clear = true;
+                println!("已确认，将清空新版数据后导入。");
+            } else {
+                println!("已取消导入，未修改任何数据。");
                 return 2;
             }
+        } else {
+            println!(
+                "[错误] {}，为避免覆盖新版数据已中止。确认清空重导请加 --force（或在交互式终端中运行本工具以确认）。",
+                reason
+            );
+            return 2;
         }
     }
 
@@ -243,8 +270,8 @@ fn run(old_path: &PathBuf, new_path: &PathBuf, force: bool, dry_run: bool) -> i3
         return 0;
     }
 
-    if force {
-        println!("\n[force] 清空新库相关表后导入…");
+    if force || confirm_clear {
+        println!("\n[清空] 清空新库相关表后导入…");
         if let Err(e) = wipe_new_data(&new) {
             println!("[错误] 清空失败：{}", e);
             return 1;
@@ -436,7 +463,7 @@ fn print_help() {
     println!("用法: legacy-migrate.exe [选项]");
     println!("  --old <路径>    旧库路径（默认 %APPDATA%\\daily-calendar\\calendar.db）");
     println!("  --new <路径>    新库路径（默认 %APPDATA%\\com.calendar.desktop\\calendar.db）");
-    println!("  --force         新库已有数据时先清空相关表再导入");
+    println!("  --force         跳过确认，新库已有数据时直接清空相关表再导入");
     println!("  --dry-run       只统计预览，不写入");
     println!("  --no-pause      结束后不等待按键");
     println!("  -h, --help      显示帮助");

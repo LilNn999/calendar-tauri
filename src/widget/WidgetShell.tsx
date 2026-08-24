@@ -12,6 +12,27 @@ import { PRIORITY_CONFIG } from '@shared/constants'
 import { SubtaskInputList, type SubtaskInputItem } from '@/components/tasks/SubtaskInputList'
 import type { Task, CheckinDefinition, CheckinEntry, Priority } from '@shared/types'
 
+type ResizeDirection = 'East' | 'North' | 'NorthEast' | 'NorthWest' | 'South' | 'SouthEast' | 'SouthWest' | 'West'
+
+// 悬浮窗边缘/角部缩放手柄（配合 Rust 侧 resizable(true)）
+const RESIZE_HANDLES: Array<{ dir: ResizeDirection; className: string }> = [
+  { dir: 'North', className: 'top-0 left-2 right-2 h-1.5 cursor-n-resize' },
+  { dir: 'South', className: 'bottom-0 left-2 right-2 h-1.5 cursor-s-resize' },
+  { dir: 'West', className: 'left-0 top-2 bottom-2 w-1.5 cursor-w-resize' },
+  { dir: 'East', className: 'right-0 top-2 bottom-2 w-1.5 cursor-e-resize' },
+  { dir: 'NorthWest', className: 'top-0 left-0 h-3.5 w-3.5 cursor-nwse-resize' },
+  { dir: 'NorthEast', className: 'top-0 right-0 h-3.5 w-3.5 cursor-nesw-resize' },
+  { dir: 'SouthWest', className: 'bottom-0 left-0 h-3.5 w-3.5 cursor-nesw-resize' },
+  { dir: 'SouthEast', className: 'bottom-0 right-0 h-3.5 w-3.5 cursor-nwse-resize' },
+]
+
+function startWindowResize(dir: ResizeDirection) {
+  if (!isTauri) return
+  import('@tauri-apps/api/window')
+    .then(({ getCurrentWindow }) => getCurrentWindow().startResizeDragging(dir))
+    .catch(() => {})
+}
+
 function formatWidgetDate(dateStr: string) {
   const d = new Date(dateStr + 'T00:00:00')
   return d.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'short' })
@@ -216,9 +237,24 @@ export function WidgetShell() {
 
   return (
     <div
-      className="flex flex-col h-screen overflow-hidden rounded-2xl shadow-xl border border-border/40 backdrop-blur-2xl"
-      style={{ background: `hsl(var(--background) / ${opacity / 100})` }}
+      className="relative flex flex-col h-screen overflow-hidden rounded-2xl shadow-xl border border-border/40 backdrop-blur-2xl"
+      style={{
+        background: `hsl(var(--widget-bg) / ${opacity / 100})`,
+        backgroundImage: 'var(--bg-glow-1), var(--bg-glow-2), var(--bg-glow-3)',
+        backgroundSize: 'cover',
+      }}
     >
+      {/* 边缘/角部缩放手柄 */}
+      {RESIZE_HANDLES.map(({ dir, className }) => (
+        <div
+          key={dir}
+          className={`absolute z-50 touch-none select-none ${className}`}
+          onPointerDown={(e) => {
+            e.preventDefault()
+            startWindowResize(dir)
+          }}
+        />
+      ))}
 
       {/* 顶部渐变色条 */}
       <div className="h-[3px] rounded-t-xl flex-shrink-0 opacity-100"

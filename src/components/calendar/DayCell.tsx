@@ -1,7 +1,8 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toDateString, matchesCheckinFrequency } from '@/lib/utils'
+import { getDayCellState } from '@/lib/dayCellState'
 import { CELL_MAX_ITEMS } from '@shared/constants'
 import { useTaskStore } from '@/store/useTaskStore'
 import { useCheckinStore } from '@/store/useCheckinStore'
@@ -46,6 +47,24 @@ export function DayCell({
   const [showNoteTooltip, setShowNoteTooltip] = useState(false)
   const [tooltipFlip, setTooltipFlip] = useState(false)
   const noteIndicatorRef = useRef<HTMLDivElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
+  const [rowLimit, setRowLimit] = useState(CELL_MAX_ITEMS)
+
+  // 按格子实际可用高度动态计算可显示行数：保证“更多”按钮不压住最后一行，
+  // 窗口缩放时也能自动适配，不产生堆叠/遮挡
+  useEffect(() => {
+    const el = listRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const measure = () => {
+      // 每行约 19px 高 + 2px 间距 ≈ 21px
+      const n = Math.max(1, Math.floor(el.clientHeight / 21))
+      setRowLimit(Math.min(CELL_MAX_ITEMS, n))
+    }
+    const ob = new ResizeObserver(measure)
+    ob.observe(el)
+    measure()
+    return () => ob.disconnect()
+  }, [])
 
   const tasks = useMemo(() => {
     const PRIORITY_WEIGHT: Record<string, number> = { high: 3, medium: 2, low: 1, none: 0 }
@@ -80,22 +99,34 @@ export function DayCell({
     ...activeDefs.map((d) => ({ kind: 'checkin' as const, defId: d.id })),
   ]
 
-  const visibleItems = allItems.slice(0, CELL_MAX_ITEMS)
-  const overflow = allItems.length - CELL_MAX_ITEMS
+  const visibleItems = allItems.slice(0, rowLimit)
+  const overflow = allItems.length - rowLimit
   const isSelected = selectedDate === dateStr
+  const dayState = getDayCellState({ isSelected, isToday, isCurrentMonth })
+  // 三种格子状态互不相同：
+  // 选中=极淡底色 + 1px 细边；当天=强调色浅底 + 顶部渐变条；非本月=中性灰底
+  const cellBg = dayState === 'selected'
+    ? 'bg-day-selected/25 ring-1 ring-inset ring-day-ring/35'
+    : dayState === 'today'
+      ? 'bg-day-today'
+      : dayState === 'outside'
+        ? 'bg-day-outside'
+        : ''
 
   return (
     <div
       className={cn(
-        'relative flex flex-col p-1.5 border-r border-b border-border/60 transition-all cursor-pointer group',
-        'min-h-[90px]',
-        !isCurrentMonth && 'bg-muted/20',
-        isToday && 'bg-primary/5',
-        isSelected && 'ring-2 ring-inset ring-primary/40 bg-primary/5',
-        'hover:bg-primary/5',
+        'relative flex flex-col p-1.5 bg-card overflow-hidden transition-colors cursor-pointer group',
+        'min-h-[76px]',
+        cellBg,
+        'hover:brightness-105 dark:hover:brightness-110',
       )}
       onClick={() => { setSelectedDate(dateStr); onDayClick(dateStr) }}
     >
+      {isToday && (
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-brand opacity-90" />
+      )}
+
       {/* 日期数字 + 备注指示器 */}
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-1">
@@ -103,10 +134,12 @@ export function DayCell({
             className={cn(
               'text-xs font-medium h-5 w-5 flex items-center justify-center rounded-full transition-all duration-200',
               isToday
-                ? 'bg-gradient-brand text-primary-foreground font-bold shadow-glow'
-                : isCurrentMonth
-                ? 'text-foreground'
-                : 'text-muted-foreground/40'
+                ? 'bg-primary text-primary-foreground font-bold'
+                : isSelected
+                ? 'text-primary font-semibold'
+                : dayState === 'outside'
+                ? 'text-muted-foreground/50'
+                : 'text-foreground'
             )}
           >
             {date.getDate()}
@@ -153,54 +186,57 @@ export function DayCell({
         </button>
       </div>
 
-      {/* 事项列表 */}
-      <div className="flex flex-col gap-0.5 flex-1">
-        {visibleItems.map((item) => {
-          if (item.kind === 'task') {
-            const task = tasks.find((t) => t.id === item.id)!
-            return (
-              <TaskItemRow
-                key={`task-${item.id}-${dateStr}`}
-                task={task}
-                compact
-                onToggle={(id, done) => onTaskToggle(id, done, task.isRecurring ? dateStr : undefined)}
-                onClick={() => onTaskClick(item.id, dateStr)}
-                onMarkComplete={() => onTaskToggle(task.id, true, task.isRecurring ? dateStr : undefined)}
-                onDelete={() => {
-                  if (task.isRecurring) {
-                    // 循环任务：打开编辑对话框（含范围选择的删除流程）
-                    onTaskClick(task.id, dateStr)
-                  } else {
-                    deleteTask(task.id)
-                  }
-                }}
-              />
-            )
-          } else {
-            const def = activeDefs.find((d) => d.id === item.defId)!
-            const entry = entries.find((e) => e.definitionId === item.defId)
-            return (
-              <CheckinPreviewRow
-                key={`checkin-${item.defId}`}
-                definition={def}
-                entry={entry}
-                compact
-                onClick={() => onCheckinClick(item.defId, dateStr)}
-              />
-            )
-          }
-        })}
-      </div>
+      {/* 事项列表 + 溢出“更多”按钮：在流内布局，天然不与行重叠 */}
+      <div className="flex flex-col flex-1 min-h-0">
+        <div ref={listRef} className="flex flex-col gap-0.5 flex-1 min-h-0 overflow-hidden">
+          {visibleItems.map((item) => {
+            if (item.kind === 'task') {
+              const task = tasks.find((t) => t.id === item.id)!
+              return (
+                <TaskItemRow
+                  key={`task-${item.id}-${dateStr}`}
+                  task={task}
+                  compact
+                  onToggle={(id, done) => onTaskToggle(id, done, task.isRecurring ? dateStr : undefined)}
+                  onClick={() => onTaskClick(item.id, dateStr)}
+                  onMarkComplete={() => onTaskToggle(task.id, true, task.isRecurring ? dateStr : undefined)}
+                  onDelete={() => {
+                    if (task.isRecurring) {
+                      // 循环任务：打开编辑对话框（含范围选择的删除流程）
+                      onTaskClick(task.id, dateStr)
+                    } else {
+                      deleteTask(task.id)
+                    }
+                  }}
+                />
+              )
+            } else {
+              const def = activeDefs.find((d) => d.id === item.defId)!
+              const entry = entries.find((e) => e.definitionId === item.defId)
+              return (
+                <CheckinPreviewRow
+                  key={`checkin-${item.defId}`}
+                  definition={def}
+                  entry={entry}
+                  compact
+                  onClick={() => onCheckinClick(item.defId, dateStr)}
+                />
+              )
+            }
+          })}
+        </div>
 
-      {/* 溢出提示 */}
-      {overflow > 0 && (
-        <button
-          className="mt-0.5 text-[10px] text-muted-foreground hover:text-primary px-1.5 py-0.5 rounded-full hover:bg-primary/10 transition-colors self-start"
-          onClick={(e) => { e.stopPropagation(); onDayClick(dateStr) }}
-        >
-          +{overflow} 更多
-        </button>
-      )}
+        {/* 溢出提示：左下角“更多”按钮 */}
+        {overflow > 0 && (
+          <button
+            className="shrink-0 mt-0.5 self-start inline-flex items-center gap-0.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary hover:bg-primary/20 transition-colors"
+            onClick={(e) => { e.stopPropagation(); onDayClick(dateStr) }}
+            title={`还有 ${overflow} 项待办`}
+          >
+            {overflow} 更多
+          </button>
+        )}
+      </div>
     </div>
   )
 }
