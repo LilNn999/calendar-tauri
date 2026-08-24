@@ -1,0 +1,58 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "日历",
+  "version": "0.2.0",
+  "identifier": "com.calendar.desktop",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "日历 · Calendar",
+        "width": 1280,
+        "height": 820,
+        "minWidth": 980,
+        "minHeight": 660,
+        "center": true,
+        "resizable": true,
+        "shadow": true,
+        "decorations": false
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "category": "Productivity",
+    "shortDescription": "本地优先的日历、任务与打卡应用",
+    "longDescription": "日历 · Calendar —— 集日历、任务、子任务、每日打卡、备注与统计于一体的本地桌面应用。数据全部存储在本机 SQLite，隐私优先。",
+    "icon": [
+      "icons/icon.ico",
+      "icons/logo.png"
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "displayLanguageSelector": false,
+        "languages": [
+          "SimpChinese",
+          "English"
+        ],
+        "compression": "lzma"
+      },
+      "webviewInstallMode": {
+        "type": "downloadBootstrapper"
+      }
+    }
+  }
+}

@@ -1,0 +1,106 @@
+import { useState } from 'react'
+import { CalendarDays, BarChart3, Settings } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { isTauri } from '@/lib/db'
+import { SettingsDialog } from './SettingsDialog'
+import { WindowControls } from './WindowControls'
+
+type TabId = 'calendar' | 'analytics'
+
+interface TabBarProps {
+  activeTab: TabId
+  onTabChange: (tab: TabId) => void
+}
+
+export function TabBar({ activeTab, onTabChange }: TabBarProps) {
+  const [settingsOpen, setSettingsOpen] = useState(false)
+
+  // 无边框窗口：点击标题栏区域拖动窗口（排除按钮/输入框等交互元素）
+  const handleTitlebarMouseDown = (e: React.MouseEvent) => {
+    if (!isTauri) return
+    if ((e.target as HTMLElement).closest('button, input, textarea, select, a')) return
+    import('@tauri-apps/api/window')
+      .then(({ getCurrentWindow }) => getCurrentWindow().startDragging())
+      .catch(() => {})
+  }
+
+  // 双击标题栏区域最大化 / 还原
+  const handleTitlebarDoubleClick = (e: React.MouseEvent) => {
+    if (!isTauri) return
+    if ((e.target as HTMLElement).closest('button, input, textarea, select, a')) return
+    import('@tauri-apps/api/window')
+      .then(({ getCurrentWindow }) => getCurrentWindow().toggleMaximize())
+      .catch(() => {})
+  }
+
+  return (
+    <>
+      <div className="relative flex items-center h-14 pl-6 pr-5 border-b border-border/60 bg-card/70 backdrop-blur-xl shrink-0"
+        style={{ boxShadow: 'var(--shadow-sm)' }}
+        onMouseDown={handleTitlebarMouseDown}
+        onDoubleClick={handleTitlebarDoubleClick}
+      >
+        {/* 左侧：应用名 */}
+        <div className="flex-1 flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-gradient-brand shadow-glow inline-block" />
+          <span className="text-sm font-extrabold tracking-wide select-none text-gradient-brand">日历</span>
+        </div>
+
+        {/* 中间：Tab 导航 */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1 bg-secondary/80 rounded-2xl p-1"
+          style={{ boxShadow: 'inset 0 1px 3px rgb(0 0 0 / 0.05)' }}>
+          <TabButton
+            active={activeTab === 'calendar'}
+            icon={<CalendarDays className="h-3.5 w-3.5" />}
+            label="日历"
+            onClick={() => onTabChange('calendar')}
+          />
+          <TabButton
+            active={activeTab === 'analytics'}
+            icon={<BarChart3 className="h-3.5 w-3.5" />}
+            label="数据分析"
+            onClick={() => onTabChange('analytics')}
+          />
+        </div>
+
+        {/* 右侧：设置按钮 */}
+        <div className="flex-1 flex items-center justify-end gap-1">
+          <button
+            onClick={() => setSettingsOpen(true)}
+            className="h-8 w-8 flex items-center justify-center rounded-full text-muted-foreground hover:text-foreground hover:bg-accent transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
+            title="设置"
+          >
+            <Settings className="h-4 w-4" />
+          </button>
+          <WindowControls />
+        </div>
+      </div>
+
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+    </>
+  )
+}
+
+function TabButton({
+  active, icon, label, onClick,
+}: {
+  active: boolean
+  icon: React.ReactNode
+  label: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        'flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-sm font-medium transition-all duration-200',
+        active
+          ? 'bg-gradient-brand text-primary-foreground shadow-glow'
+          : 'text-muted-foreground hover:text-foreground hover:bg-card/60'
+      )}
+    >
+      {icon}
+      {label}
+    </button>
+  )
+}

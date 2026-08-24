@@ -1,0 +1,20 @@
+[package]
+name = "legacy-migrate"
+version = "1.0.0"
+edition = "2021"
+description = "旧版日历数据导入新版应用（独立 exe，无外部依赖）"
+
+[[bin]]
+name = "legacy-migrate"
+path = "src/main.rs"
+
+[dependencies]
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true
+incremental = false

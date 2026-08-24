@@ -1,0 +1,55 @@
+import { useState, useRef } from 'react'
+import { Input } from '@/components/ui/input'
+import type { CheckinDefinition } from '@shared/types'
+
+interface NumericCheckinProps {
+  definition: CheckinDefinition
+  value: string
+  onChange: (value: string) => void
+}
+
+export function NumericCheckin({ definition, value, onChange }: NumericCheckinProps) {
+  const [local, setLocal] = useState(value)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const handleChange = (v: string) => {
+    // 数值型打卡不允许负值
+    if (v.startsWith('-')) return
+    setLocal(v)
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      if (v.trim() !== '') onChange(v.trim())
+    }, 600)
+  }
+
+  // 回车立即提交，避免防抖未触发时丢失输入
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter') return
+    e.preventDefault()
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+    if (local.trim() !== '') onChange(local.trim())
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-sm flex-1 text-foreground">{definition.name}</span>
+      <div className="flex items-center gap-1">
+        <Input
+          type="number"
+          min={0}
+          value={local}
+          onChange={(e) => handleChange(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="0"
+          className="w-20 h-8 text-sm text-right"
+        />
+        {definition.unit && (
+          <span className="text-xs text-muted-foreground w-6">{definition.unit}</span>
+        )}
+      </div>
+    </div>
+  )
+}

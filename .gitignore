@@ -1,0 +1,20 @@
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+src-tauri/target
+src-tauri/gen
+# 本地调试截图
+floating-issue.png
+screen-check-small.png
+screen-check.jpg
+screen-check.png
+screenshot.jpg
+# Codex 本地模型配置
+.codex-models-override.json
+# 迁移工具构建产物
+scripts/legacy-migrate/target/
+# 安装包与编译产物
+安装包/
+导入旧版数据.exe
