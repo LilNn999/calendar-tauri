@@ -120,7 +120,7 @@ export function RecycleBinDialog({ open, onOpenChange, onRestored }: RecycleBinD
                         onClick={() => handleRestore(task.id)}
                         className={cn(
                           'h-6 w-6 flex items-center justify-center rounded-full transition-colors',
-                          'text-muted-foreground hover:text-emerald-600 hover:bg-emerald-100 dark:hover:bg-emerald-900/40',
+                          'text-muted-foreground hover:text-success hover:bg-success/10',
                           actionLoading === task.id && 'opacity-50 cursor-not-allowed'
                         )}
                         title="恢复"

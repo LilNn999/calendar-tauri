@@ -36,19 +36,19 @@ export function TabBar({ activeTab, onTabChange }: TabBarProps) {
 
   return (
     <>
-      <div className="relative flex items-center h-14 pl-6 pr-5 border-b border-border/60 bg-card/70 backdrop-blur-xl shrink-0"
+      <div className="surface-header relative flex items-center h-14 pl-6 pr-5 border-b border-border-subtle backdrop-blur-xl shrink-0"
         style={{ boxShadow: 'var(--shadow-sm)' }}
         onMouseDown={handleTitlebarMouseDown}
         onDoubleClick={handleTitlebarDoubleClick}
       >
         {/* 左侧：应用名 */}
         <div className="flex-1 flex items-center gap-1.5">
-          <span className="h-2 w-2 rounded-full bg-gradient-brand shadow-glow inline-block" />
-          <span className="text-sm font-extrabold tracking-wide select-none text-gradient-brand">日历</span>
+          <span className="h-2 w-2 rounded-full bg-primary shadow-raised inline-block" />
+          <span className="font-skin-display text-sm font-extrabold tracking-wide select-none text-foreground">日历</span>
         </div>
 
         {/* 中间：Tab 导航 */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-1 bg-secondary/80 rounded-2xl p-1"
+        <div className="control-inset absolute left-1/2 -translate-x-1/2 flex items-center gap-1 rounded-2xl p-1"
           style={{ boxShadow: 'inset 0 1px 3px rgb(0 0 0 / 0.05)' }}>
           <TabButton
             active={activeTab === 'calendar'}
@@ -97,7 +97,7 @@ function TabButton({
       className={cn(
         'flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-sm font-medium transition-all duration-200',
         active
-          ? 'bg-gradient-brand text-primary-foreground shadow-glow'
+          ? 'control-raised text-primary'
           : 'text-muted-foreground hover:text-foreground hover:bg-card/60'
       )}
     >

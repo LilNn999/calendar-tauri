@@ -4,6 +4,12 @@ use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
 use crate::{floating, tray};
 
+/// 测试模式：批处理脚本通过环境变量标记后，前端据此写入示例数据。
+#[tauri::command]
+pub fn is_test_mode() -> bool {
+    std::env::var("CALENDAR_TEST_MODE").as_deref() == Ok("1")
+}
+
 /// 应用版本号
 #[tauri::command]
 pub fn app_version() -> String {

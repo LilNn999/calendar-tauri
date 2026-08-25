@@ -16,8 +16,8 @@ export function StreakBadge({ streak, className }: StreakBadgeProps) {
       className={cn(
         'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold shadow-sm',
         isHot
-          ? 'bg-gradient-brand text-white border-transparent shadow-glow'
-          : 'bg-amber-500/10 text-amber-600 border border-amber-500/20',
+          ? 'bg-primary text-white border-transparent shadow-raised'
+          : 'bg-warning/10 text-warning border border-warning/20',
         className
       )}
     >

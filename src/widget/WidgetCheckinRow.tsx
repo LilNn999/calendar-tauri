@@ -51,7 +51,7 @@ export function WidgetCheckinRow({ definitions, entries, onChange }: WidgetCheck
         const value = entry?.value ?? ''
 
         return (
-          <div key={def.id} className="flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-muted/60 transition-colors">
+          <div key={def.id} className="control-inset flex items-center gap-2 rounded-xl px-2 py-1.5 bg-checkin-bg/60 hover:bg-checkin-bg transition-colors">
             <span className="text-xs flex-1 truncate text-foreground">{def.name}</span>
             {def.type === 'boolean' && (
               <Switch

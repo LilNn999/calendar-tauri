@@ -2,52 +2,61 @@
 chcp 65001 >nul
 cd /d "%~dp0"
 
-rem prefer pre-built exe (instant open)
-if exist "src-tauri\target\release\calendar-tauri.exe" goto :run_app
-
-goto :dev_mode
-
-:run_app
-start "" "src-tauri\target\release\calendar-tauri.exe"
-exit /b 0
-
-:dev_mode
-rem dev mode fallback (slow first compile)
 title 日历 - 测试窗口
-rem ===== 查找 Rust 工具链（cargo）=====
-set "CARGO_CMD="
-where cargo >nul 2>nul && set "CARGO_CMD=cargo"
-if not defined CARGO_CMD if exist "%USERPROFILE%\.cargo\bin\cargo.exe" (
-    set "CARGO_CMD=%USERPROFILE%\.cargo\bin\cargo.exe"
-    set "PATH=%USERPROFILE%\.cargo\bin;%PATH%"
+
+set "APP_EXE=src-tauri\target\release\calendar-tauri.exe"
+set "CARGO_TARGET_DIR=%~dp0src-tauri\target"
+rem 启用测试数据模式：首次启动自动写入一组示例任务/打卡/备注
+set "CALENDAR_TEST_MODE=1"
+
+rem ===== 已构建：直接秒开测试窗口 =====
+if exist "%APP_EXE%" (
+    echo 正在启动测试窗口（测试数据模式）...
+    start "" "%APP_EXE%"
+    exit /b 0
 )
-if not defined CARGO_CMD (
-    echo [提示] 未检测到 Rust 工具链，无法启动桌面测试窗口。
-    echo 请先安装 Rust：https://rustup.rs 后重试。
+
+rem ===== 未构建：自动执行 release 构建 =====
+echo ============================================
+echo  未找到测试版程序，正在自动构建...
+echo  首次构建约需 3 分钟，请勿关闭本窗口。
+echo ============================================
+echo.
+
+where npm >nul 2>nul
+if errorlevel 1 (
+    echo [错误] 未找到 npm，请先安装 Node.js。
     pause
     exit /b 1
 )
 
-rem ===== 首次运行自动安装前端依赖 =====
 if not exist "node_modules" (
     echo [首次运行] 正在安装前端依赖，请稍候...
     call npm install
     if errorlevel 1 (
-        echo 依赖安装失败，请检查网络后重试。
+        echo [错误] 前端依赖安装失败，请检查网络。
         pause
         exit /b 1
     )
 )
 
-echo ============================================
-echo  正在启动测试窗口，首次编译可能需要几分钟...
-echo  关闭方式：直接关闭弹出的应用窗口，
-echo  或在下方终端按 Ctrl+C 结束。
-echo ============================================
-echo.
+echo 正在构建 release 版本...
+call npm run tauri build -- --no-bundle
+if errorlevel 1 (
+    echo.
+    echo [错误] 构建失败，请查看上方日志。
+    pause
+    exit /b 1
+)
 
-call npm run tauri dev
+if not exist "%APP_EXE%" (
+    echo.
+    echo [错误] 构建完成但未找到可执行文件：%APP_EXE%
+    pause
+    exit /b 1
+)
 
 echo.
-echo 测试窗口已退出。
-pause
+echo 构建成功，正在启动测试窗口...
+start "" "%APP_EXE%"
+exit /b 0

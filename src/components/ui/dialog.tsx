@@ -53,14 +53,14 @@ function DialogContent({ className, children, onClose, ...props }: DialogContent
   return (
     <div
       className={cn(
-        'relative rounded-3xl border bg-card text-card-foreground overflow-hidden',
+        'relative rounded-2xl border border-border-subtle bg-surface-raised text-card-foreground overflow-hidden',
         className
       )}
       style={{ boxShadow: 'var(--shadow-xl)' }}
       {...props}
     >
       {/* 顶部品牌渐变细条 */}
-      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-brand pointer-events-none z-10" />
+      <div className="absolute top-0 inset-x-0 h-1 bg-primary/10 pointer-events-none z-10" />
       {onClose && (
         <button
           onClick={onClose}
@@ -89,7 +89,7 @@ function DialogDescription({ className, ...props }: React.HTMLAttributes<HTMLPar
 function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn('flex items-center justify-end gap-2 px-6 py-4 border-t bg-secondary/20', className)}
+      className={cn('flex items-center justify-end gap-2 px-6 py-4 border-t border-border-subtle bg-surface-subtle/70', className)}
       {...props}
     />
   )

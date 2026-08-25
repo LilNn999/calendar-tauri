@@ -12,7 +12,8 @@ async function bootstrap() {
   // 初始化数据层与 electronAPI 桥接（浏览器环境降级为内存实现）
   await initBridge()
 
-  let isFloating = false
+  // 浏览器开发预览：?preview=floating 可直接查看悬浮窗
+  let isFloating = new URLSearchParams(window.location.search).get('preview') === 'floating'
   if (isTauri) {
     try {
       const { getCurrentWindow } = await import('@tauri-apps/api/window')

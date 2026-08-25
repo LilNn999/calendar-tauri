@@ -40,7 +40,7 @@ pub fn ensure(app: &AppHandle) -> tauri::Result<()> {
             .minimizable(false)
             .decorations(false)
             .transparent(true)
-            .shadow(true)
+            .shadow(false)
             // 按用户保存的置顶偏好创建，不再无条件置顶
             .always_on_top(state(app).always_on_top.load(Ordering::Relaxed))
             .skip_taskbar(true)

@@ -42,7 +42,7 @@ export function App() {
   }, [isFullscreen])
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-background">
+    <div className="flex flex-col h-screen overflow-hidden bg-transparent">
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
 
       {/* 全屏提示横幅 */}

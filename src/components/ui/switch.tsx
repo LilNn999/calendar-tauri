@@ -16,9 +16,10 @@ function Switch({ checked, onCheckedChange, disabled, className }: SwitchProps) 
       onClick={() => onCheckedChange(!checked)}
       className={cn(
         'relative inline-flex h-5 w-9 items-center rounded-full transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
-        checked ? 'bg-gradient-brand shadow-glow' : 'bg-input',
+        checked ? 'bg-primary shadow-sm' : 'bg-surface-inset shadow-inset',
         className
       )}
+      style={checked ? { boxShadow: 'var(--shadow-raised)' } : undefined}
     >
       <span
         className={cn(

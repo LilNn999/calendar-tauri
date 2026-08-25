@@ -73,22 +73,19 @@ export function WeekView({ definitions, onDayClick, onTaskToggle, onTaskClick, o
               className={cn(
                 'relative flex flex-col border-r last:border-r-0 cursor-pointer group transition-colors',
                 dayState === 'selected'
-                  ? 'bg-day-selected/25 ring-1 ring-inset ring-day-ring/35'
+                  ? 'bg-cell-bg ring-1 ring-inset ring-day-ring/35'
                   : dayState === 'today'
-                    ? 'bg-day-today'
+                    ? 'bg-cell-today-bg'
                     : dayState === 'outside'
-                      ? 'bg-day-outside'
-                      : '',
+                      ? 'bg-cell-dim-bg'
+                      : 'bg-cell-bg',
                 'hover:brightness-105 dark:hover:brightness-110'
               )}
               onClick={() => { setSelectedDate(dateStr); onDayClick(dateStr) }}
             >
-              {isToday && (
-                <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-brand opacity-90" />
-              )}
 
               {/* 日期头部 */}
-              <div className="flex items-center justify-between px-2 py-2 border-b border-border/60 bg-secondary/30">
+              <div className="flex items-center justify-between px-2 py-2 border-b border-border-subtle bg-surface-subtle/70">
                 <div className="flex flex-col items-center">
                   <span className="text-[10px] text-muted-foreground font-medium">
                     {format(date, 'EEE', { locale: zhCN })}
@@ -96,9 +93,9 @@ export function WeekView({ definitions, onDayClick, onTaskToggle, onTaskClick, o
                   <span className={cn(
                     'text-sm font-bold h-7 w-7 flex items-center justify-center rounded-full',
                     isToday
-                      ? 'bg-gradient-brand text-primary-foreground shadow-glow'
+                      ? 'bg-primary text-primary-foreground shadow-raised'
                       : isSelected
-                        ? 'text-primary font-semibold'
+                        ? 'bg-primary/10 text-primary font-semibold ring-1 ring-primary/20'
                         : dayState === 'outside'
                           ? 'text-muted-foreground/50'
                           : 'text-foreground'
@@ -108,7 +105,7 @@ export function WeekView({ definitions, onDayClick, onTaskToggle, onTaskClick, o
                 </div>
                 <div className="flex items-center gap-0.5">
                   {noteContent && (
-                    <div title={noteContent} className="h-5 w-5 flex items-center justify-center rounded-full text-amber-500">
+                    <div title={noteContent} className="h-5 w-5 flex items-center justify-center rounded-full text-warning">
                       <FileText className="h-3 w-3" />
                     </div>
                   )}
@@ -154,8 +151,8 @@ export function WeekView({ definitions, onDayClick, onTaskToggle, onTaskClick, o
 
                 {/* 备注内容直接展示（周视图空间充足） */}
                 {noteContent && (
-                  <div className="mt-0.5 mx-0.5 px-2 py-1 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200/40 dark:border-amber-700/30">
-                    <p className="text-[10px] text-amber-700 dark:text-amber-300 leading-relaxed line-clamp-3">
+                  <div className="mt-0.5 mx-0.5 px-2 py-1 rounded-md bg-warning/10 border border-warning/25">
+                    <p className="text-[10px] text-warning leading-relaxed line-clamp-3">
                       {noteContent}
                     </p>
                   </div>

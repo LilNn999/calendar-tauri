@@ -49,7 +49,7 @@ function applySkinClass(skin: Skin) {
 export function ThemeProvider({
   children,
   defaultTheme = 'system',
-  defaultSkin = 'default',
+  defaultSkin = 'minimal',
 }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(() => {
     try {

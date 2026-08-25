@@ -14,9 +14,9 @@ function Slider({ value, onValueChange, min = 0, max = 100, step = 1, className 
 
   return (
     <div className={cn('relative flex w-full touch-none select-none items-center', className)}>
-      <div className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-secondary">
+      <div className="relative h-1.5 w-full grow overflow-hidden rounded-full bg-surface-inset shadow-inset">
         <div
-          className="absolute h-full bg-gradient-brand rounded-full"
+          className="absolute h-full progress-fill rounded-full"
           style={{ width: `${percentage}%` }}
         />
       </div>
@@ -31,7 +31,7 @@ function Slider({ value, onValueChange, min = 0, max = 100, step = 1, className 
       />
       <div
         className="absolute block h-4 w-4 rounded-full border-2 border-primary bg-white shadow-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 pointer-events-none"
-        style={{ left: `calc(${percentage}% - 8px)` }}
+        style={{ left: `calc(${percentage}% - 8px)`, boxShadow: 'var(--shadow-raised)' }}
       />
     </div>
   )

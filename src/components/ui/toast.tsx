@@ -58,7 +58,7 @@ function ToastContainer({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: 
           <motion.div
             key={toast.id}
             className={cn(
-              'pointer-events-auto relative flex items-start gap-3 overflow-hidden rounded-2xl border bg-card/90 backdrop-blur-xl px-4 py-3 shadow-xl max-w-sm',
+              'pointer-events-auto shadow-float relative flex items-start gap-3 overflow-hidden rounded-xl border border-border-subtle bg-surface-raised px-4 py-3 max-w-sm',
               toast.variant === 'destructive' && 'border-destructive/30 bg-destructive/10',
               toast.variant === 'success' && 'border-success/30 bg-success/10'
             )}
@@ -67,7 +67,7 @@ function ToastContainer({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: 
             exit={{ opacity: 0, x: 60, scale: 0.9 }}
             transition={{ duration: 0.22, ease: 'easeOut' }}
           >
-            {toast.variant === 'default' && <div className="absolute top-0 inset-x-0 h-0.5 bg-gradient-brand" />}
+            {toast.variant === 'default' && <div className="absolute top-0 inset-x-0 h-px bg-primary/20" />}
             {toast.icon && <span className="text-2xl leading-none mt-0.5">{toast.icon}</span>}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold">{toast.title}</p>

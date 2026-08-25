@@ -109,7 +109,7 @@ export function TaskCreationSidebar() {
 
           {/* 侧边栏 */}
           <motion.div
-            className="fixed right-0 top-0 bottom-0 z-40 w-80 bg-card/90 backdrop-blur-xl border-l border-border/60 shadow-2xl flex flex-col"
+            className="surface-panel fixed right-0 top-0 bottom-0 z-40 w-80 bg-card/95 backdrop-blur-xl border-l border-border-subtle shadow-float flex flex-col"
             initial={{ x: '100%' }}
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
@@ -206,7 +206,7 @@ export function TaskCreationSidebar() {
                           key={task.id}
                           className={cn(
                             'flex items-center gap-2 rounded-lg px-2 py-2',
-                            isFailed ? 'bg-gray-100 dark:bg-gray-800/50' : 'bg-slate-100 dark:bg-slate-700/40'
+                            isFailed ? 'bg-task-failed-bg' : 'bg-task-none-bg'
                           )}
                         >
                           <div className={cn('shrink-0 w-1 h-4 rounded-full', priorityCfg.dot)} />
@@ -221,8 +221,8 @@ export function TaskCreationSidebar() {
                             onClick={() => handleFillRecurring(task.id, task.dueDate, !!task.isRecurring)}
                             className={cn(
                               'shrink-0 flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-medium transition-colors',
-                              'bg-emerald-100 text-emerald-700 hover:bg-emerald-200',
-                              'dark:bg-emerald-900/30 dark:text-emerald-400 dark:hover:bg-emerald-900/50',
+                              'bg-task-done-bg text-task-done-fg hover:bg-success/20',
+                              'hover:text-task-done-fg',
                               fillLoading === task.id && 'opacity-50 cursor-not-allowed'
                             )}
                           >

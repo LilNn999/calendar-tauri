@@ -27,7 +27,7 @@ function VersionBody({ note }: { note: VersionNote }) {
       )}
       {note.fixes && note.fixes.length > 0 && (
         <div>
-          <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 mb-1.5">
+          <p className="flex items-center gap-1.5 text-xs font-semibold text-warning mb-1.5">
             <Wrench className="h-3.5 w-3.5" />
             问题修复
           </p>
@@ -119,7 +119,7 @@ export function WhatsNewDialog({ open: openProp, onOpenChange }: WhatsNewDialogP
                       }
                     </button>
                     {isOpen && (
-                      <div className="px-4 pb-3 pt-2 border-t bg-secondary/10">
+                      <div className="px-4 pb-3 pt-2 border-t border-border-subtle bg-surface-subtle/60">
                         <VersionBody note={v} />
                       </div>
                     )}

@@ -236,10 +236,10 @@ export function CheckinPanel({ definitions, onDefinitionsChange }: CheckinPanelP
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <span className={cn(
                     'text-[10px] px-2 py-0.5 rounded-full font-medium',
-                    def.type === 'boolean' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' :
-                    def.type === 'numeric' ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/30 dark:text-orange-400' :
-                    def.type === 'time' ? 'bg-teal-100 text-teal-600 dark:bg-teal-900/30 dark:text-teal-400' :
-                    'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'
+                    def.type === 'boolean' ? 'bg-primary/10 text-primary' :
+                    def.type === 'numeric' ? 'bg-warning/10 text-warning' :
+                    def.type === 'time' ? 'bg-success/10 text-success' :
+                    'bg-surface-inset text-foreground'
                   )}>
                     {CHECKIN_TYPE_LABELS[def.type as CheckinType]}
                     {def.unit ? ` · ${def.unit}` : ''}

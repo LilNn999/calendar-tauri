@@ -1,6 +1,7 @@
 import Database from "@tauri-apps/plugin-sql";
+import { invoke as invokeCore } from "@tauri-apps/api/core";
 import {
-  eachDayOfInterval, format, isAfter, isBefore,
+  addDays, eachDayOfInterval, format, isAfter, isBefore,
   parseISO, subDays,
 } from "date-fns";
 import type {
@@ -288,6 +289,11 @@ class SqliteDb implements Db {
     // 双窗口同时初始化时避免锁库
     await this.db.execute("PRAGMA busy_timeout = 5000");
     await this.migrate();
+    if (await this.isTestDataMode()) {
+      try {
+        await this.seedTestData();
+      } catch { /* 测试数据写入失败不阻塞正式使用 */ }
+    }
     this.inited = true;
   }
 
@@ -393,6 +399,271 @@ class SqliteDb implements Db {
         [seed.key, seed.title, seed.description, seed.icon],
       );
     }
+  }
+
+  private async isTestDataMode(): Promise<boolean> {
+    if (!isTauri) return false;
+    try {
+      const { getCurrentWindow } = await import("@tauri-apps/api/window");
+      if (getCurrentWindow().label !== "main") return false;
+      return await invokeCore<boolean>("is_test_mode");
+    } catch {
+      return false;
+    }
+  }
+
+  private async seedTestData(): Promise<void> {
+    const seeded = await this.getSetting<string | null>("testDataSeededAt", null);
+    if (seeded) return;
+
+    const today = todayStr();
+    const baseDate = parseISO(today);
+    const dateAt = (offset: number) => format(addDays(baseDate, offset), "yyyy-MM-dd");
+    const ts = nowIso();
+
+    const createTask = async (input: {
+      title: string;
+      priority: Priority;
+      dueDate: string;
+      notes?: string;
+      recurrenceType?: RecurrenceType;
+      recurrenceEnd?: string;
+      subtasks?: string[];
+      completed?: boolean;
+      failed?: boolean;
+      occurrence?: { date: string; completed: boolean }[];
+      completedSubtaskCount?: number;
+    }): Promise<Task> => {
+      const task = await this.createTask({
+        title: input.title,
+        priority: input.priority,
+        dueDate: input.dueDate,
+        notes: input.notes,
+        recurrenceType: input.recurrenceType,
+        recurrenceEnd: input.recurrenceEnd,
+        subtasks: input.subtasks,
+      });
+
+      if (input.completed || input.failed) {
+        await this.updateTask(task.id, {
+          isCompleted: Boolean(input.completed),
+          isFailed: Boolean(input.failed),
+        });
+      }
+
+      if (input.completed && input.completedSubtaskCount) {
+        const rows = await this.db.select<{ id: number }[]>(
+          "SELECT id FROM subtasks WHERE taskId = ? ORDER BY sortOrder ASC",
+          [task.id],
+        );
+        for (const row of rows.slice(0, input.completedSubtaskCount)) {
+          await this.toggleSubtask(row.id, input.dueDate, true);
+        }
+      }
+
+      for (const occurrence of input.occurrence ?? []) {
+        await this.updateOccurrence(task.id, occurrence.date, {
+          isCompleted: occurrence.completed,
+          isFailed: false,
+        });
+        if (occurrence.completed && input.completedSubtaskCount) {
+          const rows = await this.db.select<{ id: number }[]>(
+            "SELECT id FROM subtasks WHERE taskId = ? ORDER BY sortOrder ASC",
+            [task.id],
+          );
+          for (const row of rows.slice(0, input.completedSubtaskCount)) {
+            await this.toggleSubtask(row.id, occurrence.date, true);
+          }
+        }
+      }
+      return task;
+    };
+
+    await createTask({
+      title: "高优先级：完成发布前测试",
+      priority: "high",
+      dueDate: dateAt(0),
+      notes: "重点验证主题切换、悬浮窗透明度与数据统计链路。",
+      subtasks: ["更新数据库迁移", "验证悬浮窗透明度", "生成安装包"],
+    });
+    await createTask({
+      title: "整理本周会议纪要",
+      priority: "medium",
+      dueDate: dateAt(0),
+      notes: "会后 24 小时内同步给项目组。",
+      subtasks: ["汇总待办", "发送评审结论"],
+    });
+    await createTask({
+      title: "浏览皮肤参考稿",
+      priority: "low",
+      dueDate: dateAt(0),
+    });
+    await createTask({
+      title: "完成每日代码审查",
+      priority: "none",
+      dueDate: dateAt(0),
+      completed: true,
+      completedSubtaskCount: 2,
+      subtasks: ["检查格式", "确认测试通过"],
+    });
+    await createTask({
+      title: "修复旧数据导入交互",
+      priority: "medium",
+      dueDate: dateAt(-1),
+      failed: true,
+    });
+    await createTask({
+      title: "准备产品评审材料",
+      priority: "high",
+      dueDate: dateAt(1),
+      notes: "包含原型链接、里程碑与风险清单。",
+    });
+    await createTask({
+      title: "补充统计图测试数据",
+      priority: "low",
+      dueDate: dateAt(3),
+    });
+    await createTask({
+      title: "回归验证任务列表",
+      priority: "none",
+      dueDate: dateAt(-2),
+      completed: true,
+    });
+    await createTask({
+      title: "验证周视图交互",
+      priority: "low",
+      dueDate: dateAt(-5),
+      completed: true,
+    });
+    await createTask({
+      title: "验证打卡组件",
+      priority: "medium",
+      dueDate: dateAt(-8),
+      completed: true,
+    });
+    await createTask({
+      title: "验证回收站恢复",
+      priority: "none",
+      dueDate: dateAt(-12),
+      failed: true,
+    });
+    await createTask({
+      title: "迁移 0.1.0 历史数据",
+      priority: "high",
+      dueDate: dateAt(-20),
+      completed: true,
+    });
+
+    await createTask({
+      title: "每日站会",
+      priority: "medium",
+      dueDate: dateAt(0),
+      recurrenceType: "daily",
+      recurrenceEnd: dateAt(30),
+      subtasks: ["同步进度", "确认阻塞项"],
+      occurrence: [
+        { date: dateAt(-1), completed: true },
+        { date: dateAt(0), completed: true },
+      ],
+      completedSubtaskCount: 2,
+    });
+    await createTask({
+      title: "每日散步 30 分钟",
+      priority: "low",
+      dueDate: dateAt(0),
+      recurrenceType: "daily",
+      recurrenceEnd: dateAt(30),
+    });
+    await createTask({
+      title: "每周项目复盘",
+      priority: "high",
+      dueDate: dateAt(0),
+      recurrenceType: "weekly",
+      recurrenceEnd: dateAt(60),
+      notes: "记录本周成果、风险和下周计划。",
+    });
+    await createTask({
+      title: "月度账单整理",
+      priority: "medium",
+      dueDate: dateAt(0),
+      recurrenceType: "monthly",
+      recurrenceEnd: dateAt(180),
+    });
+
+    const water = await this.createCheckinDef({
+      name: "每日喝水",
+      type: "boolean",
+      startDate: dateAt(-30),
+      endDate: dateAt(60),
+      frequency: "daily",
+    });
+    const exercise = await this.createCheckinDef({
+      name: "运动时长",
+      type: "numeric",
+      unit: "分钟",
+      startDate: dateAt(-30),
+      endDate: dateAt(60),
+      frequency: "daily",
+    });
+    const mood = await this.createCheckinDef({
+      name: "心情记录",
+      type: "text",
+      startDate: dateAt(-30),
+      endDate: dateAt(60),
+      frequency: "daily",
+    });
+    const wakeTime = await this.createCheckinDef({
+      name: "起床时间",
+      type: "time",
+      startDate: dateAt(-30),
+      endDate: dateAt(60),
+      frequency: "daily",
+    });
+    await this.createCheckinDef({
+      name: "每周总结",
+      type: "text",
+      startDate: dateAt(-14),
+      endDate: dateAt(60),
+      frequency: "weekly",
+    });
+    await this.createCheckinDef({
+      name: "月度复盘",
+      type: "numeric",
+      unit: "次",
+      startDate: dateAt(0),
+      endDate: dateAt(180),
+      frequency: "monthly",
+    });
+
+    for (let offset = -13; offset <= 0; offset++) {
+      const date = dateAt(offset);
+      await this.upsertCheckinEntry({
+        definitionId: water.id,
+        entryDate: date,
+        value: offset === 0 ? "true" : offset % 4 === 0 ? "false" : "true",
+      });
+      await this.upsertCheckinEntry({
+        definitionId: exercise.id,
+        entryDate: date,
+        value: offset === 0 ? "30" : String(20 + ((offset + 13) % 6) * 5),
+      });
+      await this.upsertCheckinEntry({
+        definitionId: mood.id,
+        entryDate: date,
+        value: offset === 0 ? "" : offset % 3 === 0 ? "一般" : "良好",
+      });
+      await this.upsertCheckinEntry({
+        definitionId: wakeTime.id,
+        entryDate: date,
+        value: offset === 0 ? "" : `07:${String(20 + ((offset + 13) % 6) * 5).padStart(2, "0")}`,
+      });
+    }
+
+    await this.upsertNote(dateAt(0), "今日备注：测试日历、任务、子任务、打卡、备注与统计的完整链路。");
+    await this.upsertNote(dateAt(-1), "昨日备注：已完成深色主题与悬浮窗实机验收，剩余项记录在待办中。");
+    await this.upsertNote(dateAt(2), "未来备注：用于验证日历中的备注提示与周视图展示。");
+
+    await this.setSetting("testDataSeededAt", ts);
   }
 
   private async listRaw(start: string, end: string): Promise<TaskListRaw> {

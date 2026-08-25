@@ -3,6 +3,7 @@ mod floating;
 mod tray;
 
 use tauri::Manager;
+use tauri_plugin_window_state::{Builder as WindowStateBuilder, StateFlags};
 
 pub fn run() {
     tauri::Builder::default()
@@ -22,8 +23,18 @@ pub fn run() {
         }))
         // 全局快捷键
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
-        // 主窗口位置/大小记忆
-        .plugin(tauri_plugin_window_state::Builder::default().build())
+        // 主窗口位置/大小记忆（不保存/恢复可见性，避免上次隐藏到托盘后启动无窗口）
+        .plugin(
+            WindowStateBuilder::default()
+                .with_state_flags(
+                    StateFlags::SIZE
+                        | StateFlags::POSITION
+                        | StateFlags::MAXIMIZED
+                        | StateFlags::DECORATIONS
+                        | StateFlags::FULLSCREEN,
+                )
+                .build(),
+        )
         .invoke_handler(tauri::generate_handler![
             commands::app_version,
             commands::set_autostart,
@@ -32,9 +43,12 @@ pub fn run() {
             commands::set_floating_enabled,
             commands::set_floating_always_on_top,
             commands::quit_app,
+            commands::is_test_mode,
         ])
         .setup(|app| {
             tray::create_tray(app.handle())?;
+            // 启动时显式显示主窗口，避免 window-state 将“上次隐藏到托盘”状态恢复后无窗口可见
+            tray::show_main_window(app.handle());
             floating::init(app.handle())?;
             commands::register_shortcuts(app.handle())?;
             Ok(())
@@ -42,7 +56,9 @@ pub fn run() {
         .on_window_event(|window, event| {
             // 主窗口关闭时隐藏到托盘而非退出
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                if window.label() == "main" && !window.app_handle().try_state::<tray::Quitting>().is_some() {
+                if window.label() == "main"
+                    && !window.app_handle().try_state::<tray::Quitting>().is_some()
+                {
                     api.prevent_close();
                     let _ = window.hide();
                 }
@@ -51,4 +67,3 @@ pub fn run() {
         .run(tauri::generate_context!())
         .expect("日历应用启动失败");
 }
-

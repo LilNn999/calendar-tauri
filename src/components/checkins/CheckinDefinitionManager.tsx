@@ -38,7 +38,7 @@ export function CheckinDefinitionManager() {
         {definitions.map((def) => (
           <div
             key={def.id}
-            className="flex items-center justify-between rounded-xl border border-border/60 px-3 py-2 hover:bg-card/60 transition-colors"
+            className="card-elevated flex items-center justify-between rounded-xl px-3 py-2 hover:bg-surface-hover transition-colors"
           >
             <div>
               <span className="text-sm font-medium">{def.name}</span>
@@ -58,7 +58,7 @@ export function CheckinDefinitionManager() {
       </div>
 
       {/* 新建表单 */}
-      <div className="flex flex-col gap-2 rounded-2xl border border-border/60 p-3">
+      <div className="control-inset flex flex-col gap-2 rounded-2xl p-3">
         <span className="text-xs font-medium text-muted-foreground">添加新打卡组件</span>
         <Input
           placeholder="名称，如：体重、阅读"

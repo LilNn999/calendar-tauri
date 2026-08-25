@@ -46,7 +46,7 @@ function Select({ value, onValueChange, children, placeholder, className, disabl
         type="button"
         disabled={disabled}
         onClick={() => setOpen(!open)}
-        className="flex h-9 w-full items-center justify-between rounded-xl border border-input bg-card/60 backdrop-blur-sm px-3 py-2 text-sm transition-all placeholder:text-muted-foreground hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring disabled:cursor-not-allowed disabled:opacity-50"
+        className="control-inset flex h-9 w-full items-center justify-between rounded-xl px-3 py-2 text-sm transition-all placeholder:text-muted-foreground hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span className={selectedItem ? '' : 'text-muted-foreground'}>
           {selectedItem ? selectedItem.label : placeholder}
@@ -54,7 +54,7 @@ function Select({ value, onValueChange, children, placeholder, className, disabl
         <ChevronDown className={cn('h-4 w-4 opacity-50 transition-transform duration-150', open && 'rotate-180')} />
       </button>
       {open && (
-        <div className="absolute z-50 mt-1.5 w-full rounded-2xl border bg-popover text-popover-foreground overflow-hidden" style={{ boxShadow: 'var(--shadow-lg)' }}>
+        <div className="absolute z-50 mt-1.5 w-full rounded-xl border border-border-subtle bg-surface-raised text-popover-foreground overflow-hidden" style={{ boxShadow: 'var(--shadow-lg)' }}>
           <div className="p-1.5">
             {items.map((item) => (
               <div

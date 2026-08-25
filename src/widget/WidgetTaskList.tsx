@@ -5,6 +5,30 @@ import { cn } from '@/lib/utils'
 import { PRIORITY_CONFIG, RECURRENCE_LABELS } from '@shared/constants'
 import type { Task } from '@shared/types'
 
+// 与主界面日历格保持相同的任务状态/优先级底色
+function getTaskBg(task: Task): string {
+  if (task.isCompleted) return 'bg-task-done-bg'
+  if (task.isFailed)    return 'bg-task-failed-bg'
+  switch (task.priority) {
+    case 'high':   return 'bg-task-high-bg'
+    case 'medium': return 'bg-task-medium-bg'
+    case 'low':    return 'bg-task-low-bg'
+    default:       return 'bg-task-none-bg'
+  }
+}
+
+// 与背景色配套的前景色，确保深色任务底上的标题可读
+function getTaskFg(task: Task): string {
+  if (task.isCompleted) return 'text-task-done-fg'
+  if (task.isFailed)    return 'text-task-failed-fg'
+  switch (task.priority) {
+    case 'high':   return 'text-task-high-fg'
+    case 'medium': return 'text-task-medium-fg'
+    case 'low':    return 'text-task-low-fg'
+    default:       return 'text-task-none-fg'
+  }
+}
+
 interface WidgetTaskListProps {
   tasks: Task[]
   onToggle: (id: number, completed: boolean, dueDate: string, isRecurring?: boolean) => void
@@ -27,7 +51,7 @@ export function WidgetTaskList({ tasks, onToggle, onSubtaskToggle }: WidgetTaskL
 
   return (
     <>
-    <div className="flex flex-col gap-0.5">
+    <div className="flex flex-col gap-1.5">
       {tasks.map((task) => {
         const dot = PRIORITY_CONFIG[task.priority].dot
         return (
@@ -36,7 +60,10 @@ export function WidgetTaskList({ tasks, onToggle, onSubtaskToggle }: WidgetTaskL
             className="flex flex-col"
           >
             <div
-              className="relative flex items-center gap-2 rounded-lg px-2 py-1.5 hover:bg-muted/60 transition-colors group"
+              className={cn(
+                'card-elevated relative flex items-center gap-2 rounded-xl px-2 py-1.5 group',
+                getTaskBg(task)
+              )}
               onMouseEnter={(e) => {
                 const span = titleRefs.current.get(task.id)
                 if (!span || span.scrollWidth <= span.clientWidth) return
@@ -59,20 +86,20 @@ export function WidgetTaskList({ tasks, onToggle, onSubtaskToggle }: WidgetTaskL
                   task.isCompleted
                     ? 'bg-success border-success'
                     : task.isFailed
-                    ? 'bg-red-100 border-red-400 dark:bg-red-900/30'
+                    ? 'bg-task-failed-bg border-task-failed-bar text-task-failed-fg'
                     : 'border-input dark:border-muted-foreground/80 dark:bg-muted/25 group-hover:border-primary'
                 )}
                 onClick={() => !task.isFailed && onToggle(task.id, !task.isCompleted, task.dueDate, task.isRecurring)}
               >
                 {task.isCompleted && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
-                {task.isFailed && !task.isCompleted && <X className="h-2.5 w-2.5 text-red-500" strokeWidth={3} />}
+                {task.isFailed && !task.isCompleted && <X className="h-2.5 w-2.5 text-task-failed-fg" strokeWidth={3} />}
               </button>
               <span
                 ref={(el) => { if (el) titleRefs.current.set(task.id, el); else titleRefs.current.delete(task.id) }}
                 className={cn(
                   'text-xs flex-1 truncate',
-                  task.isCompleted && 'line-through text-muted-foreground',
-                  task.isFailed && !task.isCompleted && 'text-red-400 line-through',
+                  getTaskFg(task),
+                  (task.isCompleted || task.isFailed) && 'line-through opacity-75',
                 )}
               >
                 {task.title}
@@ -93,7 +120,7 @@ export function WidgetTaskList({ tasks, onToggle, onSubtaskToggle }: WidgetTaskL
                   <button
                     key={st.id}
                     onClick={() => onSubtaskToggle(st.id, task.dueDate, !st.isCompleted)}
-                    className="group/sub flex items-center gap-1.5 rounded px-1 py-0.5 text-left hover:bg-muted/40 transition-colors"
+                    className="group/sub flex items-center gap-1.5 rounded px-1 py-0.5 text-left hover:bg-surface-hover transition-colors"
                     title={st.isCompleted ? '标记未完成' : '标记完成'}
                   >
                     <span
@@ -120,15 +147,15 @@ export function WidgetTaskList({ tasks, onToggle, onSubtaskToggle }: WidgetTaskL
     </div>
     {hoveredTask && tooltip && createPortal(
       <div
-        className="p-2.5 rounded-xl bg-popover border text-xs pointer-events-none"
-        style={{ ...tooltip.style, boxShadow: 'var(--shadow-lg)' }}
+        className="p-2.5 rounded-xl bg-popover border border-border-subtle text-xs pointer-events-none"
+        style={{ ...tooltip.style, boxShadow: 'var(--shadow-float)' }}
       >
         <p className="font-semibold text-foreground leading-snug break-words">{hoveredTask.title}</p>
         {hoveredTask.notes && (
           <p className="mt-1.5 text-muted-foreground leading-relaxed break-words">{hoveredTask.notes}</p>
         )}
         {(hoveredTask.priority !== 'none' || hoveredTask.isRecurring) && (
-          <div className="flex flex-wrap items-center gap-2 mt-1.5 pt-1.5 border-t border-border/50">
+          <div className="flex flex-wrap items-center gap-2 mt-1.5 pt-1.5 border-t border-border-subtle">
             {hoveredTask.priority !== 'none' && (
               <span className={cn('font-medium', PRIORITY_CONFIG[hoveredTask.priority].color)}>
                 {PRIORITY_CONFIG[hoveredTask.priority].label}优先级

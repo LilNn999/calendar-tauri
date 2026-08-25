@@ -9,26 +9,38 @@ import type { Task, CheckinDefinition, CheckinEntry } from '@shared/types'
 function getTaskBg(task: Task): string {
   if (task.isCompleted) {
     // 已完成：淡绿色，降低透明度
-    return 'bg-emerald-100/90 dark:bg-emerald-900/25'
+    return 'bg-task-done-bg'
   }
   if (task.isFailed) {
     // 失败/逾期：深红色底色，与高优先级浅红明显区分
-    return 'bg-red-200 dark:bg-red-900/60'
+    return 'bg-task-failed-bg'
   }
   // 待完成：按优先级渲染底色
   switch (task.priority) {
-    case 'high':   return 'bg-red-100/80 dark:bg-red-900/25'
-    case 'medium': return 'bg-amber-100/80 dark:bg-amber-900/25'
-    case 'low':    return 'bg-sky-200/70 dark:bg-sky-900/40'
-    default:       return 'bg-slate-100  dark:bg-slate-700/40'
+    case 'high':   return 'bg-task-high-bg'
+    case 'medium': return 'bg-task-medium-bg'
+    case 'low':    return 'bg-task-low-bg'
+    default:       return 'bg-task-none-bg'
   }
 }
 
 // 左侧优先级竖条颜色
 function getBarColor(task: Task): string {
-  if (task.isCompleted) return 'bg-emerald-400/50'
-  if (task.isFailed)    return 'bg-red-600/70 dark:bg-red-500/70'
+  if (task.isCompleted) return 'bg-task-done-bar'
+  if (task.isFailed)    return 'bg-task-failed-bar'
   return PRIORITY_CONFIG[task.priority].dot
+}
+
+// 与背景色配套的前景色，确保深色任务底上的标题/备注可读
+function getTaskFg(task: Task): string {
+  if (task.isCompleted) return 'text-task-done-fg'
+  if (task.isFailed)    return 'text-task-failed-fg'
+  switch (task.priority) {
+    case 'high':   return 'text-task-high-fg'
+    case 'medium': return 'text-task-medium-fg'
+    case 'low':    return 'text-task-low-fg'
+    default:       return 'text-task-none-fg'
+  }
 }
 
 // ── TaskItemRow ────────────────────────────────────────────
@@ -111,9 +123,10 @@ export function TaskItemRow({ task, onToggle, onClick, compact, onMarkComplete, 
   const row = (
     <div
       className={cn(
-        'group relative flex gap-1 rounded-lg px-1 py-0.5 cursor-pointer transition-all duration-150',
+        'group relative flex gap-1 rounded-[var(--task-radius)] px-1 py-0.5 cursor-pointer transition-all duration-150',
         'hover:brightness-[0.96] dark:hover:brightness-110',
         getTaskBg(task),
+        getTaskFg(task),
         compact ? 'text-xs items-center' : 'text-sm items-start'
       )}
       onClick={onClick}
@@ -130,15 +143,15 @@ export function TaskItemRow({ task, onToggle, onClick, compact, onMarkComplete, 
           'shrink-0 h-3.5 w-3.5 rounded-[5px] border-[1.5px] flex items-center justify-center transition-all duration-150',
           !compact && 'mt-0.5',
           task.isCompleted
-            ? 'bg-emerald-500 border-emerald-500'
+            ? 'bg-success border-success'
             : isFailed
-            ? 'bg-red-200 border-red-500 dark:bg-red-800/50 dark:border-red-400 hover:border-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20'
+            ? 'bg-task-failed-bg border-task-failed-bar text-task-failed-fg hover:border-warning hover:bg-warning/10'
             : 'border-muted-foreground/40 dark:border-muted-foreground/80 dark:bg-muted/25 hover:border-primary group-hover:border-primary/70'
         )}
         onClick={handleCheckboxClick}
       >
         {task.isCompleted && <Check className="h-2 w-2 text-white" strokeWidth={3.5} />}
-        {isFailed && <X className="h-2 w-2 text-red-600 dark:text-red-300" strokeWidth={3.5} />}
+        {isFailed && <X className="h-2 w-2 text-task-failed-fg" strokeWidth={3.5} />}
       </button>
 
       {/* 标题 + 备注（非 compact 时全量展开） */}
@@ -150,14 +163,14 @@ export function TaskItemRow({ task, onToggle, onClick, compact, onMarkComplete, 
             compact ? 'truncate' : 'break-words whitespace-pre-wrap',
             isHighPending && 'font-bold',
             !isHighPending && 'font-medium',
-            task.isCompleted && 'line-through text-emerald-600 dark:text-emerald-400 font-normal opacity-75',
-            isFailed && 'line-through text-red-700 dark:text-red-300 font-normal'
+            task.isCompleted && 'line-through text-task-done-fg font-normal opacity-75',
+            isFailed && 'line-through text-task-failed-fg font-normal'
           )}
         >
           {task.title}
         </span>
         {!compact && task.notes && (
-          <span className="text-xs text-muted-foreground break-words whitespace-pre-wrap leading-relaxed">
+          <span className={cn('text-xs break-words whitespace-pre-wrap leading-relaxed', getTaskFg(task))}>
             {task.notes}
           </span>
         )}
@@ -165,7 +178,7 @@ export function TaskItemRow({ task, onToggle, onClick, compact, onMarkComplete, 
 
       {/* 循环标记 */}
       {task.isRecurring && (
-        <RotateCcw className={cn('shrink-0 h-2.5 w-2.5 text-muted-foreground/50', !compact && 'mt-1')} />
+        <RotateCcw className={cn('shrink-0 h-2.5 w-2.5 opacity-60', getTaskFg(task), !compact && 'mt-1')} />
       )}
 
       {/* 占位符，菜单通过 portal 渲染到 body，避免 overflow 截断 */}
@@ -184,7 +197,7 @@ export function TaskItemRow({ task, onToggle, onClick, compact, onMarkComplete, 
         >
           {onMarkComplete && (
             <button
-              className="w-full text-left px-3 py-2 text-xs hover:bg-accent flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-medium"
+              className="w-full text-left px-3 py-2 text-xs hover:bg-accent flex items-center gap-2 text-task-done-fg font-medium"
               onClick={() => { setMenuOpen(false); onMarkComplete() }}
             >
               <CheckCheck className="h-3.5 w-3.5" />
@@ -222,7 +235,7 @@ export function TaskItemRow({ task, onToggle, onClick, compact, onMarkComplete, 
             <p className="mt-1.5 text-muted-foreground leading-relaxed break-words">{task.notes}</p>
           )}
           {(task.priority !== 'none' || task.isRecurring) && (
-            <div className="flex flex-wrap items-center gap-2 mt-1.5 pt-1.5 border-t border-border/50">
+            <div className="flex flex-wrap items-center gap-2 mt-1.5 pt-1.5 border-t border-border-subtle">
               {task.priority !== 'none' && (
                 <span className={cn('font-medium', PRIORITY_CONFIG[task.priority].color)}>
                   {PRIORITY_CONFIG[task.priority].label}优先级
@@ -266,7 +279,7 @@ export function TaskItemRow({ task, onToggle, onClick, compact, onMarkComplete, 
                   className={cn(
                     'shrink-0 h-3 w-3 rounded-[3px] border flex items-center justify-center transition-colors',
                     st.isCompleted
-                      ? 'bg-emerald-500 border-emerald-500'
+                      ? 'bg-success border-success'
                       : 'border-muted-foreground/40 dark:border-muted-foreground/80 dark:bg-muted/25 group-hover/sub:border-primary'
                   )}
                 >
@@ -328,17 +341,17 @@ export function CheckinPreviewRow({ definition, entry, compact, onClick }: Check
         </span>
       )
     }
-    if (definition.type === 'time') return <span className="text-[10px] font-bold text-teal-600 dark:text-teal-400">{entry.value}</span>
+    if (definition.type === 'time') return <span className="text-[10px] font-bold text-checkin-fg">{entry.value}</span>
     return <span className="text-[10px] text-foreground/70 truncate max-w-[60px]">{entry.value}</span>
   }
 
   return (
     <div
       className={cn(
-        'flex items-center gap-1 rounded-md border px-1 py-0.5',
-        hasValue ? 'border-primary/40 bg-primary/10' : 'border-primary/20 bg-primary/5',
+        'flex items-center gap-1 rounded-md border bg-checkin-bg border-checkin-border px-1 py-0.5',
+        hasValue ? 'border-checkin-border' : 'border-checkin-border/60',
         compact ? 'text-xs' : 'text-sm',
-        onClick && 'cursor-pointer hover:bg-primary/15 transition-colors'
+        onClick && 'cursor-pointer hover:bg-primary/10 transition-colors'
       )}
       onClick={(e) => { if (onClick) { e.stopPropagation(); onClick() } }}
     >

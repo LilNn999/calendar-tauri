@@ -40,21 +40,23 @@ export function MonthView({ definitions, onDayClick, onTaskToggle, onTaskClick, 
         ))}
       </div>
 
-      {/* 日期网格：占满整个界面，扁平、挨着，发丝分隔线 */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden">
-        <div className="grid grid-cols-7 auto-rows-fr gap-px bg-border/60 h-full">
-          {days.map((date) => (
-            <DayCell
-              key={date.toISOString()}
-              date={date}
-              isCurrentMonth={isSameMonth(date, currentDate)}
-              definitions={definitions}
-              onDayClick={onDayClick}
-              onTaskToggle={onTaskToggle}
-              onTaskClick={onTaskClick}
-              onCheckinClick={onCheckinClick}
-            />
-          ))}
+      {/* 日期网格：皮肤化圆角容器，网格间隙承载分隔线 */}
+      <div className="calendar-shell flex-1 min-h-0 p-1">
+        <div className="calendar-grid h-full overflow-y-auto overflow-x-hidden">
+          <div className="grid grid-cols-7 auto-rows-fr gap-px h-full min-h-[420px]">
+            {days.map((date) => (
+              <DayCell
+                key={date.toISOString()}
+                date={date}
+                isCurrentMonth={isSameMonth(date, currentDate)}
+                definitions={definitions}
+                onDayClick={onDayClick}
+                onTaskToggle={onTaskToggle}
+                onTaskClick={onTaskClick}
+                onCheckinClick={onCheckinClick}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>

@@ -237,11 +237,12 @@ export function WidgetShell() {
 
   return (
     <div
-      className="relative flex flex-col h-screen overflow-hidden rounded-2xl shadow-xl border border-border/40 backdrop-blur-2xl"
+      className="widget-shell relative flex flex-col h-full w-full overflow-hidden rounded-2xl border border-border-subtle backdrop-blur-2xl transition-opacity duration-200"
       style={{
-        background: `hsl(var(--widget-bg) / ${opacity / 100})`,
-        backgroundImage: 'var(--bg-glow-1), var(--bg-glow-2), var(--bg-glow-3)',
+        backgroundColor: 'hsl(var(--widget-bg))',
+        backgroundImage: 'var(--widget-texture)',
         backgroundSize: 'cover',
+        opacity: opacity / 100,
       }}
     >
       {/* 边缘/角部缩放手柄 */}
@@ -257,15 +258,15 @@ export function WidgetShell() {
       ))}
 
       {/* 顶部渐变色条 */}
-      <div className="h-[3px] rounded-t-xl flex-shrink-0 opacity-100"
-        style={{ background: 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent-2)))' }} />
+      <div className="h-px rounded-t-xl flex-shrink-0 bg-day-ring/40"
+ />
 
       {/* 标题栏 */}
       <div
-        className="flex items-center justify-between px-3 py-2 flex-shrink-0 border-b border-border/40 cursor-move select-none opacity-100"
+        className="bg-surface-subtle/70 flex items-center justify-between px-3 py-2 flex-shrink-0 border-b border-border-subtle cursor-move select-none"
         data-tauri-drag-region style={{ WebkitAppRegion: 'drag' } as React.CSSProperties}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex-1 min-w-0 flex items-center gap-2">
           <GripHorizontal className="h-3 w-3 text-muted-foreground/40" />
           <div className="flex flex-col leading-tight">
             <span className="text-xs font-semibold text-foreground">今日</span>
@@ -311,8 +312,8 @@ export function WidgetShell() {
 
       {/* 透明度滑块 */}
       {showOpacitySlider && (
-        <div className="px-3 py-2 border-b border-border/40 bg-muted/30 flex-shrink-0">
-          <div className="flex items-center gap-2">
+        <div className="px-3 py-2 border-b border-border-subtle bg-surface-subtle/80 flex-shrink-0">
+          <div className="flex-1 min-w-0 flex items-center gap-2">
             <span className="text-[10px] text-muted-foreground w-8">透明度</span>
             <Slider
               value={opacity}
@@ -334,14 +335,14 @@ export function WidgetShell() {
             <span className="text-[10px] font-medium text-muted-foreground">今日任务</span>
             <span className="text-[10px] text-muted-foreground">{completedCount}/{tasks.length}</span>
           </div>
-          <div className="h-1 bg-muted rounded-full overflow-hidden">
+          <div className="h-1.5 bg-surface-inset shadow-inset rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500"
               style={{
                 width: `${progress}%`,
                 background: progress === 100
                   ? 'hsl(var(--success))'
-                  : 'linear-gradient(90deg, hsl(var(--primary)), hsl(var(--accent-2)))',
+                  : undefined,
               }}
             />
           </div>
@@ -352,26 +353,26 @@ export function WidgetShell() {
       <div className="flex-1 overflow-y-auto px-3 pb-3 pt-1 flex flex-col gap-3 min-h-0">
         {/* 新增日程按钮 / 内嵌表单 */}
         {showAddForm ? (
-          <div className="flex flex-col gap-1.5 rounded-xl border border-border bg-popover/70 p-2 flex-shrink-0">
+          <div className="flex flex-col gap-1.5 card-elevated bg-surface-raised p-2 flex-shrink-0">
             <input
               autoFocus
               value={newTitle}
               onChange={(e) => setNewTitle(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') handleCreateTask() }}
               placeholder="任务标题…"
-              className="h-8 w-full rounded-lg border border-input bg-background px-2 text-xs outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground"
+              className="control-inset h-8 w-full rounded-lg px-2 text-xs outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground"
             />
             <div className="flex items-center gap-1.5">
               <input
                 type="date"
                 value={newDate}
                 onChange={(e) => setNewDate(e.target.value || today)}
-                className="h-7 flex-1 rounded-lg border border-input bg-background px-1.5 text-[11px] outline-none focus:ring-1 focus:ring-ring"
+                className="control-inset h-7 flex-1 rounded-lg px-1.5 text-[11px] outline-none focus:ring-1 focus:ring-ring"
               />
               <select
                 value={newPriority}
                 onChange={(e) => setNewPriority(e.target.value as Priority)}
-                className="h-7 w-24 rounded-lg border border-input bg-background px-1 text-[11px] outline-none focus:ring-1 focus:ring-ring"
+                className="control-inset h-7 w-24 rounded-lg px-1 text-[11px] outline-none focus:ring-1 focus:ring-ring"
               >
                 {(Object.keys(PRIORITY_CONFIG) as Priority[]).map((p) => (
                   <option key={p} value={p}>{PRIORITY_CONFIG[p].label}优先级</option>
@@ -382,14 +383,14 @@ export function WidgetShell() {
             <div className="flex items-center justify-end gap-1.5">
               <button
                 onClick={() => setShowAddForm(false)}
-                className="flex items-center gap-1 rounded-full px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+                className="control-raised flex items-center gap-1 rounded-full px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-surface-hover transition-colors"
               >
                 <X className="h-3 w-3" /> 取消
               </button>
               <button
                 onClick={handleCreateTask}
                 disabled={saving || !newTitle.trim()}
-                className="flex items-center gap-1 rounded-full bg-gradient-brand px-2.5 py-1 text-[11px] font-medium text-primary-foreground shadow-glow hover:opacity-90 disabled:opacity-50 transition-opacity"
+                className="flex items-center gap-1 rounded-full bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground shadow-raised hover:brightness-105 disabled:opacity-50 transition-[filter,opacity]"
               >
                 <Plus className="h-3 w-3" /> {saving ? '添加中…' : '添加'}
               </button>
@@ -398,7 +399,7 @@ export function WidgetShell() {
         ) : (
           <button
             onClick={() => setShowAddForm(true)}
-            className="flex-shrink-0 flex items-center justify-center gap-1 rounded-full border border-dashed border-border text-[11px] text-muted-foreground hover:text-foreground hover:border-primary/50 hover:bg-muted/40 py-1 transition-colors"
+            className="flex-shrink-0 flex items-center justify-center gap-1 rounded-full border border-dashed border-border-subtle text-[11px] text-muted-foreground hover:text-foreground hover:border-primary/50 hover:bg-surface-hover py-1 transition-colors"
           >
             <Plus className="h-3 w-3" /> 添加日程
           </button>
@@ -408,7 +409,7 @@ export function WidgetShell() {
 
         {activeDefinitions.length > 0 && (
           <>
-            <div className="h-px bg-border/40" />
+            <div className="h-px bg-border-subtle" />
             <WidgetCheckinRow
               definitions={activeDefinitions}
               entries={entries}

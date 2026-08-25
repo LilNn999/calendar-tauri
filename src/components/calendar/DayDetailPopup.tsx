@@ -104,7 +104,7 @@ export function DayDetailPopup({ date, definitions, onClose, onTaskToggle, onAft
               onClick={onClose}
             />
             <motion.div
-              className="relative z-50 w-full max-w-md bg-card rounded-3xl border border-border/60 overflow-hidden"
+              className="relative z-50 w-full max-w-md bg-card rounded-3xl border border-border-subtle shadow-float overflow-hidden"
               style={{ boxShadow: 'var(--shadow-xl)' }}
               initial={{ opacity: 0, y: -12, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -112,7 +112,7 @@ export function DayDetailPopup({ date, definitions, onClose, onTaskToggle, onAft
               transition={{ duration: 0.18, ease: 'easeOut' }}
             >
               {/* 头部 */}
-              <div className="flex items-center justify-between px-4 py-3 border-b border-border/60 bg-secondary/30">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle bg-surface-subtle/80">
                 <span className="font-bold text-sm">{dateLabel}</span>
                 <div className="flex items-center gap-1">
                   <Button
@@ -137,7 +137,7 @@ export function DayDetailPopup({ date, definitions, onClose, onTaskToggle, onAft
                 {/* 内嵌新建表单 */}
                 {showCreate && (
                   <section>
-                    <div className="rounded-2xl border border-border/60 bg-secondary/30 p-3 flex flex-col gap-2">
+                    <div className="control-inset rounded-2xl p-3 flex flex-col gap-2">
                       <div className="flex items-center justify-between">
                         <span className="text-xs font-semibold">新建任务</span>
                         <span className="text-[10px] text-muted-foreground">{dateLabel}</span>

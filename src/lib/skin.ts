@@ -1,10 +1,7 @@
 export type Skin =
-  | 'default'
-  | 'aurora'
-  | 'warm-wood'
-  | 'macos'
-  | 'win11'
   | 'minimal'
+  | 'neu'
+  | 'warm-wood'
 
 export interface SkinOption {
   value: Skin
@@ -13,20 +10,17 @@ export interface SkinOption {
 }
 
 export const SKIN_OPTIONS: SkinOption[] = [
-  { value: 'default', label: '默认靛蓝', className: '' },
-  { value: 'aurora', label: '极光渐变', className: 'skin-aurora' },
-  { value: 'warm-wood', label: '温暖原木', className: 'skin-warm-wood' },
-  { value: 'macos', label: 'macOS 原生', className: 'skin-macos' },
-  { value: 'win11', label: 'Win11 云母', className: 'skin-win11' },
   { value: 'minimal', label: '极简留白', className: 'skin-minimal' },
+  { value: 'neu', label: '新拟态', className: 'skin-neu' },
+  { value: 'warm-wood', label: '温暖原木', className: 'skin-warm-wood' },
 ]
 
 const SKIN_VALUES = new Set<string>(SKIN_OPTIONS.map((item) => item.value))
 
 export function normalizeSkin(value: unknown): Skin {
-  return typeof value === 'string' && SKIN_VALUES.has(value) ? value as Skin : 'default'
+  return typeof value === 'string' && SKIN_VALUES.has(value) ? value as Skin : 'minimal'
 }
 
 export function skinClassName(skin: Skin): string {
-  return skin === 'default' ? '' : `skin-${skin}`
+  return `skin-${skin}`
 }

@@ -103,29 +103,20 @@ export function DayCell({
   const overflow = allItems.length - rowLimit
   const isSelected = selectedDate === dateStr
   const dayState = getDayCellState({ isSelected, isToday, isCurrentMonth })
-  // 三种格子状态互不相同：
-  // 选中=极淡底色 + 1px 细边；当天=强调色浅底 + 顶部渐变条；非本月=中性灰底
-  const cellBg = dayState === 'selected'
-    ? 'bg-day-selected/25 ring-1 ring-inset ring-day-ring/35'
-    : dayState === 'today'
-      ? 'bg-day-today'
-      : dayState === 'outside'
-        ? 'bg-day-outside'
-        : ''
+  // 选中/当天由日期徽章表达；非本月使用低对比底
+  const cellBg = dayState === 'outside' ? 'bg-cell-dim-bg' : 'bg-cell-bg'
+
 
   return (
     <div
       className={cn(
-        'relative flex flex-col p-1.5 bg-card overflow-hidden transition-colors cursor-pointer group',
+        'relative flex flex-col p-1.5 bg-cell-bg overflow-hidden transition-colors cursor-pointer group',
         'min-h-[76px]',
         cellBg,
         'hover:brightness-105 dark:hover:brightness-110',
       )}
       onClick={() => { setSelectedDate(dateStr); onDayClick(dateStr) }}
     >
-      {isToday && (
-        <div className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-brand opacity-90" />
-      )}
 
       {/* 日期数字 + 备注指示器 */}
       <div className="flex items-center justify-between mb-1">
@@ -136,7 +127,7 @@ export function DayCell({
               isToday
                 ? 'bg-primary text-primary-foreground font-bold'
                 : isSelected
-                ? 'text-primary font-semibold'
+                ? 'bg-primary/10 text-primary font-semibold ring-1 ring-primary/20'
                 : dayState === 'outside'
                 ? 'text-muted-foreground/50'
                 : 'text-foreground'
@@ -160,7 +151,7 @@ export function DayCell({
               onMouseLeave={() => setShowNoteTooltip(false)}
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="h-1.5 w-1.5 rounded-full bg-amber-400 ring-1 ring-amber-400/30 cursor-help" />
+              <div className="h-1.5 w-1.5 rounded-full bg-warning ring-1 ring-warning/30 cursor-help" />
               {showNoteTooltip && (
                 <div
                   className={cn(

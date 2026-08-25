@@ -85,7 +85,7 @@ export function TaskTrendPanel({ range }: TaskTrendPanelProps) {
               </div>
               <div className="h-1.5 rounded-full bg-secondary overflow-hidden">
                 <div
-                  className="h-full bg-gradient-brand rounded-full transition-all"
+                  className="progress-fill h-full rounded-full transition-all"
                   style={{ width: `${Math.round((selected.completedCount / selected.totalCount) * 100)}%` }}
                 />
               </div>
@@ -113,7 +113,7 @@ export function TaskTrendPanel({ range }: TaskTrendPanelProps) {
               {/* 完成率色条 */}
               <div className="shrink-0 w-1 h-6 rounded-full bg-muted overflow-hidden flex flex-col-reverse">
                 <div
-                  className="w-full bg-gradient-brand rounded-full transition-all"
+                  className="progress-fill w-full rounded-full transition-all"
                   style={{ height: `${rate}%` }}
                 />
               </div>

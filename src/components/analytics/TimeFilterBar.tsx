@@ -15,7 +15,7 @@ const OPTIONS: { label: string; value: TimeRange }[] = [
 
 export function TimeFilterBar({ value, onChange }: TimeFilterBarProps) {
   return (
-    <div className="flex items-center gap-1 bg-secondary/80 p-1 rounded-full">
+    <div className="control-inset flex items-center gap-1 p-1 rounded-full">
       {OPTIONS.map((opt) => (
         <button
           key={opt.value}
@@ -23,7 +23,7 @@ export function TimeFilterBar({ value, onChange }: TimeFilterBarProps) {
           className={cn(
             'flex-1 px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200',
             value === opt.value
-              ? 'bg-gradient-brand text-primary-foreground shadow-glow'
+              ? 'control-raised text-primary'
               : 'text-muted-foreground hover:text-foreground'
           )}
         >

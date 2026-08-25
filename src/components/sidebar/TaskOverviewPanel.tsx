@@ -257,29 +257,29 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
         <div
           className={cn(
             'flex items-center gap-2 rounded-xl px-2 py-1.5 transition-colors',
-            task.isCompleted ? 'bg-emerald-50 dark:bg-emerald-900/20'
-              : task.isFailed ? 'bg-red-50 dark:bg-red-900/20'
-              : 'bg-slate-100 dark:bg-slate-700/50'
+            task.isCompleted ? 'bg-task-done-bg'
+              : task.isFailed ? 'bg-task-failed-bg'
+              : 'bg-task-none-bg'
           )}
         >
           <div className={cn('shrink-0 w-1 h-4 rounded-full', priorityCfg.dot)} />
           <button
             className={cn(
               'shrink-0 h-4 w-4 rounded-md border-[1.5px] flex items-center justify-center transition-colors',
-              task.isCompleted ? 'bg-emerald-500 border-emerald-500'
-                : task.isFailed ? 'bg-red-100 border-red-400 dark:bg-red-900/30'
+              task.isCompleted ? 'bg-success border-success'
+                : task.isFailed ? 'bg-task-failed-bg border-task-failed-bar text-task-failed-fg'
                 : 'border-muted-foreground/40 dark:border-muted-foreground/80 dark:bg-muted/25 hover:border-primary'
             )}
             onClick={() => handleToggle(task)}
           >
             {task.isCompleted && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
-            {task.isFailed && !task.isCompleted && <X className="h-2.5 w-2.5 text-red-500" strokeWidth={3} />}
+            {task.isFailed && !task.isCompleted && <X className="h-2.5 w-2.5 text-task-failed-fg" strokeWidth={3} />}
           </button>
           <div className="flex flex-col min-w-0 flex-1">
             <span className={cn(
               'text-xs font-medium break-words whitespace-pre-wrap',
               task.isCompleted && 'line-through text-muted-foreground',
-              task.isFailed && !task.isCompleted && 'line-through text-red-400'
+              task.isFailed && !task.isCompleted && 'line-through text-task-failed-fg'
             )}>
               {task.title}
             </span>
@@ -326,7 +326,7 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
                   className={cn(
                     'shrink-0 h-3 w-3 rounded-[3px] border flex items-center justify-center transition-colors',
                     st.isCompleted
-                      ? 'bg-emerald-500 border-emerald-500'
+                      ? 'bg-success border-success'
                       : 'border-muted-foreground/40 dark:border-muted-foreground/80 dark:bg-muted/25 group-hover/sub:border-primary'
                   )}
                 >
@@ -353,10 +353,10 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
 
     if (isEditing) {
       return (
-        <div key={`checkin-edit-${def.id}`} className="rounded-2xl p-3 flex flex-col gap-2 ring-1 ring-teal-300/50 bg-teal-50/60 dark:bg-teal-900/20">
+        <div key={`checkin-edit-${def.id}`} className="control-inset rounded-2xl p-3 flex flex-col gap-2 bg-checkin-bg/70">
           <div className="flex items-center gap-1.5">
-            <Clock className="shrink-0 h-3.5 w-3.5 text-teal-500" />
-            <span className="text-xs font-medium text-teal-700 dark:text-teal-300 flex-1">{def.name}</span>
+            <Clock className="shrink-0 h-3.5 w-3.5 text-checkin-fg" />
+            <span className="text-xs font-medium text-checkin-fg flex-1">{def.name}</span>
             <button
               onClick={() => setEditingCheckinId(null)}
               className="h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground transition-colors"
@@ -377,18 +377,18 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
         key={`checkin-${def.id}`}
         className={cn(
           'flex items-center gap-2 rounded-xl px-2 py-1.5',
-          done ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-teal-50 dark:bg-teal-900/20'
+          done ? 'bg-task-done-bg' : 'bg-checkin-bg/70'
         )}
       >
-        <div className="shrink-0 w-1 h-4 rounded-full bg-teal-400" />
-        <Clock className={cn('shrink-0 h-3.5 w-3.5', done ? 'text-emerald-500' : 'text-teal-500')} />
-        <span className={cn('text-xs flex-1 break-words whitespace-pre-wrap', done ? 'text-muted-foreground line-through' : 'text-teal-700 dark:text-teal-300')}>
+        <div className="shrink-0 w-1 h-4 rounded-full bg-checkin-fg" />
+        <Clock className={cn('shrink-0 h-3.5 w-3.5', done ? 'text-success' : 'text-checkin-fg')} />
+        <span className={cn('text-xs flex-1 break-words whitespace-pre-wrap', done ? 'text-muted-foreground line-through' : 'text-checkin-fg')}>
           {def.name}
         </span>
         <span className="text-[10px] text-muted-foreground">{done ? '已打卡' : '待打卡'}</span>
         <button
           onClick={() => setEditingCheckinId(def.id)}
-          className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-teal-600 hover:bg-teal-100 dark:hover:bg-teal-900/40 transition-colors"
+          className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
         >
           <Pencil className="h-3 w-3" />
         </button>
@@ -451,7 +451,7 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
           onClick={() => setFilter('pending')}
           className={cn(
             'flex-1 py-1.5 rounded-full text-[11px] font-medium transition-all duration-200',
-            filter === 'pending' ? 'bg-gradient-brand text-primary-foreground shadow-glow' : 'text-muted-foreground hover:text-foreground bg-secondary/60'
+            filter === 'pending' ? 'control-raised text-primary' : 'text-muted-foreground hover:text-foreground bg-surface-inset/60'
           )}
         >
           待完成 {pendingCount > 0 && <span className="ml-1 opacity-70">{pendingCount}</span>}
@@ -460,7 +460,7 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
           onClick={() => setFilter('completed')}
           className={cn(
             'flex-1 py-1.5 rounded-full text-[11px] font-medium transition-all duration-200',
-            filter === 'completed' ? 'bg-success text-white shadow-md' : 'text-muted-foreground hover:text-foreground bg-secondary/60'
+            filter === 'completed' ? 'bg-success text-white shadow-raised' : 'text-muted-foreground hover:text-foreground bg-surface-inset/60'
           )}
         >
           已完成 {completedCount > 0 && <span className="ml-1 opacity-70">{completedCount}</span>}

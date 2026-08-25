@@ -10,14 +10,12 @@ pub struct Quitting;
 
 pub fn create_tray(app: &AppHandle) -> tauri::Result<()> {
     let show_main = MenuItem::with_id(app, "show_main", "显示主窗口", true, None::<&str>)?;
-    let open_floating = MenuItem::with_id(app, "open_floating", "显示/隐藏悬浮窗", true, None::<&str>)?;
+    let open_floating =
+        MenuItem::with_id(app, "open_floating", "显示/隐藏悬浮窗", true, None::<&str>)?;
     let quit = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
     let sep = PredefinedMenuItem::separator(app)?;
 
-    let menu = Menu::with_items(
-        app,
-        &[&show_main, &open_floating, &sep, &quit],
-    )?;
+    let menu = Menu::with_items(app, &[&show_main, &open_floating, &sep, &quit])?;
 
     // 托盘图标：使用独立的 tray-icon.png（编译期内嵌，随应用打包）
     let icon = decode_png_icon(include_bytes!("../icons/tray-icon.png"))
@@ -63,9 +61,10 @@ pub fn show_main_window(app: &AppHandle) {
     }
 }
 
-
 /// 解码 PNG 为 RGBA 图标（托盘图标 32×32，编译期内嵌）
-fn decode_png_icon(bytes: &[u8]) -> Result<tauri::image::Image<'static>, Box<dyn std::error::Error>> {
+fn decode_png_icon(
+    bytes: &[u8],
+) -> Result<tauri::image::Image<'static>, Box<dyn std::error::Error>> {
     let decoder = png::Decoder::new(bytes);
     let mut reader = decoder.read_info()?;
     if reader.info().bit_depth != png::BitDepth::Eight {

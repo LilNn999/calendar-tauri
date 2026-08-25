@@ -3,448 +3,557 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* ============ 设计令牌（参照 Focusday 参考稿：清爽生产力 × 靛蓝 × 薄荷绿） ============
-   品牌色：靛蓝为主，配浅蓝紫渐变；亮色为灰蓝底 + 白色卡片，暗色为深邃蓝黑。
-   圆角适中，阴影轻而柔和，整体干净、留白充足。 */
+/* ============================================================
+   01 极简留白 · Minimal White（浅色）
+   ============================================================ */
 :root {
-  --background: 222 33% 97%;
-  --foreground: 224 22% 13%;
-  --card: 0 0% 100%;
-  --card-foreground: 224 22% 13%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 224 22% 13%;
-  --primary: 234 84% 63%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 231 50% 96%;
-  --secondary-foreground: 233 40% 28%;
-  --muted: 226 32% 95%;
-  --muted-foreground: 228 14% 45%;
-  --accent: 233 66% 95%;
-  --accent-foreground: 234 66% 48%;
-  --destructive: 0 78% 58%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 226 30% 89%;
-  --input: 226 26% 87%;
-  --ring: 234 84% 63%;
-  --radius: 1rem;
-  --success: 163 62% 56%;
-  --warning: 34 92% 50%;
-  --day-outside: 0 0% 91%;
-  --day-today: 234 68% 95%;
-  --day-selected: 234 72% 91%;
-  --day-ring: 234 84% 63%;
-  --widget-bg: 222 33% 97%;
-
-  /* 品牌次色：浅蓝紫，用于渐变与点缀 */
-  --accent-2: 217 85% 66%;
-
-  /* 柔和背景光斑（参考稿的灰蓝底，光斑极淡） */
-  --bg-glow-1: radial-gradient(1100px 700px at 88% -12%, hsl(233 70% 90% / 0.55), transparent 62%);
-  --bg-glow-2: radial-gradient(900px 650px at -12% 28%, hsl(222 55% 91% / 0.5), transparent 58%);
-  --bg-glow-3: radial-gradient(700px 500px at 55% 115%, hsl(196 50% 90% / 0.35), transparent 55%);
-
-  /* 轻盈中性阴影（去掉紫色光晕，更干净） */
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.04), 0 2px 6px -1px rgb(30 41 90 / 0.06);
-  --shadow-md: 0 6px 16px -6px rgb(30 41 90 / 0.12), 0 2px 6px -2px rgb(0 0 0 / 0.04);
-  --shadow-lg: 0 14px 32px -10px rgb(30 41 90 / 0.16), 0 4px 10px -4px rgb(0 0 0 / 0.05);
-  --shadow-xl: 0 26px 52px -14px rgb(30 41 90 / 0.20), 0 8px 16px -8px rgb(0 0 0 / 0.07);
-  --shadow-glow: 0 6px 20px -4px hsl(var(--primary) / 0.45), 0 2px 6px -2px hsl(var(--primary) / 0.25);
-}
-
-.dark {
-  --background: 228 30% 8%;
-  --foreground: 226 25% 92%;
-  --card: 230 24% 12%;
-  --card-foreground: 226 25% 92%;
-  --popover: 230 24% 12%;
-  --popover-foreground: 226 25% 92%;
-  --primary: 233 90% 70%;
-  --primary-foreground: 234 60% 8%;
-  --secondary: 230 22% 17%;
-  --secondary-foreground: 226 20% 85%;
-  --muted: 229 20% 16%;
-  --muted-foreground: 228 14% 58%;
-  --accent: 233 45% 22%;
-  --accent-foreground: 233 90% 82%;
-  --destructive: 0 65% 55%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 229 20% 21%;
-  --input: 229 18% 24%;
-  --ring: 233 90% 70%;
-  --success: 163 60% 52%;
-  --warning: 34 90% 55%;
-  --day-outside: 0 0% 16%;
-  --day-today: 233 40% 22%;
-  --day-selected: 233 55% 27%;
-  --day-ring: 233 90% 70%;
-  --widget-bg: 228 30% 8%;
-
-  --accent-2: 210 85% 65%;
-
-  --bg-glow-1: radial-gradient(1100px 700px at 88% -12%, hsl(233 55% 26% / 0.45), transparent 62%);
-  --bg-glow-2: radial-gradient(900px 650px at -12% 28%, hsl(220 45% 22% / 0.35), transparent 58%);
-  --bg-glow-3: radial-gradient(700px 500px at 55% 115%, hsl(196 40% 20% / 0.28), transparent 55%);
-
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.30);
-  --shadow-md: 0 4px 14px -4px rgb(0 0 0 / 0.50), 0 2px 6px -2px rgb(0 0 0 / 0.35);
-  --shadow-lg: 0 12px 30px -8px rgb(0 0 0 / 0.55), 0 4px 10px -4px rgb(0 0 0 / 0.40);
-  --shadow-xl: 0 24px 48px -12px rgb(0 0 0 / 0.60), 0 8px 16px -8px rgb(0 0 0 / 0.45);
-  --shadow-glow: 0 6px 22px -4px hsl(var(--primary) / 0.40), 0 2px 8px -2px hsl(var(--primary) / 0.25);
-}
-
-
-/* ============ 皮肤 token ============ */
-
-.skin-aurora {
-  --background: 250 60% 96%;
-  --foreground: 250 55% 18%;
-  --card: 250 48% 98%;
-  --card-foreground: 250 55% 18%;
-  --popover: 250 48% 98%;
-  --popover-foreground: 250 55% 18%;
-  --primary: 258 72% 65%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 252 55% 92%;
-  --secondary-foreground: 255 40% 30%;
-  --muted: 252 40% 93%;
-  --muted-foreground: 250 22% 48%;
-  --accent: 258 60% 93%;
-  --accent-foreground: 258 60% 45%;
-  --border: 250 35% 86%;
-  --input: 250 30% 84%;
-  --ring: 258 70% 65%;
-  --radius: 1rem;
-  --accent-2: 190 80% 60%;
-  --day-outside: 0 0% 91%;
-  --day-today: 258 60% 94%;
-  --day-selected: 258 65% 88%;
-  --day-ring: 258 70% 65%;
-  --widget-bg: 250 55% 92%;
-  --bg-glow-1: radial-gradient(1100px 700px at 88% -12%, hsl(258 70% 86% / 0.85), transparent 62%);
-  --bg-glow-2: radial-gradient(900px 650px at -12% 28%, hsl(230 70% 88% / 0.8), transparent 58%);
-  --bg-glow-3: radial-gradient(700px 500px at 55% 115%, hsl(190 80% 84% / 0.7), transparent 55%);
-  --shadow-sm: 0 1px 2px rgb(40 20 90 / 0.06), 0 2px 6px -1px rgb(60 30 120 / 0.08);
-  --shadow-md: 0 6px 16px -6px rgb(60 30 120 / 0.14), 0 2px 6px -2px rgb(0 0 0 / 0.04);
-  --shadow-lg: 0 14px 32px -10px rgb(60 30 120 / 0.18), 0 4px 10px -4px rgb(0 0 0 / 0.05);
-  --shadow-xl: 0 26px 52px -14px rgb(60 30 120 / 0.22), 0 8px 16px -8px rgb(0 0 0 / 0.07);
-  --shadow-glow: 0 6px 20px -4px hsl(var(--primary) / 0.5), 0 2px 6px -2px hsl(var(--primary) / 0.28);
-}
-
-.dark.skin-aurora {
-  --background: 252 45% 12%;
-  --foreground: 255 50% 94%;
-  --card: 252 45% 17%;
-  --card-foreground: 255 50% 94%;
-  --popover: 252 42% 18%;
-  --popover-foreground: 255 50% 94%;
-  --primary: 262 88% 75%;
-  --primary-foreground: 255 35% 10%;
-  --secondary: 252 30% 20%;
-  --secondary-foreground: 255 25% 88%;
-  --muted: 252 25% 20%;
-  --muted-foreground: 255 20% 65%;
-  --accent: 260 45% 26%;
-  --accent-foreground: 260 90% 86%;
-  --border: 255 28% 26%;
-  --input: 255 25% 30%;
-  --ring: 260 85% 72%;
-  --radius: 1rem;
-  --accent-2: 190 85% 68%;
-  --day-outside: 0 0% 16%;
-  --day-today: 260 45% 24%;
-  --day-selected: 260 60% 30%;
-  --day-ring: 260 85% 72%;
-  --widget-bg: 252 45% 12%;
-  --bg-glow-1: radial-gradient(1100px 700px at 88% -12%, hsl(262 75% 28% / 0.65), transparent 62%);
-  --bg-glow-2: radial-gradient(900px 650px at -12% 28%, hsl(230 65% 25% / 0.52), transparent 58%);
-  --bg-glow-3: radial-gradient(700px 500px at 55% 115%, hsl(190 75% 24% / 0.45), transparent 55%);
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.32);
-  --shadow-md: 0 4px 14px -4px rgb(0 0 0 / 0.5), 0 2px 6px -2px rgb(0 0 0 / 0.34);
-  --shadow-lg: 0 12px 30px -8px rgb(0 0 0 / 0.55), 0 4px 10px -4px rgb(0 0 0 / 0.4);
-  --shadow-xl: 0 24px 48px -12px rgb(0 0 0 / 0.6), 0 8px 16px -8px rgb(0 0 0 / 0.45);
-  --shadow-glow: 0 6px 22px -4px hsl(var(--primary) / 0.42), 0 2px 8px -2px hsl(var(--primary) / 0.26);
-}
-
-.skin-warm-wood {
-  --background: 35 32% 94%;
-  --foreground: 25 30% 20%;
-  --card: 38 45% 97%;
-  --card-foreground: 25 30% 20%;
-  --popover: 38 45% 97%;
-  --popover-foreground: 25 30% 20%;
-  --primary: 28 75% 40%;
-  --primary-foreground: 35 60% 96%;
-  --secondary: 33 40% 88%;
-  --secondary-foreground: 28 40% 30%;
-  --muted: 34 35% 88%;
-  --muted-foreground: 28 22% 45%;
-  --accent: 35 50% 88%;
-  --accent-foreground: 28 65% 40%;
-  --border: 32 35% 82%;
-  --input: 32 30% 80%;
-  --ring: 28 70% 45%;
-  --radius: 1rem;
-  --accent-2: 22 65% 50%;
-  --day-outside: 0 0% 91%;
-  --day-today: 34 50% 91%;
-  --day-selected: 30 60% 85%;
-  --day-ring: 28 70% 45%;
-  --widget-bg: 35 32% 94%;
-  --bg-glow-1: radial-gradient(1100px 700px at 88% -12%, hsl(30 60% 86% / 0.7), transparent 62%);
-  --bg-glow-2: radial-gradient(900px 650px at -12% 28%, hsl(35 50% 88% / 0.62), transparent 58%);
-  --bg-glow-3: radial-gradient(700px 500px at 55% 115%, hsl(25 45% 84% / 0.48), transparent 55%);
-  --shadow-sm: 0 1px 2px rgb(70 40 15 / 0.05), 0 2px 6px -1px rgb(90 50 20 / 0.08);
-  --shadow-md: 0 6px 16px -6px rgb(90 50 20 / 0.13), 0 2px 6px -2px rgb(0 0 0 / 0.04);
-  --shadow-lg: 0 14px 32px -10px rgb(90 50 20 / 0.17), 0 4px 10px -4px rgb(0 0 0 / 0.05);
-  --shadow-xl: 0 26px 52px -14px rgb(90 50 20 / 0.21), 0 8px 16px -8px rgb(0 0 0 / 0.07);
-  --shadow-glow: 0 6px 20px -4px hsl(var(--primary) / 0.42), 0 2px 6px -2px hsl(var(--primary) / 0.22);
-}
-
-.dark.skin-warm-wood {
-  --background: 24 40% 10%;
-  --foreground: 35 45% 92%;
-  --card: 25 35% 16%;
-  --card-foreground: 35 45% 92%;
-  --popover: 25 35% 18%;
-  --popover-foreground: 35 45% 92%;
-  --primary: 30 70% 52%;
-  --primary-foreground: 24 50% 8%;
-  --secondary: 25 30% 20%;
-  --secondary-foreground: 32 35% 86%;
-  --muted: 25 28% 20%;
-  --muted-foreground: 28 25% 65%;
-  --accent: 28 38% 25%;
-  --accent-foreground: 32 80% 80%;
-  --border: 28 26% 25%;
-  --input: 28 22% 29%;
-  --ring: 30 65% 55%;
-  --radius: 1rem;
-  --accent-2: 22 65% 55%;
-  --day-outside: 0 0% 16%;
-  --day-today: 30 45% 22%;
-  --day-selected: 32 55% 27%;
-  --day-ring: 28 70% 52%;
-  --widget-bg: 24 40% 10%;
-  --bg-glow-1: radial-gradient(1100px 700px at 88% -12%, hsl(30 60% 25% / 0.55), transparent 62%);
-  --bg-glow-2: radial-gradient(900px 650px at -12% 28%, hsl(35 55% 22% / 0.45), transparent 58%);
-  --bg-glow-3: radial-gradient(700px 500px at 55% 115%, hsl(20 50% 20% / 0.38), transparent 55%);
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.30);
-  --shadow-md: 0 4px 14px -4px rgb(0 0 0 / 0.48), 0 2px 6px -2px rgb(0 0 0 / 0.33);
-  --shadow-lg: 0 12px 30px -8px rgb(0 0 0 / 0.53), 0 4px 10px -4px rgb(0 0 0 / 0.38);
-  --shadow-xl: 0 24px 48px -12px rgb(0 0 0 / 0.58), 0 8px 16px -8px rgb(0 0 0 / 0.43);
-  --shadow-glow: 0 6px 22px -4px hsl(var(--primary) / 0.4), 0 2px 8px -2px hsl(var(--primary) / 0.24);
-}
-
-.skin-macos {
-  --background: 220 18% 96%;
-  --foreground: 220 12% 20%;
-  --card: 0 0% 100%;
-  --card-foreground: 220 12% 20%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 220 12% 20%;
-  --primary: 211 100% 50%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 220 14% 93%;
-  --secondary-foreground: 220 20% 30%;
-  --muted: 220 12% 94%;
-  --muted-foreground: 220 10% 48%;
-  --accent: 220 20% 94%;
-  --accent-foreground: 211 95% 45%;
-  --border: 220 14% 87%;
-  --input: 220 12% 84%;
-  --ring: 211 95% 50%;
-  --radius: 0.75rem;
-  --accent-2: 201 80% 55%;
-  --day-outside: 0 0% 91%;
-  --day-today: 211 55% 95%;
-  --day-selected: 211 70% 91%;
-  --day-ring: 211 95% 50%;
-  --widget-bg: 220 16% 94%;
-  --bg-glow-1: radial-gradient(1100px 700px at 88% -12%, hsl(220 18% 90% / 0.52), transparent 62%);
-  --bg-glow-2: radial-gradient(900px 650px at -12% 28%, hsl(220 15% 91% / 0.46), transparent 58%);
-  --bg-glow-3: radial-gradient(700px 500px at 55% 115%, hsl(210 15% 90% / 0.34), transparent 55%);
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.05), 0 1px 4px rgb(0 0 0 / 0.04);
-  --shadow-md: 0 4px 12px -4px rgb(0 0 0 / 0.11), 0 2px 4px -2px rgb(0 0 0 / 0.04);
-  --shadow-lg: 0 10px 24px -8px rgb(0 0 0 / 0.14), 0 4px 8px -4px rgb(0 0 0 / 0.05);
-  --shadow-xl: 0 18px 38px -12px rgb(0 0 0 / 0.18), 0 8px 16px -8px rgb(0 0 0 / 0.07);
-  --shadow-glow: 0 5px 16px -3px hsl(var(--primary) / 0.34), 0 2px 5px -2px hsl(var(--primary) / 0.18);
-}
-
-.dark.skin-macos {
-  --background: 220 10% 12%;
-  --foreground: 220 10% 93%;
-  --card: 220 9% 17%;
-  --card-foreground: 220 10% 93%;
-  --popover: 220 9% 19%;
-  --popover-foreground: 220 10% 93%;
-  --primary: 211 100% 66%;
-  --primary-foreground: 220 40% 9%;
-  --secondary: 220 9% 21%;
-  --secondary-foreground: 220 10% 88%;
-  --muted: 220 10% 21%;
-  --muted-foreground: 220 8% 63%;
-  --accent: 220 12% 25%;
-  --accent-foreground: 211 90% 75%;
-  --border: 220 8% 25%;
-  --input: 220 8% 30%;
-  --ring: 211 95% 62%;
-  --radius: 0.75rem;
-  --accent-2: 201 80% 62%;
-  --day-outside: 0 0% 16%;
-  --day-today: 211 35% 24%;
-  --day-selected: 211 45% 28%;
-  --day-ring: 211 95% 62%;
-  --widget-bg: 220 10% 12%;
-  --bg-glow-1: radial-gradient(1100px 700px at 88% -12%, hsl(220 20% 20% / 0.42), transparent 62%);
-  --bg-glow-2: radial-gradient(900px 650px at -12% 28%, hsl(220 18% 18% / 0.34), transparent 58%);
-  --bg-glow-3: radial-gradient(700px 500px at 55% 115%, hsl(210 15% 17% / 0.28), transparent 55%);
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.34);
-  --shadow-md: 0 4px 14px -4px rgb(0 0 0 / 0.52), 0 2px 6px -2px rgb(0 0 0 / 0.35);
-  --shadow-lg: 0 12px 30px -8px rgb(0 0 0 / 0.56), 0 4px 10px -4px rgb(0 0 0 / 0.4);
-  --shadow-xl: 0 24px 48px -12px rgb(0 0 0 / 0.62), 0 8px 16px -8px rgb(0 0 0 / 0.46);
-  --shadow-glow: 0 6px 22px -4px hsl(var(--primary) / 0.38), 0 2px 8px -2px hsl(var(--primary) / 0.22);
-}
-
-.skin-win11 {
-  --background: 210 20% 95%;
-  --foreground: 220 15% 18%;
-  --card: 210 20% 100%;
-  --card-foreground: 220 15% 18%;
-  --popover: 210 20% 100%;
-  --popover-foreground: 220 15% 18%;
-  --primary: 205 85% 52%;
-  --primary-foreground: 0 0% 100%;
-  --secondary: 210 22% 92%;
-  --secondary-foreground: 220 20% 30%;
-  --muted: 210 20% 93%;
-  --muted-foreground: 220 12% 45%;
-  --accent: 210 30% 93%;
-  --accent-foreground: 205 85% 45%;
-  --border: 210 20% 85%;
-  --input: 210 18% 82%;
-  --ring: 205 85% 52%;
-  --radius: 0.65rem;
-  --accent-2: 190 90% 55%;
-  --day-outside: 0 0% 91%;
-  --day-today: 205 68% 94%;
-  --day-selected: 205 75% 89%;
-  --day-ring: 205 85% 52%;
-  --widget-bg: 210 18% 93%;
-  --bg-glow-1: radial-gradient(1100px 700px at 88% -12%, hsl(205 70% 86% / 0.62), transparent 62%);
-  --bg-glow-2: radial-gradient(900px 650px at -12% 28%, hsl(195 65% 88% / 0.55), transparent 58%);
-  --bg-glow-3: radial-gradient(700px 500px at 55% 115%, hsl(220 55% 86% / 0.4), transparent 55%);
-  --shadow-sm: 0 1px 1px rgb(0 0 0 / 0.03), 0 2px 4px rgb(0 0 0 / 0.04);
-  --shadow-md: 0 5px 12px -4px rgb(0 0 0 / 0.09), 0 2px 4px -2px rgb(0 0 0 / 0.04);
-  --shadow-lg: 0 12px 24px -8px rgb(0 0 0 / 0.12), 0 4px 8px -4px rgb(0 0 0 / 0.05);
-  --shadow-xl: 0 20px 40px -12px rgb(0 0 0 / 0.16), 0 8px 16px -8px rgb(0 0 0 / 0.07);
-  --shadow-glow: 0 4px 14px -2px hsl(var(--primary) / 0.3), 0 2px 5px -2px hsl(var(--primary) / 0.16);
-}
-
-.dark.skin-win11 {
-  --background: 220 18% 10%;
-  --foreground: 220 15% 93%;
-  --card: 220 15% 15%;
-  --card-foreground: 220 15% 93%;
-  --popover: 220 15% 17%;
-  --popover-foreground: 220 15% 93%;
-  --primary: 202 80% 62%;
-  --primary-foreground: 220 35% 8%;
-  --secondary: 220 12% 18%;
-  --secondary-foreground: 220 15% 88%;
-  --muted: 220 12% 19%;
-  --muted-foreground: 220 12% 62%;
-  --accent: 220 18% 23%;
-  --accent-foreground: 202 85% 70%;
-  --border: 220 12% 24%;
-  --input: 220 12% 29%;
-  --ring: 202 80% 62%;
-  --radius: 0.65rem;
-  --accent-2: 190 90% 65%;
-  --day-outside: 0 0% 16%;
-  --day-today: 202 45% 21%;
-  --day-selected: 202 55% 26%;
-  --day-ring: 202 80% 62%;
-  --widget-bg: 220 18% 10%;
-  --bg-glow-1: radial-gradient(1100px 700px at 88% -12%, hsl(205 70% 22% / 0.48), transparent 62%);
-  --bg-glow-2: radial-gradient(900px 650px at -12% 28%, hsl(195 65% 20% / 0.4), transparent 58%);
-  --bg-glow-3: radial-gradient(700px 500px at 55% 115%, hsl(220 55% 18% / 0.32), transparent 55%);
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.32);
-  --shadow-md: 0 4px 14px -4px rgb(0 0 0 / 0.48), 0 2px 6px -2px rgb(0 0 0 / 0.32);
-  --shadow-lg: 0 12px 30px -8px rgb(0 0 0 / 0.52), 0 4px 10px -4px rgb(0 0 0 / 0.38);
-  --shadow-xl: 0 24px 48px -12px rgb(0 0 0 / 0.58), 0 8px 16px -8px rgb(0 0 0 / 0.42);
-  --shadow-glow: 0 6px 22px -4px hsl(var(--primary) / 0.38), 0 2px 8px -2px hsl(var(--primary) / 0.22);
-}
-
-.skin-minimal {
   --background: 0 0% 100%;
-  --foreground: 0 0% 10%;
+  --foreground: 0 0% 8%;
   --card: 0 0% 100%;
-  --card-foreground: 0 0% 10%;
+  --card-foreground: 0 0% 8%;
   --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 10%;
-  --primary: 221 83% 53%;
+  --popover-foreground: 0 0% 8%;
+  --primary: 0 0% 8%;
   --primary-foreground: 0 0% 100%;
   --secondary: 0 0% 96%;
   --secondary-foreground: 0 0% 20%;
   --muted: 0 0% 96%;
-  --muted-foreground: 0 0% 45%;
+  --muted-foreground: 0 0% 48%;
   --accent: 0 0% 96%;
-  --accent-foreground: 221 83% 53%;
-  --border: 0 0% 88%;
-  --input: 0 0% 84%;
-  --ring: 221 83% 53%;
+  --accent-foreground: 0 0% 8%;
+  --accent-2: 0 0% 8%;
+  --destructive: 0 72% 52%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 150 60% 38%;
+  --warning: 36 92% 46%;
+  --border: 0 0% 93%;
+  --input: 0 0% 90%;
+  --ring: 0 0% 8%;
   --radius: 0.5rem;
-  --accent-2: 210 80% 55%;
-  --day-outside: 0 0% 91%;
-  --day-today: 221 50% 96%;
-  --day-selected: 221 65% 92%;
-  --day-ring: 221 83% 53%;
-  --widget-bg: 0 0% 100%;
-  --bg-glow-1: none;
-  --bg-glow-2: none;
-  --bg-glow-3: none;
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.035);
-  --shadow-md: 0 3px 8px -2px rgb(0 0 0 / 0.06);
-  --shadow-lg: 0 8px 20px -8px rgb(0 0 0 / 0.09);
+  --day-outside: 0 0% 98%;
+  --day-today: 0 0% 100%;
+  --day-selected: 0 0% 93%;
+  --day-ring: 0 0% 8%;
+  --widget-bg: 0 0% 98%;
+  --header-foreground: var(--foreground);
+  --header-muted-foreground: var(--muted-foreground);
+  --panel-foreground: var(--foreground);
+  --panel-muted-foreground: var(--muted-foreground);
+  --widget-foreground: var(--foreground);
+  --widget-muted-foreground: var(--muted-foreground);
+  --control-muted-foreground: var(--muted-foreground);
+
+  --surface-raised: #ffffff;
+  --surface-subtle: #fbfcfd;
+  --surface-inset: #f3f4f6;
+  --surface-hover: #f6f7f9;
+  --border-subtle: #eef0f3;
+  --border-strong: #e6e9ed;
+  --calendar-grid-bg: #eef0f3;
+  --calendar-surface: #fbfcfd;
+  --cell-bg: #ffffff;
+  --cell-dim-bg: #fbfcfd;
+  --cell-today-bg: #ffffff;
+  --task-high-bg: #fdecec;
+  --task-high-fg: #d64545;
+  --task-high-bar: #e05252;
+  --task-medium-bg: #fff3e0;
+  --task-medium-fg: #c27000;
+  --task-medium-bar: #f59e0b;
+  --task-low-bg: #eef1f5;
+  --task-low-fg: #5f7184;
+  --task-low-bar: #94a3b8;
+  --task-none-bg: #f4f5f7;
+  --task-none-fg: #4b5563;
+  --task-none-bar: #9ca3af;
+  --task-done-bg: #eaf8f0;
+  --task-done-fg: #137a4f;
+  --task-done-bar: #22b573;
+  --task-failed-bg: #fdecec;
+  --task-failed-fg: #c53b3b;
+  --task-failed-bar: #e04f4f;
+  --checkin-bg: #f4f6fa;
+  --checkin-border: #dfe5ed;
+  --checkin-fg: #475569;
+  --accent-gradient: linear-gradient(135deg, #14161a, #14161a);
+  --progress-gradient: linear-gradient(90deg, #14161a, #14161a);
+  --control-bg: #ffffff;
+  --control-hover-bg: #f5f6f8;
+  --control-fg: #3d434b;
+  --control-border: #e6e9ed;
+  --header-bg: rgba(255, 255, 255, 0.96);
+  --header-border: #eef0f3;
+  --panel-bg: #fbfcfd;
+  --panel-border: #eef0f3;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.03);
+  --shadow-md: 0 2px 8px -2px rgb(0 0 0 / 0.06);
+  --shadow-lg: 0 8px 20px -8px rgb(0 0 0 / 0.08);
   --shadow-xl: 0 14px 32px -12px rgb(0 0 0 / 0.12);
-  --shadow-glow: 0 3px 10px -2px hsl(var(--primary) / 0.22);
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.03);
+  --shadow-raised-hover: 0 3px 8px rgb(0 0 0 / 0.06);
+  --shadow-inset: inset 0 1px 3px rgb(0 0 0 / 0.03);
+  --shadow-float: 0 8px 24px rgb(0 0 0 / 0.06);
+  --shadow-soft: 0 1px 3px rgb(0 0 0 / 0.04);
+  --shadow-glow: none;
+  --app-texture: none;
+  --widget-texture: none;
+  --scrollbar-thumb: #e6e9ed;
+  --font-display: "Inter", "Noto Sans SC", "Microsoft YaHei UI", sans-serif;
+  --task-radius: 0.5rem;
 }
 
-.dark.skin-minimal {
-  --background: 0 0% 5%;
+/* 02 纯黑 OLED · Minimal White 暗色配套 */
+.dark {
+  --background: 0 0% 0%;
   --foreground: 0 0% 94%;
-  --card: 0 0% 9%;
+  --card: 0 0% 7%;
   --card-foreground: 0 0% 94%;
-  --popover: 0 0% 11%;
+  --popover: 0 0% 9%;
   --popover-foreground: 0 0% 94%;
-  --primary: 218 90% 64%;
-  --primary-foreground: 0 0% 4%;
-  --secondary: 0 0% 14%;
+  --primary: 210 92% 52%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 0 0% 12%;
   --secondary-foreground: 0 0% 88%;
-  --muted: 0 0% 13%;
-  --muted-foreground: 0 0% 60%;
-  --accent: 0 0% 16%;
-  --accent-foreground: 218 90% 76%;
-  --border: 0 0% 20%;
-  --input: 0 0% 25%;
-  --ring: 218 90% 64%;
-  --radius: 0.5rem;
-  --accent-2: 210 90% 65%;
-  --day-outside: 0 0% 16%;
-  --day-today: 218 40% 20%;
-  --day-selected: 218 55% 25%;
-  --day-ring: 218 90% 64%;
-  --widget-bg: 0 0% 5%;
-  --bg-glow-1: none;
-  --bg-glow-2: none;
-  --bg-glow-3: none;
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.25);
-  --shadow-md: 0 4px 10px -3px rgb(0 0 0 / 0.4);
-  --shadow-lg: 0 10px 22px -8px rgb(0 0 0 / 0.48);
-  --shadow-xl: 0 18px 36px -12px rgb(0 0 0 / 0.55);
-  --shadow-glow: 0 4px 14px -3px hsl(var(--primary) / 0.32);
+  --muted: 0 0% 11%;
+  --muted-foreground: 0 0% 62%;
+  --accent: 0 0% 13%;
+  --accent-foreground: 0 0% 90%;
+  --accent-2: 210 85% 65%;
+  --destructive: 0 72% 55%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 145 60% 48%;
+  --warning: 36 92% 58%;
+  --border: 0 0% 18%;
+  --input: 0 0% 22%;
+  --ring: 210 92% 58%;
+  --day-outside: 0 0% 0%;
+  --day-today: 210 60% 8%;
+  --day-selected: 210 45% 14%;
+  --day-ring: 210 92% 58%;
+  --widget-bg: 0 0% 4%;
+
+  --surface-raised: #151517;
+  --surface-subtle: #0b0b0c;
+  --surface-inset: #050506;
+  --surface-hover: #1c1c1e;
+  --border-subtle: #1d1d20;
+  --border-strong: #2a2a2d;
+  --calendar-grid-bg: #1d1d20;
+  --calendar-surface: #050506;
+  --cell-bg: #050506;
+  --cell-dim-bg: #000000;
+  --cell-today-bg: #0b0f14;
+  --task-high-bg: rgb(255 69 58 / 0.18);
+  --task-high-fg: #ff6b60;
+  --task-high-bar: #ff6b60;
+  --task-medium-bg: rgb(255 159 10 / 0.18);
+  --task-medium-fg: #ffb340;
+  --task-medium-bar: #ffb340;
+  --task-low-bg: #1d1d20;
+  --task-low-fg: #8e8e93;
+  --task-low-bar: #8e8e93;
+  --task-none-bg: rgb(255 255 255 / 0.08);
+  --task-none-fg: #c7c7cc;
+  --task-none-bar: #8e8e93;
+  --task-done-bg: rgb(48 209 88 / 0.16);
+  --task-done-fg: #5ce087;
+  --task-done-bar: #30d158;
+  --task-failed-bg: rgb(255 55 95 / 0.18);
+  --task-failed-fg: #ff6482;
+  --task-failed-bar: #ff6482;
+  --checkin-bg: rgb(10 132 255 / 0.08);
+  --checkin-border: rgb(10 132 255 / 0.28);
+  --checkin-fg: #8ab8ff;
+  --accent-gradient: linear-gradient(135deg, #0a84ff, #0a84ff);
+  --progress-gradient: linear-gradient(90deg, #30d158, #30d158);
+  --control-bg: #1c1c1e;
+  --control-hover-bg: #2a2a2d;
+  --control-fg: #e5e5ea;
+  --control-border: #2a2a2d;
+  --header-bg: rgba(11, 11, 12, 0.96);
+  --header-border: #1d1d20;
+  --panel-bg: #0b0b0c;
+  --panel-border: #1d1d20;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-md: 0 4px 12px -4px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 10px 24px -8px rgb(0 0 0 / 0.55);
+  --shadow-xl: 0 18px 36px -12px rgb(0 0 0 / 0.6);
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-raised-hover: 0 3px 10px rgb(0 0 0 / 0.5);
+  --shadow-inset: inset 0 1px 3px rgb(0 0 0 / 0.45);
+  --shadow-float: 0 8px 24px rgb(0 0 0 / 0.5);
+  --shadow-soft: 0 1px 3px rgb(0 0 0 / 0.35);
+  --shadow-glow: none;
+  --app-texture: none;
+  --widget-texture: none;
+  --scrollbar-thumb: #2a2a2d;
+  --font-display: "Inter", "Noto Sans SC", "Microsoft YaHei UI", sans-serif;
+  --task-radius: 0.5rem;
 }
 
+/* ============================================================
+   04 新拟态 · Neumorphism（浅色）
+   ============================================================ */
+.skin-neu {
+  --background: 220 36% 92%;
+  --foreground: 220 18% 37%;
+  --card: 220 36% 92%;
+  --card-foreground: 220 18% 37%;
+  --popover: 220 36% 92%;
+  --popover-foreground: 220 18% 37%;
+  --primary: 228 62% 73%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 220 22% 85%;
+  --secondary-foreground: 220 18% 32%;
+  --muted: 220 22% 86%;
+  --muted-foreground: 218 22% 56%;
+  --accent: 220 24% 88%;
+  --accent-foreground: 228 55% 48%;
+  --accent-2: 144 48% 66%;
+  --border: 220 24% 84%;
+  --input: 220 24% 82%;
+  --ring: 228 62% 73%;
+  --radius: 1rem;
+  --day-outside: 220 30% 90%;
+  --day-today: 220 36% 92%;
+  --day-selected: 220 36% 92%;
+  --day-ring: 228 62% 73%;
+  --widget-bg: 220 36% 92%;
+
+  --surface-raised: #e3e9f2;
+  --surface-subtle: #e3e9f2;
+  --surface-inset: #d6deea;
+  --surface-hover: #eef3fb;
+  --border-subtle: transparent;
+  --border-strong: transparent;
+  --calendar-grid-bg: #e3e9f2;
+  --calendar-surface: #e3e9f2;
+  --cell-bg: transparent;
+  --cell-dim-bg: transparent;
+  --cell-today-bg: transparent;
+  --task-high-bg: rgb(208 85 127 / 0.10);
+  --task-high-fg: #c8557d;
+  --task-high-bar: #c8557d;
+  --task-medium-bg: rgb(192 122 26 / 0.10);
+  --task-medium-fg: #b77519;
+  --task-medium-bar: #b77519;
+  --task-low-bg: rgb(93 107 138 / 0.10);
+  --task-low-fg: #5c6b8a;
+  --task-low-bar: #7385a3;
+  --task-none-bg: rgb(93 107 138 / 0.08);
+  --task-none-fg: #62718b;
+  --task-none-bar: #8fa0b8;
+  --task-done-bg: rgb(47 157 108 / 0.12);
+  --task-done-fg: #2f8f65;
+  --task-done-bar: #2f9d6c;
+  --task-failed-bg: rgb(208 85 127 / 0.12);
+  --task-failed-fg: #c8557d;
+  --task-failed-bar: #d0557f;
+  --checkin-bg: #e7edf6;
+  --checkin-border: transparent;
+  --checkin-fg: #5a6fd8;
+  --accent-gradient: linear-gradient(135deg, #8ea2e8, #8ea2e8);
+  --progress-gradient: linear-gradient(90deg, #8ea2e8, #6fd0a8);
+  --control-bg: #e3e9f2;
+  --control-hover-bg: #eef3fb;
+  --control-fg: #4c5a70;
+  --control-border: transparent;
+  --header-bg: rgba(227, 233, 242, 0.92);
+  --header-border: transparent;
+  --panel-bg: #e3e9f2;
+  --panel-border: transparent;
+  --shadow-sm: 2px 2px 5px #cbd3e0, -2px -2px 5px #fbfdff;
+  --shadow-md: 4px 4px 9px #cbd3e0, -4px -4px 9px #fbfdff;
+  --shadow-lg: 5px 5px 12px #cbd3e0, -5px -5px 12px #fbfdff;
+  --shadow-xl: 8px 8px 18px #cbd3e0, -8px -8px 18px #fbfdff;
+  --shadow-raised: 5px 5px 12px #cbd3e0, -5px -5px 12px #fbfdff;
+  --shadow-raised-hover: 6px 6px 14px #c5cedc, -6px -6px 14px #ffffff;
+  --shadow-inset: inset 3px 3px 7px #cbd3e0, inset -3px -3px 7px #fbfdff;
+  --shadow-float: 8px 8px 18px #cbd3e0, -8px -8px 18px #fbfdff;
+  --shadow-soft: 3px 3px 6px #cbd3e0, -3px -3px 6px #fbfdff;
+  --shadow-glow: 0 0 0 rgb(0 0 0 / 0);
+  --app-texture: none;
+  --widget-texture: none;
+  --scrollbar-thumb: #c8d1df;
+  --font-display: "Inter", "Noto Sans SC", "Microsoft YaHei UI", sans-serif;
+  --task-radius: 0.75rem;
+}
+
+.dark.skin-neu {
+  --background: 220 16% 18%;
+  --foreground: 220 18% 78%;
+  --card: 220 16% 18%;
+  --card-foreground: 220 18% 78%;
+  --popover: 220 16% 18%;
+  --popover-foreground: 220 18% 78%;
+  --primary: 228 62% 74%;
+  --primary-foreground: 220 35% 8%;
+  --secondary: 220 12% 24%;
+  --secondary-foreground: 220 18% 82%;
+  --muted: 220 12% 24%;
+  --muted-foreground: 220 14% 62%;
+  --accent: 220 15% 28%;
+  --accent-foreground: 228 70% 82%;
+  --border: 220 14% 27%;
+  --input: 220 14% 31%;
+  --ring: 228 62% 74%;
+  --day-outside: 220 12% 15%;
+  --day-today: 220 16% 18%;
+  --day-selected: 220 16% 18%;
+  --day-ring: 228 62% 74%;
+  --widget-bg: 220 16% 18%;
+
+  --surface-raised: #262c36;
+  --surface-subtle: #262c36;
+  --surface-inset: #1c222c;
+  --surface-hover: #2c3442;
+  --border-subtle: transparent;
+  --border-strong: transparent;
+  --calendar-grid-bg: #262c36;
+  --calendar-surface: #262c36;
+  --cell-bg: transparent;
+  --cell-dim-bg: transparent;
+  --cell-today-bg: transparent;
+  --task-high-bg: rgb(255 105 145 / 0.12);
+  --task-high-fg: #ff9ab5;
+  --task-high-bar: #ff9ab5;
+  --task-medium-bg: rgb(255 180 90 / 0.12);
+  --task-medium-fg: #ffc37a;
+  --task-medium-bar: #ffc37a;
+  --task-low-bg: rgb(143 160 184 / 0.12);
+  --task-low-fg: #a9b6c8;
+  --task-low-bar: #a9b6c8;
+  --task-none-bg: rgb(143 160 184 / 0.10);
+  --task-none-fg: #b7c3d6;
+  --task-none-bar: #8fa0b8;
+  --task-done-bg: rgb(74 222 128 / 0.12);
+  --task-done-fg: #74d99e;
+  --task-done-bar: #4ade80;
+  --task-failed-bg: rgb(255 105 145 / 0.12);
+  --task-failed-fg: #ff9ab5;
+  --task-failed-bar: #ff9ab5;
+  --checkin-bg: #2a3341;
+  --checkin-border: transparent;
+  --checkin-fg: #8ea2e8;
+  --accent-gradient: linear-gradient(135deg, #7b91e8, #7b91e8);
+  --progress-gradient: linear-gradient(90deg, #7b91e8, #58b993);
+  --control-bg: #262c36;
+  --control-hover-bg: #2c3442;
+  --control-fg: #b7c3d6;
+  --control-border: transparent;
+  --header-bg: rgba(38, 44, 54, 0.92);
+  --header-border: transparent;
+  --panel-bg: #262c36;
+  --panel-border: transparent;
+  --shadow-sm: 2px 2px 5px #151a22, -2px -2px 5px #323945;
+  --shadow-md: 4px 4px 9px #151a22, -4px -4px 9px #323945;
+  --shadow-lg: 5px 5px 12px #151a22, -5px -5px 12px #323945;
+  --shadow-xl: 8px 8px 18px #151a22, -8px -8px 18px #323945;
+  --shadow-raised: 5px 5px 12px #151a22, -5px -5px 12px #323945;
+  --shadow-raised-hover: 6px 6px 14px #121720, -6px -6px 14px #333b4a;
+  --shadow-inset: inset 3px 3px 7px #151a22, inset -3px -3px 7px #323945;
+  --shadow-float: 8px 8px 18px #151a22, -8px -8px 18px #323945;
+  --shadow-soft: 3px 3px 6px #151a22, -3px -3px 6px #323945;
+  --shadow-glow: 0 0 0 rgb(0 0 0 / 0);
+  --app-texture: none;
+  --widget-texture: none;
+  --scrollbar-thumb: #3b4553;
+  --font-display: "Inter", "Noto Sans SC", "Microsoft YaHei UI", sans-serif;
+  --task-radius: 0.75rem;
+}
+
+/* ============================================================
+   15 温暖原木 · Warm Wood（浅色）
+   ============================================================ */
+.skin-warm-wood {
+  --background: 31 40% 64%;
+  --foreground: 28 30% 20%;
+  --card: 40 66% 92%;
+  --card-foreground: 28 30% 20%;
+  --popover: 40 66% 92%;
+  --popover-foreground: 28 30% 20%;
+  --primary: 28 48% 38%;
+  --primary-foreground: 40 60% 96%;
+  --secondary: 40 48% 82%;
+  --secondary-foreground: 28 30% 24%;
+  --muted: 40 48% 80%;
+  --muted-foreground: 33 30% 38%;
+  --accent: 40 52% 78%;
+  --accent-foreground: 25 35% 22%;
+  --accent-2: 22 65% 50%;
+  --destructive: 9 62% 46%;
+  --destructive-foreground: 40 60% 96%;
+  --success: 118 45% 40%;
+  --warning: 35 78% 50%;
+  --border: 36 35% 78%;
+  --input: 36 32% 74%;
+  --ring: 28 48% 38%;
+  --radius: 0.65rem;
+  --day-outside: 42 60% 90%;
+  --day-today: 40 66% 92%;
+  --day-selected: 40 60% 88%;
+  --day-ring: 28 48% 38%;
+  --widget-bg: 24 40% 16%;
+  --header-foreground: 38 52% 94%;
+  --header-muted-foreground: 34 30% 72%;
+  --panel-foreground: 38 52% 94%;
+  --panel-muted-foreground: 34 30% 72%;
+  --widget-foreground: 38 52% 94%;
+  --widget-muted-foreground: 34 30% 72%;
+  --control-muted-foreground: 32 30% 34%;
+
+  --surface-raised: #fffdf4;
+  --surface-subtle: #ead8b4;
+  --surface-inset: #f3ead5;
+  --surface-hover: #f4e7c9;
+  --border-subtle: #d8c49a;
+  --border-strong: #c9ab78;
+  --calendar-grid-bg: #ddc9a6;
+  --calendar-surface: #f8f1e0;
+  --cell-bg: #f8f1e0;
+  --cell-dim-bg: #f3ead5;
+  --cell-today-bg: #f8f1e0;
+  --task-high-bg: #b3452d;
+  --task-high-fg: #ffffff;
+  --task-high-bar: #b3452d;
+  --task-medium-bg: #d4a95c;
+  --task-medium-fg: #3a2818;
+  --task-medium-bar: #d4a95c;
+  --task-low-bg: #ead8b4;
+  --task-low-fg: #6b5436;
+  --task-low-bar: #c9ab78;
+  --task-none-bg: #f3ead5;
+  --task-none-fg: #6b5436;
+  --task-none-bar: #b39a72;
+  --task-done-bg: #dce8c8;
+  --task-done-fg: #4e6b33;
+  --task-done-bar: #7e9a55;
+  --task-failed-bg: #e4b3a5;
+  --task-failed-fg: #7f261c;
+  --task-failed-bar: #b3452d;
+  --checkin-bg: #ead8b4;
+  --checkin-border: #c9ab78;
+  --checkin-fg: #6b5436;
+  --accent-gradient: linear-gradient(135deg, #d4a95c, #c98d54);
+  --progress-gradient: linear-gradient(90deg, #d4a95c, #b9783e);
+  --control-bg: #fffdf4;
+  --control-hover-bg: #f6ead0;
+  --control-fg: #5a3d22;
+  --control-border: #d8c49a;
+  --header-bg: rgba(51, 36, 23, 0.94);
+  --header-border: rgb(201 164 92 / 0.28);
+  --panel-bg: #3a2818;
+  --panel-border: transparent;
+  --shadow-sm: 0 1px 2px rgb(58 40 24 / 0.08);
+  --shadow-md: 0 5px 12px -4px rgb(58 40 24 / 0.14);
+  --shadow-lg: 0 10px 20px -8px rgb(58 40 24 / 0.18);
+  --shadow-xl: 0 18px 36px -12px rgb(58 40 24 / 0.24);
+  --shadow-raised: 0 1px 2px rgb(58 40 24 / 0.08);
+  --shadow-raised-hover: 0 4px 10px rgb(58 40 24 / 0.14);
+  --shadow-inset: inset 0 1px 2px rgb(58 40 24 / 0.08);
+  --shadow-float: 0 8px 24px rgb(58 40 24 / 0.16);
+  --shadow-soft: 0 1px 3px rgb(58 40 24 / 0.08);
+  --shadow-glow: none;
+  --app-texture: linear-gradient(180deg, rgb(255 255 255 / 0.08), rgb(0 0 0 / 0.12)), repeating-linear-gradient(90deg, rgb(0 0 0 / 0.05) 0 2px, transparent 2px 180px);
+  --widget-texture: repeating-linear-gradient(90deg, rgb(255 255 255 / 0.025) 0 2px, transparent 2px 180px);
+  --scrollbar-thumb: #b89a6d;
+  --font-display: "华文楷体", KaiTi, STKaiti, "Noto Serif SC", serif;
+  --task-radius: 0.5rem;
+}
+
+.dark.skin-warm-wood {
+  --background: 24 45% 8%;
+  --foreground: 36 42% 92%;
+  --card: 28 35% 16%;
+  --card-foreground: 36 42% 92%;
+  --popover: 28 35% 16%;
+  --popover-foreground: 36 42% 92%;
+  --primary: 40 55% 60%;
+  --primary-foreground: 24 35% 8%;
+  --secondary: 30 28% 22%;
+  --secondary-foreground: 36 42% 88%;
+  --muted: 30 28% 20%;
+  --muted-foreground: 32 30% 68%;
+  --accent: 30 30% 26%;
+  --accent-foreground: 40 60% 78%;
+  --border: 30 32% 28%;
+  --input: 30 28% 32%;
+  --ring: 40 55% 60%;
+  --day-outside: 28 32% 12%;
+  --day-today: 28 32% 17%;
+  --day-selected: 30 35% 22%;
+  --day-ring: 40 55% 60%;
+  --widget-bg: 24 45% 9%;
+  --header-foreground: 36 48% 93%;
+  --header-muted-foreground: 34 32% 72%;
+  --panel-foreground: 36 48% 93%;
+  --panel-muted-foreground: 34 32% 72%;
+  --widget-foreground: 36 48% 93%;
+  --widget-muted-foreground: 34 32% 72%;
+  --control-muted-foreground: 34 32% 72%;
+
+  --surface-raised: #382717;
+  --surface-subtle: #2a1d12;
+  --surface-inset: #241a10;
+  --surface-hover: #43301d;
+  --border-subtle: #4b3825;
+  --border-strong: #6b5234;
+  --calendar-grid-bg: #4a3623;
+  --calendar-surface: #2b1e12;
+  --cell-bg: #2b1e12;
+  --cell-dim-bg: #241a10;
+  --cell-today-bg: #2b1e12;
+  --task-high-bg: rgb(179 69 45 / 0.82);
+  --task-high-fg: #fff4e6;
+  --task-high-bar: #d06446;
+  --task-medium-bg: rgb(212 169 92 / 0.78);
+  --task-medium-fg: #2b1910;
+  --task-medium-bar: #d4a95c;
+  --task-low-bg: #42301c;
+  --task-low-fg: #e2c99e;
+  --task-low-bar: #b9975f;
+  --task-none-bg: #342615;
+  --task-none-fg: #d9c49d;
+  --task-none-bar: #9b8059;
+  --task-done-bg: rgb(126 154 85 / 0.68);
+  --task-done-fg: #edf3d8;
+  --task-done-bar: #9cbb6f;
+  --task-failed-bg: rgb(179 69 45 / 0.75);
+  --task-failed-fg: #ffe0d3;
+  --task-failed-bar: #d06446;
+  --checkin-bg: #382717;
+  --checkin-border: #6b5234;
+  --checkin-fg: #d4a95c;
+  --accent-gradient: linear-gradient(135deg, #d4a95c, #c98d54);
+  --progress-gradient: linear-gradient(90deg, #d4a95c, #c98d54);
+  --control-bg: #382717;
+  --control-hover-bg: #49331e;
+  --control-fg: #efe3cd;
+  --control-border: #6b5234;
+  --header-bg: rgba(27, 17, 10, 0.96);
+  --header-border: rgb(201 164 92 / 0.25);
+  --panel-bg: #1b110a;
+  --panel-border: transparent;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.32);
+  --shadow-md: 0 5px 12px -4px rgb(0 0 0 / 0.42);
+  --shadow-lg: 0 10px 20px -8px rgb(0 0 0 / 0.48);
+  --shadow-xl: 0 18px 36px -12px rgb(0 0 0 / 0.55);
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-raised-hover: 0 4px 10px rgb(0 0 0 / 0.4);
+  --shadow-inset: inset 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow-float: 0 8px 24px rgb(0 0 0 / 0.45);
+  --shadow-soft: 0 1px 3px rgb(0 0 0 / 0.3);
+  --shadow-glow: none;
+  --app-texture: linear-gradient(180deg, rgb(255 255 255 / 0.04), rgb(0 0 0 / 0.24)), repeating-linear-gradient(90deg, rgb(255 255 255 / 0.025) 0 2px, transparent 2px 180px);
+  --widget-texture: repeating-linear-gradient(90deg, rgb(255 255 255 / 0.025) 0 2px, transparent 2px 180px);
+  --scrollbar-thumb: #6b5234;
+  --font-display: "华文楷体", KaiTi, STKaiti, "Noto Serif SC", serif;
+  --task-radius: 0.5rem;
+}
+
+/* ============================================================
+   Tailwind 语义映射
+   ============================================================ */
 @theme inline {
   --color-background: hsl(var(--background));
   --color-foreground: hsl(var(--foreground));
@@ -473,25 +582,72 @@
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
+
+  --color-surface-raised: var(--surface-raised);
+  --color-surface-subtle: var(--surface-subtle);
+  --color-surface-inset: var(--surface-inset);
+  --color-surface-hover: var(--surface-hover);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  --color-calendar-grid-bg: var(--calendar-grid-bg);
+  --color-calendar-surface: var(--calendar-surface);
+  --color-cell-bg: var(--cell-bg);
+  --color-cell-dim-bg: var(--cell-dim-bg);
+  --color-cell-today-bg: var(--cell-today-bg);
+  --color-task-high-bg: var(--task-high-bg);
+  --color-task-high-fg: var(--task-high-fg);
+  --color-task-high-bar: var(--task-high-bar);
+  --color-task-medium-bg: var(--task-medium-bg);
+  --color-task-medium-fg: var(--task-medium-fg);
+  --color-task-medium-bar: var(--task-medium-bar);
+  --color-task-low-bg: var(--task-low-bg);
+  --color-task-low-fg: var(--task-low-fg);
+  --color-task-low-bar: var(--task-low-bar);
+  --color-task-none-bg: var(--task-none-bg);
+  --color-task-none-fg: var(--task-none-fg);
+  --color-task-none-bar: var(--task-none-bar);
+  --color-task-done-bg: var(--task-done-bg);
+  --color-task-done-fg: var(--task-done-fg);
+  --color-task-done-bar: var(--task-done-bar);
+  --color-task-failed-bg: var(--task-failed-bg);
+  --color-task-failed-fg: var(--task-failed-fg);
+  --color-task-failed-bar: var(--task-failed-bar);
+  --color-checkin-bg: var(--checkin-bg);
+  --color-checkin-border: var(--checkin-border);
+  --color-checkin-fg: var(--checkin-fg);
+  --color-control-bg: var(--control-bg);
+  --color-control-fg: var(--control-fg);
+  --color-control-border: var(--control-border);
+
   --radius-sm: calc(var(--radius) - 6px);
   --radius-md: calc(var(--radius) - 4px);
   --radius-lg: calc(var(--radius) - 2px);
   --radius-xl: var(--radius);
   --radius-2xl: calc(var(--radius) + 4px);
   --radius-3xl: calc(var(--radius) + 10px);
+
   --shadow-sm: var(--shadow-sm);
   --shadow-md: var(--shadow-md);
   --shadow-lg: var(--shadow-lg);
   --shadow-xl: var(--shadow-xl);
   --shadow-glow: var(--shadow-glow);
-  --font-sans: "Inter", "Noto Sans SC", system-ui, -apple-system, "Segoe UI",
-    "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  --shadow-raised: var(--shadow-raised);
+  --shadow-raised-hover: var(--shadow-raised-hover);
+  --shadow-inset: var(--shadow-inset);
+  --shadow-float: var(--shadow-float);
+  --shadow-soft: var(--shadow-soft);
+
+  --font-sans: "Inter", "Noto Sans SC", system-ui, -apple-system, "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
 }
 
-/* ============ 基础样式 ============ */
-* {
-  border-color: hsl(var(--border));
-  box-sizing: border-box;
+/* ============================================================
+   基础样式
+   ============================================================ */
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+    box-sizing: border-box;
+  }
 }
 
 html,
@@ -502,20 +658,20 @@ body,
 
 body {
   background-color: hsl(var(--background));
-  background-image: var(--bg-glow-1), var(--bg-glow-2), var(--bg-glow-3);
+  background-image: var(--app-texture);
+  background-size: cover, auto;
   background-attachment: fixed;
   color: hsl(var(--foreground));
-  font-family: "Inter", "Noto Sans SC", system-ui, -apple-system, "Segoe UI",
-    "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
   user-select: none;
 }
 
-/* 悬浮窗：窗口透明，由 WidgetShell 自身绘制圆角背景 */
 body.floating-window {
   background: transparent;
+  background-image: none;
 }
 
 ::selection {
@@ -532,62 +688,377 @@ textarea {
   width: 6px;
   height: 6px;
 }
+
 ::-webkit-scrollbar-track {
   background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--border));
+  background: var(--scrollbar-thumb);
   border-radius: 9999px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.3);
+  background: var(--border-strong);
 }
 
-/* ============ 面板工具类 ============ */
+.font-skin-display {
+  font-family: var(--font-display);
+}
+
+/* ============================================================
+   面板与控件工具类
+   ============================================================ */
 @utility card-elevated {
-  background: hsl(var(--card));
-  border: 1px solid hsl(var(--border));
-  border-radius: calc(var(--radius) + 2px);
-  box-shadow: var(--shadow-sm);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-raised);
 }
 
 @utility card-raised {
-  background: hsl(var(--card));
-  border: 1px solid hsl(var(--border));
-  border-radius: calc(var(--radius) + 10px);
-  box-shadow: var(--shadow-md);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-raised-hover);
+}
+
+@utility surface-panel {
+  background: var(--panel-bg);
+  border-color: var(--panel-border);
+}
+
+@utility surface-header {
+  background: var(--header-bg);
+  border-color: var(--header-border);
+}
+
+@utility control-raised {
+  background: var(--control-bg);
+  border: 1px solid var(--control-border);
+  color: var(--control-fg);
+  box-shadow: var(--shadow-raised);
+}
+
+@utility control-inset {
+  background: var(--surface-inset);
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-inset);
 }
 
 @utility sidebar-panel {
-  background: hsl(var(--card) / 0.82);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  border-left: 1px solid hsl(var(--border));
-  box-shadow: -10px 0 28px -12px rgb(30 41 90 / 0.12);
+  background: var(--panel-bg);
+  border-left: 1px solid var(--panel-border);
+  box-shadow: var(--shadow-soft);
 }
 
-/* 品牌渐变：靛蓝 → 蓝紫 */
+/* ============================================================
+   深色面板/标题栏/悬浮窗的前景色修复
+   温暖原木浅色主题使用深色木纹面板，但正文默认前景为深色，
+   这里为不同表面提供独立前景色，避免文字融入背景。
+   ============================================================ */
+.surface-header {
+  color: hsl(var(--header-foreground));
+}
+
+.surface-header .text-foreground {
+  color: hsl(var(--header-foreground));
+}
+
+.surface-header .text-muted-foreground {
+  color: hsl(var(--header-muted-foreground));
+}
+
+.surface-header :is(
+  .control-raised,
+  .control-inset,
+  .bg-secondary,
+  .bg-surface-raised,
+  .bg-surface-subtle,
+  .bg-surface-inset,
+  .bg-card,
+  .bg-muted
+) {
+  color: var(--control-fg);
+}
+
+.surface-header :is(
+  .control-raised,
+  .control-inset,
+  .bg-secondary,
+  .bg-surface-raised,
+  .bg-surface-subtle,
+  .bg-surface-inset,
+  .bg-card,
+  .bg-muted
+) .text-muted-foreground {
+  color: hsl(var(--control-muted-foreground));
+}
+
+.sidebar-panel {
+  color: hsl(var(--panel-foreground));
+}
+
+.sidebar-panel .text-foreground {
+  color: hsl(var(--panel-foreground));
+}
+
+.sidebar-panel .text-muted-foreground {
+  color: hsl(var(--panel-muted-foreground));
+}
+
+.sidebar-panel :is(
+  .card-elevated,
+  .control-raised,
+  .control-inset,
+  .bg-secondary,
+  .bg-surface-raised,
+  .bg-surface-subtle,
+  .bg-surface-inset,
+  .bg-card,
+  .bg-muted
+) {
+  color: var(--control-fg);
+}
+
+.sidebar-panel :is(
+  .card-elevated,
+  .control-raised,
+  .control-inset,
+  .bg-secondary,
+  .bg-surface-raised,
+  .bg-surface-subtle,
+  .bg-surface-inset,
+  .bg-card,
+  .bg-muted
+) .text-foreground {
+  color: var(--control-fg);
+}
+
+.sidebar-panel :is(
+  .card-elevated,
+  .control-raised,
+  .control-inset,
+  .bg-secondary,
+  .bg-surface-raised,
+  .bg-surface-subtle,
+  .bg-surface-inset,
+  .bg-card,
+  .bg-muted
+) .text-muted-foreground {
+  color: hsl(var(--control-muted-foreground));
+}
+
+.sidebar-panel .bg-task-high-bg {
+  color: var(--task-high-fg);
+}
+
+.sidebar-panel .bg-task-medium-bg {
+  color: var(--task-medium-fg);
+}
+
+.sidebar-panel .bg-task-low-bg {
+  color: var(--task-low-fg);
+}
+
+.sidebar-panel .bg-task-none-bg {
+  color: var(--task-none-fg);
+}
+
+.sidebar-panel .bg-task-done-bg {
+  color: var(--task-done-fg);
+}
+
+.sidebar-panel .bg-task-failed-bg {
+  color: var(--task-failed-fg);
+}
+
+.sidebar-panel :is(.bg-checkin-bg, .bg-checkin-bg\/70, .bg-checkin-bg\/60) {
+  color: var(--checkin-fg);
+}
+
+.sidebar-panel .bg-task-high-bg .text-muted-foreground {
+  color: var(--task-high-fg);
+}
+
+.sidebar-panel .bg-task-medium-bg .text-muted-foreground {
+  color: var(--task-medium-fg);
+}
+
+.sidebar-panel .bg-task-low-bg .text-muted-foreground {
+  color: var(--task-low-fg);
+}
+
+.sidebar-panel .bg-task-none-bg .text-muted-foreground {
+  color: var(--task-none-fg);
+}
+
+.sidebar-panel .bg-task-done-bg .text-muted-foreground {
+  color: var(--task-done-fg);
+}
+
+.sidebar-panel .bg-task-failed-bg .text-muted-foreground {
+  color: var(--task-failed-fg);
+}
+
+.sidebar-panel :is(.bg-checkin-bg, .bg-checkin-bg\/70, .bg-checkin-bg\/60) .text-muted-foreground {
+  color: var(--checkin-fg);
+}
+
+.widget-shell {
+  color: hsl(var(--widget-foreground));
+}
+
+.widget-shell .text-foreground {
+  color: hsl(var(--widget-foreground));
+}
+
+.widget-shell .text-muted-foreground {
+  color: hsl(var(--widget-muted-foreground));
+}
+
+.widget-shell :is(
+  .card-elevated,
+  .control-raised,
+  .control-inset,
+  .bg-secondary,
+  .bg-surface-raised,
+  .bg-surface-subtle,
+  .bg-surface-inset,
+  .bg-card,
+  .bg-muted
+) {
+  color: var(--control-fg);
+}
+
+.widget-shell :is(
+  .card-elevated,
+  .control-raised,
+  .control-inset,
+  .bg-secondary,
+  .bg-surface-raised,
+  .bg-surface-subtle,
+  .bg-surface-inset,
+  .bg-card,
+  .bg-muted
+) .text-foreground {
+  color: var(--control-fg);
+}
+
+.widget-shell :is(
+  .card-elevated,
+  .control-raised,
+  .control-inset,
+  .bg-secondary,
+  .bg-surface-raised,
+  .bg-surface-subtle,
+  .bg-surface-inset,
+  .bg-card,
+  .bg-muted
+) .text-muted-foreground {
+  color: hsl(var(--control-muted-foreground));
+}
+
+.widget-shell .bg-task-high-bg {
+  background: var(--task-high-bg);
+  color: var(--task-high-fg);
+}
+
+.widget-shell .bg-task-medium-bg {
+  background: var(--task-medium-bg);
+  color: var(--task-medium-fg);
+}
+
+.widget-shell .bg-task-low-bg {
+  background: var(--task-low-bg);
+  color: var(--task-low-fg);
+}
+
+.widget-shell .bg-task-none-bg {
+  background: var(--task-none-bg);
+  color: var(--task-none-fg);
+}
+
+.widget-shell .bg-task-done-bg {
+  background: var(--task-done-bg);
+  color: var(--task-done-fg);
+}
+
+.widget-shell .bg-task-failed-bg {
+  background: var(--task-failed-bg);
+  color: var(--task-failed-fg);
+}
+
+.widget-shell :is(.bg-checkin-bg, .bg-checkin-bg\/70, .bg-checkin-bg\/60) {
+  color: var(--checkin-fg);
+}
+
+.widget-shell .bg-task-high-bg .text-muted-foreground {
+  color: var(--task-high-fg);
+}
+
+.widget-shell .bg-task-medium-bg .text-muted-foreground {
+  color: var(--task-medium-fg);
+}
+
+.widget-shell .bg-task-low-bg .text-muted-foreground {
+  color: var(--task-low-fg);
+}
+
+.widget-shell .bg-task-none-bg .text-muted-foreground {
+  color: var(--task-none-fg);
+}
+
+.widget-shell .bg-task-done-bg .text-muted-foreground {
+  color: var(--task-done-fg);
+}
+
+.widget-shell .bg-task-failed-bg .text-muted-foreground {
+  color: var(--task-failed-fg);
+}
+
+.widget-shell :is(.bg-checkin-bg, .bg-checkin-bg\/70, .bg-checkin-bg\/60) .text-muted-foreground {
+  color: var(--checkin-fg);
+}
+
 @utility bg-gradient-brand {
-  background-image: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent-2)) 100%);
+  background-image: var(--accent-gradient);
 }
 
-/* 渐变文字 */
 @utility text-gradient-brand {
-  background-image: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent-2)) 100%);
+  background-image: var(--accent-gradient);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
-/* 玻璃拟态面板 */
 @utility glass-panel {
-  background: hsl(var(--card) / 0.7);
+  background: var(--surface-subtle);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid hsl(var(--border) / 0.8);
+  border: 1px solid var(--border-subtle);
 }
 
-/* ============ motion shim 动画 keyframes ============ */
+@utility progress-fill {
+  background-image: var(--progress-gradient);
+}
+
+@utility calendar-shell {
+  background: var(--calendar-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-inset);
+}
+
+@utility calendar-grid {
+  background: var(--calendar-grid-bg);
+  border-radius: calc(var(--radius-2xl) - 4px);
+  overflow: hidden;
+}
+
+/* ============================================================
+   motion shim 动画 keyframes
+   ============================================================ */
 @keyframes fm-fade-in {
   from { opacity: 0; }
   to { opacity: 1; }

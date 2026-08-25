@@ -1,183 +1,120 @@
-# 日历皮肤系统与日历状态视觉设计
+# 日历皮肤系统与三套参考稿视觉设计
 
 日期：2026-08-25
 
-状态：待用户审阅
+状态：已完成（代码已合并至当前工作区，待桌面端实机验收）
 
 ## 目标
 
-1. 修复日历格子三种状态的视觉区分：非本月、今天、选中。
-2. 在保留现有功能和布局的前提下，新增 5 款皮肤：
-   - 极光渐变（Aurora Gradient）
-   - 温暖原木（Warm Wood）
-   - macOS 原生（macOS Native）
-   - Win11 云母（Fluent Mica）
-   - 极简留白（Minimal White）
-3. 每款皮肤同时支持浅色与深色，并同步适配主窗口与桌面悬浮窗。
-4. 在顶部标题栏新增独立“换肤”按钮，位于设置按钮左侧。
-5. 换肤按钮使用衣服图标。
-6. 将设置页的浅色、深色、跟随系统按钮移入换肤弹层。
+1. 按照 `styles-gallery` 参考稿实现三套换肤，项目现有功能与主体布局完全不变：
+   - 01 极简留白（`minimal`）
+   - 04 新拟态（`neu`）
+   - 15 温暖原木（`warm-wood`）
+2. 每套皮肤同时提供浅色与深色模式，共 6 种主题组合。
+3. 主窗口与置顶悬浮窗共享同一皮肤与明暗模式，切换后实时同步。
+4. 用语义化 CSS token 承接视觉差异，避免为每套皮肤复制组件代码。
 
 ## 非目标
 
-- 不改任务、子任务、打卡、备注、统计等业务逻辑。
-- 不改主窗口顶部 Tab、右侧面板、弹窗等现有主体布局。
-- 不引入新 npm 依赖。
-- 不改变悬浮窗的透明度、置顶、缩放与位置持久化行为。
+- 不修改任务、子任务、打卡、备注、统计等业务逻辑。
+- 不改变顶部 Tab、右侧面板、日历月 / 周视图、弹窗等既有功能布局。
+- 不新增 npm 依赖。
+- 不改变悬浮窗的透明度、置顶、缩放、位置持久化行为。
+- 不追求与参考稿完全逐像素一致；优先复刻色板、材质、层级、圆角、阴影、字体与控件形态。
+
+## 最终皮肤范围
+
+最终只保留三套参考稿皮肤，移除之前的默认靛蓝、极光渐变、macOS 原生、Win11 云母等中间方案：
+
+| 值 | 名称 | 对应参考稿 | 默认 |
+| --- | --- | --- | --- |
+| `minimal` | 极简留白 | 01 Minimal White + 02 OLED Dark | 是 |
+| `neu` | 新拟态 | 04 Neumorphism | 否 |
+| `warm-wood` | 温暖原木 | 15 Warm Wood | 否 |
+
+`src/lib/skin.ts` 只导出以上三个选项；未知值由 `normalizeSkin` 回退到 `minimal`。
 
 ## 技术方案
 
-采用“CSS 变量皮肤层”：
+### 1. 皮肤 class 与明暗 class
 
-- 保留现有 `light` / `dark` class，继续控制明暗模式。
-- 在根节点增加皮肤 class：`skin-aurora`、`skin-warm-wood`、`skin-macos`、`skin-win11`、`skin-minimal`。
-- 默认使用现有靛蓝主题，不挂任何皮肤 class。
-- 每款皮肤只覆盖现有语义 token，如 `--background`、`--card`、`--primary`、`--accent-2`、`--border`、`--bg-glow-*`、`--shadow-*` 和新增的日历状态 token。
-- 组件继续使用现有 Tailwind 语义类，避免为每款皮肤复制组件代码。
+- 根节点同时维护 `light` / `dark` 与 `skin-minimal` / `skin-neu` / `skin-warm-wood`。
+- `minimal` 使用 `:root` 与 `.dark` 作为默认皮肤；`neu` 与 `warm-wood` 分别使用 `.skin-neu`、`.dark.skin-neu`、`.skin-warm-wood`、`.dark.skin-warm-wood` 覆盖。
+- `ThemeProvider` 默认皮肤为 `minimal`，切换后写 `localStorage` 与 SQLite `settings`，并通过 `PUSH_THEME_CHANGED` / `PUSH_SKIN_CHANGED` 同步另一个窗口。
 
-## 皮肤模型与持久化
+### 2. 语义 token
 
-在 `src/lib/theme.tsx` 中扩展：
+`src/styles/globals.css` 为每套主题定义完整语义令牌：
 
-```ts
-export type Skin =
-  | 'default'
-  | 'aurora'
-  | 'warm-wood'
-  | 'macos'
-  | 'win11'
-  | 'minimal'
-```
+- 基础主题：`--background`、`--card`、`--popover`、`--primary`、`--border`、`--ring` 等。
+- 表面与边框：`--surface-raised`、`--surface-subtle`、`--surface-inset`、`--surface-hover`、`--border-subtle`、`--border-strong`、`--header-bg`、`--panel-bg`。
+- 日历：`--calendar-grid-bg`、`--calendar-surface`、`--cell-bg`、`--cell-dim-bg`、`--cell-today-bg`、`--day-outside`、`--day-today`、`--day-selected`、`--day-ring`。
+- 任务与打卡：`--task-high-*`、`--task-medium-*`、`--task-low-*`、`--task-none-*`、`--task-done-*`、`--task-failed-*`、`--checkin-bg`、`--checkin-border`、`--checkin-fg`。
+- 控件与动效：`--control-*`、`--shadow-*`、`--accent-gradient`、`--progress-gradient`、`--scrollbar-thumb`。
+- 皮肤特征：`--app-texture`、`--widget-texture`、`--font-display`、`--task-radius`。
 
-`ThemeProvider` 新增：
+`@theme inline` 将主要令牌映射为 Tailwind 工具类，供业务组件直接使用。
 
-- `skin: Skin`
-- `setSkin: (skin: Skin) => void`
-- 从 `localStorage` 与 `settings` 表读取 `skin`
-- 切换时同时写入 `localStorage` 与 `settings` 表
-- 向另一个窗口发送 `PUSH_SKIN_CHANGED`，实现主窗口与悬浮窗实时同步
+### 3. 共享皮肤工具类
 
-新增 IPC：
+- `surface-header`：顶栏、标题栏与弹层标题表面。
+- `control-raised`：凸起按钮、标签页、Tab、选中项。
+- `control-inset`：内凹输入、进度条底、打卡行。
+- `card-elevated`：任务卡、列表卡片。
+- `calendar-shell` / `calendar-grid`：日历外框与格子网格。
+- `progress-fill`：任务与打卡进度填充。
+- `sidebar-panel`：右侧面板与悬浮窗面板。
+- `shadow-raised` / `shadow-raised-hover` / `shadow-inset` / `shadow-float` / `shadow-soft`：皮肤级阴影。
 
-- `system:getSkin`
-- `system:setSkin`
-- `push:skinChanged`
+## 三套皮肤视觉方向
 
-对应修改：
-
-- `src/shared/ipc-channels.ts`
-- `src/api/index.ts`
-- `src/lib/ipc-bridge.ts`
-- `src/lib/theme.tsx`
-
-无需数据库迁移：`settings` 表已存在，只新增 `skin` key。
-
-## 顶部换肤入口
-
-在 `src/components/layout/TabBar.tsx` 的右上角操作区新增一个换肤按钮：
-
-- 位置：紧邻设置按钮左侧。
-- 图标：使用衣服图标（Shirt）。
-- 点击行为：打开紧凑的换肤弹层，不打开设置窗口。
-- 弹层包含两个区域：
-  1. **显示模式**：浅色、深色、跟随系统。
-  2. **皮肤**：默认靛蓝、极光渐变、温暖原木、macOS 原生、Win11 云母、极简留白。
-- 选中项使用主色边框与光晕。
-- 选择后即时生效，并通过 `PUSH_SKIN_CHANGED` 同步悬浮窗。
-- 设置页不再保留浅色、深色、跟随系统按钮，仅保留系统、窗口、关于等设置项。
-
-新增或修改：
-
-- `src/components/layout/TabBar.tsx`
-- `src/components/layout/SkinSwitcher.tsx`（换肤与显示模式弹层）
-- `src/components/layout/SettingsDialog.tsx`（移除外观模式区域）
-
-## 皮肤视觉方向
-
-每款皮肤均提供浅色与深色两套 token：
-
-| 皮肤 | 浅色方向 | 深色方向 | 强调色 |
+| 皮肤 | 浅色 | 深色 | 关键特征 |
 | --- | --- | --- | --- |
-| 极光渐变 | 淡紫蓝渐变、半透明卡片 | 深靛紫渐变、紫色/青色光晕 | 紫罗兰至青色 |
-| 温暖原木 | 米白纸张、暖棕边框 | 深咖啡背景、奶油色卡片 | 焦糖/琥珀 |
-| macOS 原生 | 浅灰白、细边框、柔和阴影 | 石墨黑、深灰卡片 | 系统蓝 |
-| Win11 云母 | 冰白半透明、细腻玻璃感 | 深灰云母、微弱蓝色环境光 | 云母蓝 |
-| 极简留白 | 近纯白、极细灰边框、克制阴影 | 近纯黑、深灰层级 | 极简蓝 |
+| 极简留白 | 近纯白背景、卡片白、极细灰边、黑白强调 | 纯黑 OLED、深灰层级、蓝色强调 | 克制阴影、药丸任务边、无纹理 |
+| 新拟态 | 灰蓝背景 `#fbfdff` 到 `#cbd3e0`、双光源软阴影 | 深灰蓝背景、双光源暗阴影 | 凹凸卡片、无明显描边、0.75rem 圆角 |
+| 温暖原木 | 米白纸张、原木纹理、暖棕边框、深棕标题栏 | 深咖啡背景、奶油卡片、金色强调 | 木纹、楷体标题、暖色任务条 |
 
-现有“默认靛蓝”保持不变，作为第 6 个可选皮肤。
+## 业务组件皮肤化
 
-## 日历状态视觉
-
-在 `src/styles/globals.css` 新增语义 token：
-
-```css
---day-outside
---day-today
---day-selected
---day-ring
-```
-
-并通过 `@theme inline` 暴露为 Tailwind 颜色：
-
-```css
---color-day-outside
---color-day-today
---color-day-selected
---color-day-ring
-```
-
-`DayCell` 状态优先级：
-
-1. 选中：`--day-selected` 底色 + `--day-ring` 2px 内圈。
-2. 今天：`--day-today` 底色 + 顶部渐变强调条 + 日期徽章。
-3. 非本月：`--day-outside` 底色，数字与事项降低对比度，但保持可读和可点击。
-4. 普通当月：透明/卡片底色。
-
-规则：
-
-- 选中日期始终最醒目。
-- 今天与选中重叠时，同时保留渐变徽章与选中内圈。
-- 非本月被选中时，选中背景优先，数字仍保持弱化但可读。
-- 周视图使用同一套 token，保持与月视图一致。
+- `MonthView` / `DayCell` / `DayCellItem` 使用 `calendar-shell`、`calendar-grid` 与 `bg-cell-*`，保留原有状态优先级。
+- `WeekView`、`DayDetailPopup` 使用同一套日历与任务令牌。
+- `PRIORITY_CONFIG` 从 Tailwind 直写颜色改为 `bg-task-*` / `text-task-*`，三套皮肤共用同一套业务代码。
+- `TabBar`、`RightSidebar`、`SkinSwitcher` 使用 `surface-header` / `control-raised` / `shadow-float`。
+- 输入框、按钮、Select、Switch、Slider、Badge、Toast、Dialog 等 shadcn 生成物统一改为语义类，不写死颜色。
 
 ## 悬浮窗适配
 
-- 悬浮窗共享 `ThemeProvider`，自动应用当前皮肤与明暗模式。
-- `WidgetShell` 继续使用现有透明度滑块；将背景改为由 `--widget-bg` 和 `--bg-glow-*` 驱动的皮肤级玻璃质感。
-- 顶部进度条继续使用 `--primary` 到 `--accent-2` 的渐变。
-- 悬浮窗收到 `PUSH_SKIN_CHANGED` 后即时切换，不重启窗口。
+- `WidgetShell` 根容器使用皮肤背景、`--widget-texture` 与语义边框；标题条使用 `bg-day-ring/40`。
+- 任务进度条使用 `progress-fill`，按钮与新增表单使用 `control-raised` / `control-inset` / `card-elevated`。
+- `WidgetTaskList` 与 `WidgetCheckinRow` 完整继承任务、打卡、优先级语义。
+- 悬浮窗通过 `body.floating-window` 在正常页面中隐藏主窗口纹理，避免浏览器预览出现条纹伪影。
 
 ## 涉及文件
 
+- `src/lib/skin.ts`
+- `src/lib/skin.test.ts`
 - `src/lib/theme.tsx`
-- `src/shared/ipc-channels.ts`
-- `src/api/index.ts`
-- `src/lib/ipc-bridge.ts`
 - `src/styles/globals.css`
-- `src/components/layout/TabBar.tsx`
 - `src/components/layout/SkinSwitcher.tsx`
-- `src/components/layout/SettingsDialog.tsx`
-- `src/components/calendar/DayCell.tsx`
-- `src/components/calendar/WeekView.tsx`
-- `src/widget/WidgetShell.tsx`
-- `CHANGELOG.md`
-- `PROJECT_MAP.md`
+- `src/components/layout/TabBar.tsx`
+- `src/components/calendar/DayCell.tsx`、`DayCellItem.tsx`、`MonthView.tsx`、`WeekView.tsx`、`DayDetailPopup.tsx`
+- `src/components/sidebar/RightSidebar.tsx` 及相关面板
+- `src/widget/WidgetShell.tsx`、`WidgetTaskList.tsx`、`WidgetCheckinRow.tsx`
+- `src/shared/constants.ts` 与 `src/components/ui/*` 的语义类统一
+- `CHANGELOG.md`、`PROJECT_MAP.md`
 
 ## 验证方式
 
-1. `npm run build` 无类型错误和构建错误。
-2. 浏览器预览逐款检查 6 款皮肤 × 浅色/深色共 12 种组合。
-3. 检查换肤按钮是否位于设置按钮左侧，图标是否为衣服。
-4. 检查设置页不再显示浅色、深色、跟随系统按钮，且换肤弹层内可切换。
-5. 检查月视图与周视图的今天、选中、非本月状态。
-6. 检查悬浮窗与主窗口主题同步、透明度滑块与置顶功能不受影响。
+1. `npm test`：皮肤归一化与皮肤选项测试共 7 项通过。
+2. `npm run build`：TypeScript 与 Vite 构建通过。
+3. 浏览器截图检查三套皮肤 × 浅色 / 深色共 6 种主窗口组合，以及 6 种悬浮窗组合。
+4. 检查今天、选中、非本月、任务优先级、完成 / 失败、打卡等视觉状态在每套皮肤下均可读。
+5. 桌面端使用 `npm run tauri dev` 实机确认主窗口与悬浮窗同步、皮肤持久化、置顶与透明度功能正常。
 
 ## 验收标准
 
-- 现有业务功能与主体布局完全不变。
-- 换肤按钮位于顶部设置按钮左侧，图标为衣服。
-- 浅色、深色、跟随系统按钮已从设置页移至换肤弹层。
-- 6 款皮肤可选，浅色/深色均可用。
-- 非本月、今天、选中三种日历状态在普通尺寸下清晰可辨。
-- 桌面悬浮窗正确继承皮肤。
-- `npm run build` 通过。
+- 功能与布局不变，仅样式层换肤。
+- 三套皮肤均提供浅色与深色，默认皮肤为极简留白。
+- 主窗口与悬浮窗皮肤、明暗模式实时同步。
+- 业务组件使用语义 token，不残留 Tailwind 直写颜色。
+- `npm test` 与 `npm run build` 通过。

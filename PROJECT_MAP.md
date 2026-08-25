@@ -16,7 +16,7 @@
 | 数据库 | `src/lib/db.ts` | SQLite（Tauri）+ 内存（浏览器）双实现，源 Prisma 逻辑等价移植 |
 | 桥接层 | `src/lib/ipc-bridge.ts` | 安装 `window.electronAPI`：数据通道→db，系统通道→Tauri API |
 | 主题 | `src/lib/theme.tsx` | next-themes 轻量替代（`ThemeProvider` + `.dark` class + 皮肤 class + 设置表持久化） |
-| 皮肤 | `src/lib/skin.ts` | Skin 类型、6 款皮肤选项、归一化与根 class |
+| 皮肤 | `src/lib/skin.ts` | Skin 类型、3 套参考稿皮肤选项、归一化与根 class |
 | 日历状态 | `src/lib/dayCellState.ts` | 选中/今天/非本月状态优先级 |
 | 动画替代 | `src/lib/motion.tsx` | framer-motion 轻量子集（CSS keyframes） |
 | 彩带 | `src/lib/confetti.ts` | canvas-confetti 轻量自绘替代 |
@@ -30,7 +30,7 @@
 | 布局组件 | `src/components/layout/` | TabBar / SettingsDialog / SkinSwitcher / WhatsNewDialog |
 | 强度组件 | `src/components/streaks/` | StreakBadge / AchievementToast |
 | 备注组件 | `src/components/notes/` | DailyNoteEditor |
-| 主题样式 | `src/styles/globals.css` | 默认主题 + 5 款皮肤的明暗 HSL 令牌、日历状态与悬浮窗 token、动画 keyframes |
+| 主题样式 | `src/styles/globals.css` | 三套参考稿皮肤（极简留白 / 新拟态 / 温暖原木）× 浅色 / 深色的语义令牌、日历状态、控件与悬浮窗 token、动画 keyframes |
 | Rust 入口 | `src-tauri/src/main.rs` | 调用 `lib.rs::run()` |
 | Rust 装配 | `src-tauri/src/lib.rs` | 插件注册（sql/autostart/single-instance/global-shortcut/window-state）、窗口/托盘初始化 |
 | 托盘 | `src-tauri/src/tray.rs` | 系统托盘菜单（显示主窗 / 切换悬浮窗 / 退出） |

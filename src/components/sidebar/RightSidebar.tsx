@@ -41,11 +41,11 @@ export function RightSidebar({ definitions, onDefinitionsChange }: RightSidebarP
         className={cn(
           'absolute -left-4 top-1/2 -translate-y-1/2 z-20',
           'h-8 w-8 flex items-center justify-center rounded-full',
-          'bg-card border-2 border-border/60 text-muted-foreground',
+          'bg-card border border-border-subtle text-muted-foreground shadow-float',
           'hover:text-primary hover:border-primary/50 hover:scale-110',
           'active:scale-95 transition-all duration-150'
         )}
-        style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.1)' }}
+        style={{ boxShadow: 'var(--shadow-float)' }}
         title={sidebarCollapsed ? '展开侧边栏' : '折叠侧边栏'}
       >
         <motion.div animate={{ rotate: sidebarCollapsed ? 180 : 0 }} transition={{ duration: 0.2 }}>
@@ -66,7 +66,7 @@ export function RightSidebar({ definitions, onDefinitionsChange }: RightSidebarP
           >
             <div className="w-72 flex flex-col h-full">
               {/* Tab 切换头 */}
-              <div className="flex items-center gap-1 p-2 border-b border-border/60 bg-secondary/30 shrink-0">
+              <div className="flex items-center gap-1 p-2 border-b border-border-subtle bg-surface-subtle/80 shrink-0">
                 <SideTab
                   active={activeTab === 'task'}
                   icon={<ListTodo className="h-3.5 w-3.5" />}
@@ -108,7 +108,7 @@ function SideTab({ active, icon, label, onClick }: {
       className={cn(
         'flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl text-xs font-medium transition-all duration-200',
         active
-          ? 'bg-gradient-brand text-primary-foreground shadow-glow'
+          ? 'control-raised text-primary'
           : 'text-muted-foreground hover:text-foreground hover:bg-card/60'
       )}
       

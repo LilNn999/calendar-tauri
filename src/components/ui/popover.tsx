@@ -60,7 +60,7 @@ function PopoverContent({ children, className, open, onClose, align = 'center' }
           <div className="fixed inset-0 z-40" onClick={onClose} />
           <motion.div
             className={cn(
-              'absolute z-50 mt-1.5 rounded-2xl border bg-popover text-popover-foreground shadow-xl p-0 overflow-hidden',
+              'absolute z-50 mt-1.5 rounded-xl border border-border-subtle bg-surface-raised text-popover-foreground p-0 overflow-hidden',
               {
                 'left-0': align === 'start',
                 'left-1/2 -translate-x-1/2': align === 'center',

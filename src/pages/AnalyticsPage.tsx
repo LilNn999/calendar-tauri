@@ -73,7 +73,7 @@ export function AnalyticsPage() {
   return (
     <div className="flex-1 overflow-y-auto">
       {/* 顶部：标题 + 筛选 */}
-      <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-3 border-b border-border/60 bg-background/80 backdrop-blur-xl">
+      <div className="sticky top-0 z-10 flex items-center justify-between px-5 py-3 border-b border-border-subtle bg-surface-subtle/85 backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <h2 className="text-base font-bold">数据统计</h2>
           {streak && <StreakBadge streak={streak.currentStreak} />}
@@ -108,8 +108,8 @@ export function AnalyticsPage() {
               <div className="card-raised p-4">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">连续打卡</h3>
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="flex flex-col items-center rounded-xl bg-orange-50 dark:bg-orange-900/20 border border-orange-200/50 dark:border-orange-800/30 p-4">
-                    <span className="text-3xl font-black text-orange-500">{streak.currentStreak}</span>
+                  <div className="flex flex-col items-center rounded-xl bg-warning/10 border border-warning/25 p-4">
+                    <span className="text-3xl font-black text-warning">{streak.currentStreak}</span>
                     <span className="text-xs text-muted-foreground mt-1">当前连续（天）</span>
                   </div>
                   <div className="flex flex-col items-center rounded-xl bg-primary/5 border border-primary/20 p-4">
