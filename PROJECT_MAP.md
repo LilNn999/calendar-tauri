@@ -13,13 +13,13 @@
 | 共享类型 | `src/shared/` | `types.ts` / `constants.ts` / `ipc-channels.ts`（源项目原样） |
 | API 层 | `src/api/index.ts` | 类型化 IPC 封装（走 `window.electronAPI`） |
 | 全局状态 | `src/store/` | Zustand store：calendar / task / checkin / notes / ui |
-| 数据库 | `src/lib/db.ts` | SQLite（Tauri）+ 内存（浏览器）双实现，源 Prisma 逻辑等价移植 |
+| 数据库 | `src/lib/db.ts` | SQLite（Tauri）+ 内存（浏览器）双实现；正式 `calendar.db` / 测试 `test-calendar.db` 分离，源 Prisma 逻辑等价移植 |
 | 桥接层 | `src/lib/ipc-bridge.ts` | 安装 `window.electronAPI`：数据通道→db，系统通道→Tauri API |
 | 主题 | `src/lib/theme.tsx` | next-themes 轻量替代（`ThemeProvider` + `.dark` class + 皮肤 class + 设置表持久化） |
 | 皮肤 | `src/lib/skin.ts` | Skin 类型、3 套参考稿皮肤选项、归一化与根 class |
 | 日历状态 | `src/lib/dayCellState.ts` | 选中/今天/非本月状态优先级 |
 | 动画替代 | `src/lib/motion.tsx` | framer-motion 轻量子集（CSS keyframes） |
-| 彩带 | `src/lib/confetti.ts` | canvas-confetti 轻量自绘替代 |
+| 彩带 | `src/lib/confetti.ts` | canvas-confetti 原版多波彩带（与源项目一致） |
 | 工具函数 | `src/lib/utils.ts` | `cn()`、日期格式化、打卡频率判断 |
 | UI 组件 | `src/components/ui/` | shadcn 风格组件（badge/button/dialog/input/popover/select/slider/switch/textarea/toast） |
 | 日历组件 | `src/components/calendar/` | CalendarHeader / MonthView / WeekView / DayCell / DayDetailPopup |
@@ -50,7 +50,7 @@
 - `achievement_definitions` / `earned_achievements` — 成就体系
 - `settings` — KV 设置（theme / skin / widgetPrefs 等）
 
-数据访问：`src/lib/db.ts` 暴露 `initDb()/getDb()`，Tauri 环境走 `SqliteDb`（`@tauri-apps/plugin-sql`），浏览器预览走 `MemoryDb`（同接口内存实现）。
+数据访问：`src/lib/db.ts` 暴露 `initDb()/getDb()`，Tauri 环境走 `SqliteDb`（`@tauri-apps/plugin-sql`），浏览器预览走 `MemoryDb`（同接口内存实现）。正式版使用 `calendar.db`，测试版使用独立的 `test-calendar.db`；安装包不包含数据库，升级只替换安装目录，不删除应用数据。
 
 ## 三、前端页面结构
 

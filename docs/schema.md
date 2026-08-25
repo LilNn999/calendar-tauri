@@ -1,6 +1,6 @@
 # docs/schema.md — 数据表结构
 
-数据库：SQLite（`@tauri-apps/plugin-sql`，文件位于应用数据目录 `calendar.db`）。
+数据库：SQLite（`@tauri-apps/plugin-sql`）。正式模式使用 `calendar.db`，测试模式使用 `test-calendar.db`，均位于应用数据目录 `com.calendar.desktop`。测试模式由 `CALENDAR_TEST_MODE=1`（`启动测试窗口.bat`）触发，测试数据不会写入正式库；正式库启动时会自动清理旧版本遗留的测试数据标记。
 所有表变更需同步：`src/lib/db.ts` 迁移（`PRAGMA user_version` 递增）、本文件、`CHANGELOG.md`。
 表结构与源项目（Electron + Prisma）一一对应。
 

@@ -285,14 +285,21 @@ class SqliteDb implements Db {
 
   async connect() {
     if (this.inited) return;
-    this.db = await Database.load("sqlite:calendar.db");
+    const testMode = await this.isTestDataMode();
+    this.db = await Database.load(testMode ? "sqlite:test-calendar.db" : "sqlite:calendar.db");
     // 双窗口同时初始化时避免锁库
     await this.db.execute("PRAGMA busy_timeout = 5000");
     await this.migrate();
-    if (await this.isTestDataMode()) {
+    if (testMode && await this.isMainWindow()) { // 只由主窗口写入示例数据，避免悬浮窗并发重复
       try {
         await this.seedTestData();
       } catch { /* 测试数据写入失败不阻塞正式使用 */ }
+    } else if (!testMode) {
+      try {
+        await this.cleanupLegacyTestData();
+      } catch (e) {
+        console.error("清理旧测试数据失败:", e);
+      }
     }
     this.inited = true;
   }
@@ -404,14 +411,63 @@ class SqliteDb implements Db {
   private async isTestDataMode(): Promise<boolean> {
     if (!isTauri) return false;
     try {
-      const { getCurrentWindow } = await import("@tauri-apps/api/window");
-      if (getCurrentWindow().label !== "main") return false;
       return await invokeCore<boolean>("is_test_mode");
     } catch {
       return false;
     }
   }
 
+  private async isMainWindow(): Promise<boolean> {
+    try {
+      const { getCurrentWindow } = await import("@tauri-apps/api/window");
+      return getCurrentWindow().label === "main";
+    } catch {
+      return false;
+    }
+  }
+
+  private async cleanupLegacyTestData(): Promise<void> {
+    const marker = await this.getSetting<string | null>("testDataSeededAt", null);
+    if (!marker) return;
+    const startMs = Date.parse(marker);
+    if (!Number.isFinite(startMs)) return;
+    const end = new Date(startMs + 5000).toISOString();
+    const ph = (count: number) => Array.from({ length: count }, () => "?").join(",");
+
+    const taskIds = (await this.db.select<{ id: number }[]>(
+      "SELECT id FROM tasks WHERE createdAt >= ? AND createdAt < ?",
+      [marker, end],
+    )).map((r) => r.id);
+    if (taskIds.length) {
+      const taskSql = ph(taskIds.length);
+      const subtaskIds = (await this.db.select<{ id: number }[]>(
+        `SELECT id FROM subtasks WHERE taskId IN (${taskSql})`,
+        taskIds,
+      )).map((r) => r.id);
+
+      await this.db.execute(`DELETE FROM task_occurrences WHERE taskId IN (${taskSql})`, taskIds);
+      if (subtaskIds.length) {
+        const subSql = ph(subtaskIds.length);
+        await this.db.execute(`DELETE FROM subtask_occurrences WHERE subtaskId IN (${subSql})`, subtaskIds);
+        await this.db.execute(`DELETE FROM subtasks WHERE id IN (${subSql})`, subtaskIds);
+      }
+      await this.db.execute(`DELETE FROM tasks WHERE id IN (${taskSql})`, taskIds);
+    }
+
+    const definitionIds = (await this.db.select<{ id: number }[]>(
+      "SELECT id FROM checkin_definitions WHERE createdAt >= ? AND createdAt < ?",
+      [marker, end],
+    )).map((r) => r.id);
+    if (definitionIds.length) {
+      const defSql = ph(definitionIds.length);
+      await this.db.execute(`DELETE FROM checkin_entries WHERE definitionId IN (${defSql})`, definitionIds);
+      await this.db.execute(`DELETE FROM checkin_definitions WHERE id IN (${defSql})`, definitionIds);
+    }
+
+    await this.db.execute("DELETE FROM daily_notes WHERE updatedAt >= ? AND updatedAt < ?", [marker, end]);
+    await this.db.execute("DELETE FROM earned_achievements WHERE earnedAt >= ? AND earnedAt < ?", [marker, end]);
+    await this.db.execute("DELETE FROM settings WHERE key = 'testDataSeededAt'");
+  }
   private async seedTestData(): Promise<void> {
     const seeded = await this.getSetting<string | null>("testDataSeededAt", null);
     if (seeded) return;

@@ -22,7 +22,7 @@
 | 样式 | Tailwind CSS v4（CSS-first 主题令牌） |
 | 组件 | Shadcn/ui（Radix UI + CVA） |
 | 状态 | Zustand |
-| 存储 | SQLite（`tauri-plugin-sql`，本地 `calendar.db`） |
+| 存储 | SQLite（`tauri-plugin-sql`，正式 `calendar.db` / 测试 `test-calendar.db`，位于应用数据目录） |
 | 打包 | NSIS 安装包（目标 5~10 MB） |
 
 ## 环境要求
@@ -75,6 +75,7 @@ npm run tauri build
 ├── src-tauri/                                  # Rust 后端
 │   ├── src/                                    #   lib.rs / tray.rs / floating.rs / commands.rs
 │   ├── capabilities/                           #   最小权限集
+│   ├── windows/installer-hooks.nsh             #   NSIS 安装器覆盖清理钩子
 │   └── tauri.conf.json
 └── scripts/gen-icons.ps1                       # 图标生成脚本
 ```
@@ -88,5 +89,6 @@ npm run tauri build
 
 ## 数据与隐私
 
-- 所有数据保存在应用数据目录下的 `calendar.db`（SQLite），无任何云服务。
-- 卸载即清除本地数据（如需保留，请先备份数据库文件）。
+- 正式模式数据保存在应用数据目录 `com.calendar.desktop\calendar.db`（SQLite），无任何云服务。测试模式由 `启动测试窗口.bat` 启动，使用独立的 `test-calendar.db`，不会写入正式库。
+- 安装包不捆绑数据库或用户数据；卸载/升级不会删除应用数据目录中的正式库，如需彻底清除请先备份后再手动删除对应数据库。
+- 版本升级时安装器会停止旧进程、清空安装目录后写入新版本文件，应用数据目录中的正式数据保留不变。

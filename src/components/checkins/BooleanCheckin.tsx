@@ -1,4 +1,3 @@
-import { Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Switch } from '@/components/ui/switch'
 import type { CheckinDefinition } from '@shared/types'
@@ -31,15 +30,6 @@ export function BooleanCheckin({ definition, value, onChange }: BooleanCheckinPr
           : 'border-border-subtle bg-surface-raised hover:border-primary/40 hover:bg-surface-hover'
       )}
     >
-      {/* 打勾图标 */}
-      <div className={cn(
-        'shrink-0 h-5 w-5 rounded-md border-2 flex items-center justify-center transition-all duration-150',
-        checked
-          ? 'bg-success border-success'
-          : 'border-muted-foreground/40'
-      )}>
-        {checked && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
-      </div>
       <span className={cn(
         'flex-1 text-sm font-medium leading-snug',
         checked

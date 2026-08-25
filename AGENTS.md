@@ -82,6 +82,21 @@ npm run tauri dev
 npm run tauri build
 ```
 
+### 测试窗口构建规范
+
+- `启动测试窗口.bat` 必须自动检测 `src/`、`src-tauri/`、`dist/` 与前端/配置入口文件是否新于 `src-tauri/target/release/calendar-tauri.exe`；发现更新时先执行 `npm run tauri build -- --no-bundle`，再启动最新测试窗口。
+- 禁止直接运行旧 release exe；Codex 修改代码后不能只执行 `npm run build` 就声称测试版已更新，必须以 `启动测试窗口.bat` 的自动流程为准。
+- 测试窗口始终使用 `CALENDAR_TEST_MODE=1` 与 `test-calendar.db`，自动重建不得生成 NSIS 安装包。
+### 安装包交付规范
+
+1. 打包固定使用 `npm run tauri build`，构建后将 `src-tauri/target/release/bundle/nsis/` 下的安装包复制到项目根目录 `安装包/`，文件名保持 `产品名_版本_平台-setup.exe` 不变。
+2. 禁止由代理自动运行安装包或启动测试窗口；构建完成后只报告产物路径、大小、SHA256，窗口由用户自行启动。
+3. 每次打包后向 `docs/build-notes.md` 追加记录：时间、分支、版本、提交、命令、产物、SHA256、注意事项。
+4. 新工作窗口处理打包任务前，先查看 `AGENTS.md` 与 `docs/build-notes.md`，避免遗漏安装包交付与测试窗口约定。
+5. 安装包内禁止捆绑数据库、测试数据或任何用户数据：不要配置 `bundle.resources` 复制 `*.db`，构建后确认 `dist` 与安装包内不含数据库文件。
+6. 数据库必须分离：正式模式使用 `calendar.db`，测试模式使用 `test-calendar.db`，测试模式由 `CALENDAR_TEST_MODE=1` 触发，主窗口与悬浮窗必须使用同一选择逻辑，示例数据只由主窗口写入；测试模式不注册单实例，允许与正式版并行。
+7. 迭代升级安装包需停止旧进程并清空安装目录后写入新版本，避免残留旧版本文件；升级/卸载不得删除应用数据目录中的正式库。
+
 ## Rust 后端规范
 
 - Rust 代码放在 `src-tauri/src`；`lib.rs` 暴露 `run()`，`main.rs` 调用它（利于集成测试）。
