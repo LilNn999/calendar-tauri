@@ -174,7 +174,7 @@ export function CalendarPage() {
         onAfterChange={loadData}
       />
 
-      {/* 日历格子 + 号触发的快速新建任务侧边栏 */}
+      {/* 日历格子 + 号触发的快速新建任务弹窗 */}
       <TaskCreationSidebar />
     </div>
   )

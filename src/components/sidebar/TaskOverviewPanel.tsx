@@ -327,7 +327,7 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
                     'shrink-0 h-3 w-3 rounded-[3px] border flex items-center justify-center transition-colors',
                     st.isCompleted
                       ? 'bg-success border-success'
-                      : 'border-muted-foreground/40 dark:border-muted-foreground/80 dark:bg-muted/25 group-hover/sub:border-primary'
+                      : 'border-current bg-current/10 group-hover/sub:border-current'
                   )}
                 >
                   {st.isCompleted && <Check className="h-2 w-2 text-white" strokeWidth={3} />}

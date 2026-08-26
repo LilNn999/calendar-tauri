@@ -109,7 +109,7 @@ function SideTab({ active, icon, label, onClick }: {
         'flex-1 flex items-center justify-center gap-1.5 px-2 py-1.5 rounded-xl text-xs font-medium transition-all duration-200',
         active
           ? 'control-raised text-primary'
-          : 'text-muted-foreground hover:text-foreground hover:bg-card/60'
+          : 'text-control-fg hover:text-primary hover:bg-card/60'
       )}
       
     >

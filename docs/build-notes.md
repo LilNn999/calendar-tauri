@@ -10,14 +10,24 @@
 - 交付文件名：`日历_<版本>_x64-setup.exe`
 - 交付动作：构建后复制到 `安装包/`；不自动运行安装包或测试窗口，由用户自行启动。
 - 测试窗口规则：`启动测试窗口.bat` 使用 `scripts/check-test-build-stale.mjs` 自动判断源码/配置/dist 是否新于 release exe；如有更新，先执行 `npm run tauri build -- --no-bundle` 再启动最新测试版，禁止直接启动旧 exe。
-- 用户端更新公告：已同步写入 src/data/whatsNew.ts，首次启动 0.3.2 自动弹出。
-- 0.3.2 为当前正式发布版本，包含完成特效复刻、开关型修复与测试窗口自动构建升级。
-- 耗时：前端约 3.5 秒；Cargo release 约 1 分 16 秒；NSIS 打包成功。
-- 注意事项：
-  1. 本次构建前项目已将 Rust target 缓存从 F 盘改为项目内 `src-tauri/target`，首次会完整编译；后续未改依赖时使用增量缓存。
-  2. release 与 debug 使用独立缓存，不要为了打开窗口额外运行 `npm run tauri dev`。
-  3. 沙箱环境无法把 GUI 窗口推到用户桌面，因此代理不能“代开”测试窗口；构建后由用户双击 `启动测试窗口.bat`。
-  4. 本次安装包已复制到 `安装包/`，后续新窗口默认沿用此流程。
+- Codex 内部验收必须主动执行 `npm run tauri build -- --no-bundle`，并确认 `node scripts/check-test-build-stale.mjs` 输出 `0`；此后用户直接打开 `启动测试窗口.bat` 应直接启动最新版，不得再次构建。
+
+## 2026-08-26 0.3.3 正式版
+
+- 时间：2026-08-26 11:56:48
+- 分支：`chore/sync-lockfile`
+- 提交：`3444d52`（版本升级与发布内容尚未提交）
+- 版本：`0.3.3`
+- 命令：`npm run tauri build`
+- 构建结果：成功（退出码 0）
+- 安装包源文件：`src-tauri/target/release/bundle/nsis/日历_0.3.3_x64-setup.exe`
+- 已交付：`安装包/日历_0.3.3_x64-setup.exe`
+- 大小：2,220,825 bytes（约 2.1 MB）
+- SHA256：`94299B995C0CEBB1B25998EB0D7CFEC39BF0A36D6BE6B07C44D7CE4C74C9D567`
+- 耗时：前端约 3.7 秒；Cargo release 约 1 分 46 秒；NSIS 打包成功。
+- 本次改动：新增旧版 daily-calendar 数据迁移工具；日历格子快捷新建任务改为居中弹窗；优化温暖原木、新拟态和极简黑白浅色模式下子任务、打卡 Tab 与悬浮窗完成按钮的对比度。
+- 验证：`npm test` 7/7；`npm run build` 通过；`npm run tauri build` 成功；`dist` 无 `*.db`；`bundle.resources` 未配置；NSIS 已包含 `installer-hooks.nsh` 与 `NSIS_HOOK_PREINSTALL`。
+- 注意事项：安装包已交付但未由代理启动；用户自行双击安装并测试，测试窗口也由用户自行打开。
 
 ## 2026-08-25 0.3.2 正式版
 

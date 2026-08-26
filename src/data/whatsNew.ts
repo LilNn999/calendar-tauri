@@ -8,6 +8,18 @@ export interface VersionNote {
 /** 更新历史（最新版本在最前） */
 export const VERSION_NOTES: VersionNote[] = [
   {
+    version: '0.3.3',
+    date: '2026-08-26',
+    features: [
+      '新增旧版 daily-calendar 数据一键迁移工具',
+      '日历格子快捷新建任务改为居中弹窗',
+    ],
+    fixes: [
+      '优化温暖原木浅色模式下子任务、打卡任务 Tab 与悬浮窗完成按钮的显示效果',
+      '优化新拟态、极简黑白浅色模式下悬浮窗待办完成按钮的清晰度',
+    ],
+  },
+  {
     version: '0.3.2',
     date: '2026-08-25',
     features: [

@@ -146,6 +146,8 @@ export function TaskItemRow({ task, onToggle, onClick, compact, onMarkComplete, 
             ? 'bg-success border-success'
             : isFailed
             ? 'bg-task-failed-bg border-task-failed-bar text-task-failed-fg hover:border-warning hover:bg-warning/10'
+            : isHighPending
+            ? 'border-task-high-fg/70 bg-task-high-fg/10 hover:border-task-high-fg group-hover:border-task-high-fg'
             : 'border-muted-foreground/40 dark:border-muted-foreground/80 dark:bg-muted/25 hover:border-primary group-hover:border-primary/70'
         )}
         onClick={handleCheckboxClick}
@@ -280,7 +282,7 @@ export function TaskItemRow({ task, onToggle, onClick, compact, onMarkComplete, 
                     'shrink-0 h-3 w-3 rounded-[3px] border flex items-center justify-center transition-colors',
                     st.isCompleted
                       ? 'bg-success border-success'
-                      : 'border-muted-foreground/40 dark:border-muted-foreground/80 dark:bg-muted/25 group-hover/sub:border-primary'
+                      : 'border-current bg-current/10 group-hover/sub:border-current'
                   )}
                 >
                   {st.isCompleted && <Check className="h-2 w-2 text-white" strokeWidth={3.5} />}

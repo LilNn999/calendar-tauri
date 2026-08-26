@@ -98,25 +98,29 @@ export function TaskCreationSidebar() {
     <AnimatePresence>
       {sidebarOpen && (
         <>
-          {/* 遮罩 */}
+          {/* 居中弹窗 */}
           <motion.div
-            className="fixed inset-0 z-30 bg-black/20"
+            className="fixed inset-0 z-40 flex items-center justify-center p-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            onClick={handleClose}
-          />
-
-          {/* 侧边栏 */}
-          <motion.div
-            className="surface-panel fixed right-0 top-0 bottom-0 z-40 w-80 bg-card/95 backdrop-blur-xl border-l border-border-subtle shadow-float flex flex-col"
-            initial={{ x: '100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '100%' }}
-            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
           >
+            <motion.div
+              className="absolute inset-0 bg-black/20"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={handleClose}
+            />
+            <motion.div
+              className="surface-panel relative z-10 w-full max-w-md max-h-[calc(100vh-2rem)] bg-card/95 backdrop-blur-xl border border-border-subtle shadow-float rounded-2xl flex flex-col overflow-hidden"
+              initial={{ opacity: 0, scale: 0.95, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 12 }}
+              transition={{ duration: 0.18, ease: 'easeOut' }}
+            >
             {/* 头部 */}
-            <div className="flex items-center justify-between px-4 py-3 border-b">
+            <div className="shrink-0 flex items-center justify-between px-4 py-3 border-b">
               <h3 className="font-semibold text-sm">新建任务</h3>
               <button
                 onClick={handleClose}
@@ -126,7 +130,7 @@ export function TaskCreationSidebar() {
               </button>
             </div>
 
-            <div className="flex flex-col flex-1 overflow-y-auto">
+            <div className="min-h-0 flex flex-col flex-1 overflow-y-auto">
               {/* 新建任务表单 */}
               <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-4">
                 <div>
@@ -236,6 +240,7 @@ export function TaskCreationSidebar() {
                 </div>
               )}
             </div>
+            </motion.div>
           </motion.div>
         </>
       )}

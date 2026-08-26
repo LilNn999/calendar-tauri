@@ -83,11 +83,12 @@ export function WidgetTaskList({ tasks, onToggle, onSubtaskToggle }: WidgetTaskL
               <button
                 className={cn(
                   'shrink-0 h-4 w-4 rounded-md border flex items-center justify-center transition-all',
+                  getTaskFg(task),
                   task.isCompleted
                     ? 'bg-success border-success'
                     : task.isFailed
                     ? 'bg-task-failed-bg border-task-failed-bar text-task-failed-fg'
-                    : 'border-input dark:border-muted-foreground/80 dark:bg-muted/25 group-hover:border-primary'
+                    : 'border-current bg-current/10 hover:border-current group-hover:border-current'
                 )}
                 onClick={() => !task.isFailed && onToggle(task.id, !task.isCompleted, task.dueDate, task.isRecurring)}
               >
@@ -128,7 +129,7 @@ export function WidgetTaskList({ tasks, onToggle, onSubtaskToggle }: WidgetTaskL
                         'shrink-0 h-3 w-3 rounded-[3px] border flex items-center justify-center transition-colors',
                         st.isCompleted
                           ? 'bg-success border-success'
-                          : 'border-muted-foreground/40 dark:border-muted-foreground/80 dark:bg-muted/25 group-hover/sub:border-primary'
+                          : 'border-current bg-current/10 group-hover/sub:border-current'
                       )}
                     >
                       {st.isCompleted && <Check className="h-2 w-2 text-white" strokeWidth={3} />}

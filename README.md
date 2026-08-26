@@ -87,6 +87,24 @@ npm run tauri build
 - **`npm run tauri dev` 白屏**：确认 `npm run dev` 先行启动或端口 1420 未被占用。
 - **托盘不显示**：Windows 需重新登录或等待 Explorer 刷新托盘图标。
 
+## 旧版 daily-calendar 数据迁移
+
+根目录的 `迁移数据.cmd` 可直接导入旧版 daily-calendar（旧“日历”）数据。脚本使用 Windows 自带的 SQLite 组件，**不需要 Node.js、npm 或第三方依赖**。
+
+1. 完全退出旧版 daily-calendar 和当前“日历”（含托盘图标，右键退出）。
+2. 双击 `迁移数据.cmd`。
+3. 若当前库已有数据，输入 `Y` 覆盖并导入（会先自动备份），输入 `N` 合并导入（不覆盖现有数据），其他输入取消。
+4. 按提示再次输入 `Y` 确认执行；迁移完成后重启当前“日历”。
+
+说明：
+
+- 默认旧数据源为 `%APPDATA%\daily-calendar\calendar.db`。请勿使用安装目录 `...\resources\prisma\dev.db`，那是空模板库。
+- 覆盖模式会备份后清空当前任务、子任务、打卡、备注和已解锁成就，再写入旧数据；不会删除成就定义，并会迁移旧版悬浮窗设置、主题和最近失败打卡日期。
+- 合并模式按旧数据源任务/打卡 ID 记录已导入项，重复运行不会再次追加相同数据；若两版存在同名任务或打卡，仍可能显示两份，希望完全以旧数据为准时请选择覆盖模式。
+- 迁移前自动备份到 `%APPDATA%\com.calendar.desktop\migration-backups\`，脚本会显示备份路径与 SHA256。
+- 旧版数据库不在默认位置时可直接指定：`powershell -NoProfile -ExecutionPolicy Bypass -File scripts\migrate-daily-calendar.ps1 -SourceDb "数据库文件路径"`。
+- 高级参数：`-SourceDb`、`-TargetDb`、`-BackupDir`、`-Overwrite`、`-Merge`、`-Force`、`-Yes`。
+
 ## 数据与隐私
 
 - 正式模式数据保存在应用数据目录 `com.calendar.desktop\calendar.db`（SQLite），无任何云服务。测试模式由 `启动测试窗口.bat` 启动，使用独立的 `test-calendar.db`，不会写入正式库。
