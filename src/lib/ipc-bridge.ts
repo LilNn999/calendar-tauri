@@ -316,6 +316,7 @@ async function invoke(channel: IpcChannel, ...args: unknown[]): Promise<unknown>
       const win = await getMainWindow();
       if (win) {
         await win.show();
+        await win.unminimize();
         await win.setFocus();
       }
       return;

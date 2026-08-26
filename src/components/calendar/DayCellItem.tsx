@@ -60,6 +60,7 @@ interface TaskItemRowProps {
 export function TaskItemRow({ task, onToggle, onClick, compact, onMarkComplete, onDelete, onSubtaskToggle }: TaskItemRowProps) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
+  const rowRef = useRef<HTMLDivElement>(null)
   const titleRef = useRef<HTMLSpanElement>(null)
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties | null>(null)
 
@@ -76,6 +77,37 @@ export function TaskItemRow({ task, onToggle, onClick, compact, onMarkComplete, 
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [menuOpen])
+
+  // WebView 下离开行/窗口时 onMouseLeave 偶发不触发，这里做全局兜底
+  useEffect(() => {
+    if (!compact || !tooltipStyle) return
+
+    const clearTooltip = () => setTooltipStyle(null)
+    const handlePointerMove = (event: PointerEvent) => {
+      const rect = rowRef.current?.getBoundingClientRect()
+      if (!rect) return
+      if (
+        event.clientX < rect.left ||
+        event.clientX > rect.right ||
+        event.clientY < rect.top ||
+        event.clientY > rect.bottom
+      ) {
+        clearTooltip()
+      }
+    }
+
+    document.addEventListener('pointermove', handlePointerMove)
+    document.addEventListener('pointerleave', clearTooltip)
+    document.addEventListener('mouseleave', clearTooltip)
+    window.addEventListener('blur', clearTooltip)
+
+    return () => {
+      document.removeEventListener('pointermove', handlePointerMove)
+      document.removeEventListener('pointerleave', clearTooltip)
+      document.removeEventListener('mouseleave', clearTooltip)
+      window.removeEventListener('blur', clearTooltip)
+    }
+  }, [compact, tooltipStyle])
 
   const isFailed = task.isFailed && !task.isCompleted
   const isHighPending = task.priority === 'high' && !task.isCompleted && !task.isFailed
@@ -122,6 +154,7 @@ export function TaskItemRow({ task, onToggle, onClick, compact, onMarkComplete, 
 
   const row = (
     <div
+      ref={rowRef}
       className={cn(
         'group relative flex gap-1 rounded-[var(--task-radius)] px-1 py-0.5 cursor-pointer transition-all duration-150',
         'hover:brightness-[0.96] dark:hover:brightness-110',
