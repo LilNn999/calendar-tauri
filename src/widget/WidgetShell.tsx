@@ -80,12 +80,15 @@ export function WidgetShell() {
       if (isTauri) {
         void systemApi.setAlwaysOnTop(prefs.alwaysOnTop)
       }
-      // 恢复窗口位置（仅启动时一次，直接设置窗口；不经过 saveWidgetPrefs，避免与 onMoved 保存形成“保存→移动→再触发移动”的回路）
+      // 恢复窗口位置与尺寸（仅启动时一次，直接设置窗口；不经过 saveWidgetPrefs，避免与 onMoved/onResized 保存形成回路）
       if (isTauri) {
         import('@tauri-apps/api/window')
           .then(async ({ getCurrentWindow }) => {
-            const { PhysicalPosition } = await import('@tauri-apps/api/dpi')
-            await getCurrentWindow().setPosition(new PhysicalPosition(prefs.posX, prefs.posY))
+            const { PhysicalPosition, PhysicalSize } = await import('@tauri-apps/api/dpi')
+            const win = getCurrentWindow()
+            await win.setPosition(new PhysicalPosition(prefs.posX, prefs.posY))
+            // Rust 创建窗口后为修复透明背景会短暂重置一次尺寸，因此前端需再次应用用户缩放结果
+            await win.setSize(new PhysicalSize(prefs.width, prefs.height))
           })
           .catch(() => {})
       }

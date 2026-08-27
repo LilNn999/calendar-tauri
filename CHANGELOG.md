@@ -2,11 +2,16 @@
 
 本项目变更记录。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循语义化版本。
 
-## [Unreleased]
+## [0.3.4] — 2026-08-27
 
 ### 修复
+- 修复重启后桌面悬浮窗缩放尺寸恢复默认值的问题：启动时重新应用用户保存的悬浮窗宽度与高度。
 - 修复悬浮窗点击“打开主窗口”无法恢复已最小化主窗口的问题：调用窗口取消最小化并补充 `core:window:allow-unminimize` 权限。
 - 修复主窗口日历待办悬停气泡在鼠标移出后偶发残留的问题：增加指针位置、离开窗口与窗口失焦时的兜底清理。
+
+### 构建
+- 版本号由 0.3.3 升级至 0.3.4（`package.json` / `package-lock.json` / `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` / `src-tauri/Cargo.lock` 同步）。
+- 同步发布用户端更新公告（`src/data/whatsNew.ts`），首次启动 0.3.4 自动弹出。
 
 ## [0.3.3] — 2026-08-26
 

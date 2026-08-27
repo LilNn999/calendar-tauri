@@ -8,6 +8,15 @@ export interface VersionNote {
 /** 更新历史（最新版本在最前） */
 export const VERSION_NOTES: VersionNote[] = [
   {
+    version: '0.3.4',
+    date: '2026-08-27',
+    fixes: [
+      '修复重启后悬浮窗缩放尺寸恢复默认值的问题，现在会记住上次缩放大小',
+      '修复悬浮窗点击“打开主窗口”无法恢复已最小化主窗口的问题',
+      '修复主窗口日历待办悬停气泡在鼠标移出后偶发残留的问题',
+    ],
+  },
+  {
     version: '0.3.3',
     date: '2026-08-26',
     features: [
