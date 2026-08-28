@@ -12,6 +12,24 @@
 - 测试窗口规则：`启动测试窗口.bat` 使用 `scripts/check-test-build-stale.mjs` 自动判断源码/配置/dist 是否新于 release exe；如有更新，先执行 `npm run tauri build -- --no-bundle` 再启动最新测试版，禁止直接启动旧 exe。
 - Codex 内部验收必须主动执行 `npm run tauri build -- --no-bundle`，并确认 `node scripts/check-test-build-stale.mjs` 输出 `0`；此后用户直接打开 `启动测试窗口.bat` 应直接启动最新版，不得再次构建。
 
+## 2026-08-28 0.3.8 正式版
+
+- 时间：2026-08-28 16:30:50
+- 分支：`codex/release-0.3.4`
+- 提交：`3aaf63f`（`release: 0.3.8 新增蒸汽波皮肤`，前置功能提交 `64a67a2`）
+- 版本：`0.3.8`
+- 命令：`npm run tauri build`
+- 构建结果：成功（退出码 0）
+- 安装包源文件：`src-tauri/target/release/bundle/nsis/日历_0.3.8_x64-setup.exe`
+- 已交付：`安装包/日历_0.3.8_x64-setup.exe`
+- 大小：2,224,282 bytes（约 2.1 MB）
+- SHA256：`9BA3FF4D99517FB4633F4686DAA5B4D5DE7C8499BBE30C4D94A53BCA262454FA`
+- 耗时：前端约 3.4 秒；Cargo release 增量编译；NSIS 打包成功。
+- 本次改动：皮肤列表新增「蒸汽波 Vaporwave」（含浅色/深色，取自 UI 画廊风格 35）——浅色马卡龙粉紫青 pastel + 三处柔光，深色霓虹深紫 + 电光蓝网格地平线 + 粉青渐变；皮肤总数达 6 款；版本号 0.3.7 → 0.3.8，公告与 CHANGELOG 同步。
+- 模板校验：`diff --strip-trailing-cr` 对比 0.3.5 官方基线共 55 行差异，与 0.3.7 构建完全一致（均为既有自定义改动与版本号/ESTIMATEDSIZE 行），无新增差异；`NSIS_HOOK_PREINSTALL` 在位。
+- 验证：`npm test` 8/8；`npm run build` 通过；`npm run tauri build` 成功；`dist` 无 `*.db`；`bundle.resources` 未配置。
+- 注意事项：安装包已交付但未由代理启动，用户自行双击安装测试；本次发布完成后分支与 main 同步合并并推送码云。
+
 ## 2026-08-28 0.3.7 正式版
 
 - 时间：2026-08-28 15:52:38
