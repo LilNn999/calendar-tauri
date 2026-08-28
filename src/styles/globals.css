@@ -947,6 +947,207 @@
 }
 
 /* ============================================================
+   35 蒸汽波 Vaporwave（浅色）— 取自画廊风格 35
+   粉彩日光蒸汽波：马卡龙粉紫青 pastel 色盘 + 三处柔光
+   ============================================================ */
+.skin-vapor {
+  --background: 325 75% 97%;
+  --foreground: 279 31% 33%;
+  --card: 330 100% 99%;
+  --card-foreground: 279 31% 33%;
+  --popover: 330 100% 99%;
+  --popover-foreground: 279 31% 33%;
+  --primary: 331 77% 61%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 310 60% 94%;
+  --secondary-foreground: 279 31% 33%;
+  --muted: 310 60% 94%;
+  --muted-foreground: 276 24% 55%;
+  --accent: 328 82% 93%;
+  --accent-foreground: 327 67% 52%;
+  --accent-2: 196 91% 44%;
+  --destructive: 346 89% 61%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 171 85% 39%;
+  --warning: 38 90% 48%;
+  --border: 326 61% 87%;
+  --input: 326 61% 87%;
+  --ring: 331 77% 61%;
+  --radius: 0.75rem;
+  --day-outside: 328 100% 97%;
+  --day-today: 330 100% 99%;
+  --day-selected: 328 82% 93%;
+  --day-ring: 331 77% 61%;
+  --widget-bg: 330 100% 99%;
+  --header-foreground: 279 31% 33%;
+  --header-muted-foreground: 276 24% 55%;
+  --panel-foreground: 279 31% 33%;
+  --panel-muted-foreground: 276 24% 55%;
+  --widget-foreground: 279 31% 33%;
+  --widget-muted-foreground: 276 24% 55%;
+  --control-muted-foreground: 276 24% 55%;
+
+  --surface-raised: #fffbfd;
+  --surface-subtle: #fff0f8;
+  --surface-inset: #f9e7f6;
+  --surface-hover: #fce0ef;
+  --border-subtle: #fbe6f2;
+  --border-strong: #f2c9e0;
+  --calendar-grid-bg: #fbe6f2;
+  --calendar-surface: #fffbfd;
+  --cell-bg: #fffbfd;
+  --cell-dim-bg: #fff0f8;
+  --cell-today-bg: #fffbfd;
+  --task-high-bg: #fde1e8;
+  --task-high-fg: #f4436c;
+  --task-high-bar: #f4436c;
+  --task-medium-bg: #fdeeda;
+  --task-medium-fg: #e8960c;
+  --task-medium-bar: #e8960c;
+  --task-low-bg: #ddf1fb;
+  --task-low-fg: #0a9fd6;
+  --task-low-bar: #0a9fd6;
+  --task-none-bg: #f9e7f6;
+  --task-none-fg: #9270a8;
+  --task-none-bar: #c0a5d4;
+  --task-done-bg: #d9f5f0;
+  --task-done-fg: #0fb8a0;
+  --task-done-bar: #0fb8a0;
+  --task-failed-bg: #fde1e8;
+  --task-failed-fg: #d6338c;
+  --task-failed-bar: #f4436c;
+  --checkin-bg: #fff0f8;
+  --checkin-border: #f2c9e0;
+  --checkin-fg: #9270a8;
+  --accent-gradient: linear-gradient(135deg, #e84f9a, #0a9fd6);
+  --progress-gradient: linear-gradient(90deg, #e84f9a, #0a9fd6);
+  --control-bg: #fffbfd;
+  --control-hover-bg: #fff0f8;
+  --control-fg: #5c3a6e;
+  --control-border: #f2c9e0;
+  --header-bg: #fffbfd;
+  --header-border: #f2c9e0;
+  --panel-bg: #fff0f8;
+  --panel-border: #f2c9e0;
+  --shadow-sm: 0 1px 2px rgb(190 90 180 / 0.06);
+  --shadow-md: 0 5px 12px -4px rgb(190 90 180 / 0.12);
+  --shadow-lg: 0 10px 20px -8px rgb(190 90 180 / 0.16);
+  --shadow-xl: 0 18px 36px -12px rgb(190 90 180 / 0.22);
+  --shadow-raised: 0 1px 2px rgb(190 90 180 / 0.06);
+  --shadow-raised-hover: 0 4px 10px rgb(190 90 180 / 0.12);
+  --shadow-inset: inset 0 1px 2px rgb(190 90 180 / 0.06);
+  --shadow-float: 0 10px 28px rgb(190 90 180 / 0.18);
+  --shadow-soft: 0 1px 3px rgb(190 90 180 / 0.06);
+  --shadow-glow: none;
+  --app-texture: radial-gradient(360px 260px at 12% 18%, rgb(255 113 206 / 0.16), transparent 70%),
+    radial-gradient(400px 300px at 88% 10%, rgb(1 205 254 / 0.14), transparent 70%),
+    radial-gradient(360px 300px at 80% 88%, rgb(157 141 255 / 0.14), transparent 70%);
+  --widget-texture: none;
+  --scrollbar-thumb: #f2c9e0;
+  --font-display: "Inter", "Noto Sans SC", "Microsoft YaHei UI", sans-serif;
+  --task-radius: 0.75rem;
+}
+
+/* 蒸汽波 · 深色 — 霓虹深紫夜色 + 网格地平线 + 粉青渐变 */
+.dark.skin-vapor {
+  --background: 267 61% 11%;
+  --foreground: 322 100% 96%;
+  --card: 265 60% 16%;
+  --card-foreground: 322 100% 96%;
+  --popover: 263 60% 20%;
+  --popover-foreground: 322 100% 96%;
+  --primary: 321 100% 72%;
+  --primary-foreground: 320 62% 10%;
+  --secondary: 262 57% 24%;
+  --secondary-foreground: 322 100% 96%;
+  --muted: 262 57% 24%;
+  --muted-foreground: 278 53% 74%;
+  --accent: 263 56% 28%;
+  --accent-foreground: 323 100% 80%;
+  --accent-2: 192 99% 50%;
+  --destructive: 349 100% 65%;
+  --destructive-foreground: 0 0% 100%;
+  --success: 172 96% 48%;
+  --warning: 50 100% 65%;
+  --border: 266 52% 39%;
+  --input: 266 52% 39%;
+  --ring: 321 100% 72%;
+  --radius: 0.375rem;
+  --day-outside: 263 60% 20%;
+  --day-today: 265 60% 16%;
+  --day-selected: 263 56% 28%;
+  --day-ring: 321 100% 72%;
+  --widget-bg: 265 60% 16%;
+  --header-foreground: 322 100% 96%;
+  --header-muted-foreground: 278 53% 74%;
+  --panel-foreground: 322 100% 96%;
+  --panel-muted-foreground: 278 53% 74%;
+  --widget-foreground: 322 100% 96%;
+  --widget-muted-foreground: 278 53% 74%;
+  --control-muted-foreground: 278 53% 74%;
+
+  --surface-raised: #241040;
+  --surface-subtle: #2b1450;
+  --surface-inset: #341a60;
+  --surface-hover: #3d1f6e;
+  --border-subtle: #3d1f6e;
+  --border-strong: #5b2f96;
+  --calendar-grid-bg: #3d1f6e;
+  --calendar-surface: #241040;
+  --cell-bg: #241040;
+  --cell-dim-bg: #2b1450;
+  --cell-today-bg: #241040;
+  --task-high-bg: rgb(255 77 109 / 0.12);
+  --task-high-fg: #ff4d6d;
+  --task-high-bar: #ff4d6d;
+  --task-medium-bg: rgb(255 225 77 / 0.10);
+  --task-medium-fg: #ffe14d;
+  --task-medium-bar: #ffe14d;
+  --task-low-bg: rgb(1 205 254 / 0.12);
+  --task-low-fg: #01cdfe;
+  --task-low-bar: #01cdfe;
+  --task-none-bg: rgb(199 155 224 / 0.10);
+  --task-none-fg: #c79be0;
+  --task-none-bar: #8a63b8;
+  --task-done-bg: rgb(5 242 210 / 0.10);
+  --task-done-fg: #05f2d2;
+  --task-done-bar: #05f2d2;
+  --task-failed-bg: rgb(255 77 109 / 0.15);
+  --task-failed-fg: #ff4d6d;
+  --task-failed-bar: #ff4d6d;
+  --checkin-bg: #2b1450;
+  --checkin-border: rgb(199 155 224 / 0.35);
+  --checkin-fg: #c79be0;
+  --accent-gradient: linear-gradient(135deg, #ff71ce, #01cdfe);
+  --progress-gradient: linear-gradient(90deg, #ff71ce, #01cdfe);
+  --control-bg: #341a60;
+  --control-hover-bg: #3d1f6e;
+  --control-fg: #ffe9f7;
+  --control-border: #5b2f96;
+  --header-bg: #1d0c36;
+  --header-border: #5b2f96;
+  --panel-bg: #2b1450;
+  --panel-border: #5b2f96;
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow-md: 0 5px 12px -4px rgb(0 0 0 / 0.5);
+  --shadow-lg: 0 10px 20px -8px rgb(0 0 0 / 0.55);
+  --shadow-xl: 0 18px 36px -12px rgb(0 0 0 / 0.6);
+  --shadow-raised: 0 1px 2px rgb(0 0 0 / 0.35);
+  --shadow-raised-hover: 0 4px 10px rgb(0 0 0 / 0.45), 0 0 10px rgb(255 113 206 / 0.2);
+  --shadow-inset: inset 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-float: 0 12px 32px rgb(0 0 0 / 0.55), 0 0 24px rgb(255 113 206 / 0.15);
+  --shadow-soft: 0 1px 3px rgb(0 0 0 / 0.35);
+  --shadow-glow: none;
+  --app-texture: linear-gradient(180deg, rgb(52 19 88 / 0.85), rgb(91 42 140 / 0.5)),
+    repeating-linear-gradient(90deg, rgb(1 205 254 / 0.1) 0 1px, transparent 1px 44px),
+    repeating-linear-gradient(0deg, rgb(1 205 254 / 0.08) 0 1px, transparent 1px 44px);
+  --widget-texture: none;
+  --scrollbar-thumb: #5b2f96;
+  --font-display: "Inter", "Noto Sans SC", "Microsoft YaHei UI", sans-serif;
+  --task-radius: 0.375rem;
+}
+
+/* ============================================================
    Tailwind 语义映射
    ============================================================ */
 @theme inline {

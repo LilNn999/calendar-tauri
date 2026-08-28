@@ -18,6 +18,7 @@ const SKIN_PREVIEWS: Record<Skin, string> = {
   'warm-wood': 'linear-gradient(135deg, #3a2818 0%, #c8a87e 48%, #f8f1e0 50%, #3a2818 100%)',
   cny: 'linear-gradient(135deg, #a02c2c 0%, #c02c38 48%, #f4e8cd 50%, #d9bd82 100%)',
   press: 'linear-gradient(135deg, #1a1a1a 0%, #4a463c 48%, #f9f7f1 50%, #b3261e 100%)',
+  vapor: 'linear-gradient(135deg, #1b0b2e 0%, #ff71ce 48%, #01cdfe 52%, #5b2a8c 100%)',
 }
 
 export function SkinSwitcher() {

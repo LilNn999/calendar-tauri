@@ -11,13 +11,14 @@ test('normalizeSkin 保留合法皮肤', () => {
 })
 
 test('SKIN_OPTIONS 包含全部目标皮肤', () => {
-  assert.equal(SKIN_OPTIONS.length, 5)
+  assert.equal(SKIN_OPTIONS.length, 6)
   assert.deepEqual(SKIN_OPTIONS.map((item) => item.value), [
-    'minimal', 'neu', 'warm-wood', 'cny', 'press',
+    'minimal', 'neu', 'warm-wood', 'cny', 'press', 'vapor',
   ])
 })
 
-test('normalizeSkin 保留新增的 cny 与 press', () => {
+test('normalizeSkin 保留新增的 cny、press 与 vapor', () => {
   assert.equal(normalizeSkin('cny'), 'cny')
   assert.equal(normalizeSkin('press'), 'press')
+  assert.equal(normalizeSkin('vapor'), 'vapor')
 })

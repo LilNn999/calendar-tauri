@@ -4,6 +4,7 @@ export type Skin =
   | 'warm-wood'
   | 'cny'
   | 'press'
+  | 'vapor'
 
 export interface SkinOption {
   value: Skin
@@ -17,6 +18,7 @@ export const SKIN_OPTIONS: SkinOption[] = [
   { value: 'warm-wood', label: '温暖原木', className: 'skin-warm-wood' },
   { value: 'cny', label: '新年中国红', className: 'skin-cny' },
   { value: 'press', label: '报纸印刷', className: 'skin-press' },
+  { value: 'vapor', label: '蒸汽波', className: 'skin-vapor' },
 ]
 
 const SKIN_VALUES = new Set<string>(SKIN_OPTIONS.map((item) => item.value))
