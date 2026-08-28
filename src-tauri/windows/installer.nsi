@@ -81,7 +81,8 @@ Var NoShortcutMode
 Var WixMode
 Var OldMainBinaryName
 
-Name "${PRODUCTNAME}"
+; 日历本地改动：窗口标题带版本号，便于区分正在运行的是哪个版本的安装包
+Name "${PRODUCTNAME} ${VERSION}"
 BrandingText "${COPYRIGHT}"
 OutFile "${OUTFILE}"
 

@@ -29,6 +29,7 @@
 - 模板校验：`diff --strip-trailing-cr` 对比 0.3.5 基线（`src-tauri/target/installer-baseline-0.3.5.nsi`），差异仅为模板头注释、版本号行与默认勾选逻辑三处，证明模板与 CLI 2.11.4 内嵌版本完全一致；生成脚本仍含 `Page custom PageReinstall`（L187）、`installer-hooks.nsh` include（L36）与 `NSIS_HOOK_PREINSTALL`（L647）。
 - 验证：`npm test` 7/7；`npm run build` 通过；`npm run tauri build` 成功；`dist` 无 `*.db`；`bundle.resources` 未配置。
 - 注意事项：GitHub raw 直连超时，模板改用 jsDelivr CDN（`cdn.jsdelivr.net/gh/tauri-apps/tauri@tauri-cli-v2.11.4/...`）下载；安装包已交付但未由代理启动，用户需在装有 0.3.5 的机器上实测升级流程（应默认勾选"不卸载直接安装"），测试窗口由用户自行打开。
+- **二次交付（2026-08-28 12:45）**：用户反馈升级页默认仍勾选"安装前卸载"。经三重实证排查（生成脚本 diff、静默探针实测 SemverCompare 返回 1 且分支判定 UPG:R3、页面控件探针实测 R3 勾选生效），确认首版 0.3.6 安装包逻辑正确，所截页面应来自旧版安装包运行实例。为彻底消除版本歧义，模板 `Name` 增加版本号（窗口标题显示"日历 0.3.6 安装"），同版本重新打包交付：大小 2,221,192 bytes，SHA256 `BE2E628A6BF0906B147BBC4D81A7DBC397AB2892438F4F321BD128753FD8213D`，覆盖 `安装包/日历_0.3.6_x64-setup.exe`（首版 SHA256 `7FC693018D86E0F9A8CA1063FE6FFA733F59E6CBDC47A168CC766EC6933A16AF` 作废）。升级页默认勾选行为两次交付一致。
 
 ## 2026-08-28 0.3.5 正式版
 
