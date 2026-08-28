@@ -12,6 +12,24 @@
 - 测试窗口规则：`启动测试窗口.bat` 使用 `scripts/check-test-build-stale.mjs` 自动判断源码/配置/dist 是否新于 release exe；如有更新，先执行 `npm run tauri build -- --no-bundle` 再启动最新测试版，禁止直接启动旧 exe。
 - Codex 内部验收必须主动执行 `npm run tauri build -- --no-bundle`，并确认 `node scripts/check-test-build-stale.mjs` 输出 `0`；此后用户直接打开 `启动测试窗口.bat` 应直接启动最新版，不得再次构建。
 
+## 2026-08-28 0.3.6 正式版
+
+- 时间：2026-08-28 12:16:36
+- 分支：`codex/release-0.3.4`
+- 提交：`6edadbf`（`release: 0.3.6 升级安装默认直接覆盖，不再默认卸载旧版`）
+- 版本：`0.3.6`
+- 命令：`npm run tauri build`
+- 构建结果：成功（退出码 0）
+- 安装包源文件：`src-tauri/target/release/bundle/nsis/日历_0.3.6_x64-setup.exe`
+- 已交付：`安装包/日历_0.3.6_x64-setup.exe`
+- 大小：2,221,576 bytes（约 2.1 MB）
+- SHA256：`7FC693018D86E0F9A8CA1063FE6FFA733F59E6CBDC47A168CC766EC6933A16AF`
+- 耗时：前端约 3.7 秒；Cargo release 约 1 分 30 秒；NSIS 打包成功。
+- 本次改动：引入自定义 NSIS 模板 `src-tauri/windows/installer.nsi`（基于 `tauri-cli-v2.11.4` 官方模板，经 jsDelivr CDN 下载，`bundle.windows.nsis.template` 启用），重装选择页在升级/降级时默认勾选"不卸载直接安装"（同版本重装保持原默认）；旧进程停止与安装目录清理仍由 `installer-hooks.nsh` 的 `NSIS_HOOK_PREINSTALL` 完成；版本号 0.3.5 → 0.3.6，公告与 CHANGELOG 同步。
+- 模板校验：`diff --strip-trailing-cr` 对比 0.3.5 基线（`src-tauri/target/installer-baseline-0.3.5.nsi`），差异仅为模板头注释、版本号行与默认勾选逻辑三处，证明模板与 CLI 2.11.4 内嵌版本完全一致；生成脚本仍含 `Page custom PageReinstall`（L187）、`installer-hooks.nsh` include（L36）与 `NSIS_HOOK_PREINSTALL`（L647）。
+- 验证：`npm test` 7/7；`npm run build` 通过；`npm run tauri build` 成功；`dist` 无 `*.db`；`bundle.resources` 未配置。
+- 注意事项：GitHub raw 直连超时，模板改用 jsDelivr CDN（`cdn.jsdelivr.net/gh/tauri-apps/tauri@tauri-cli-v2.11.4/...`）下载；安装包已交付但未由代理启动，用户需在装有 0.3.5 的机器上实测升级流程（应默认勾选"不卸载直接安装"），测试窗口由用户自行打开。
+
 ## 2026-08-28 0.3.5 正式版
 
 - 时间：2026-08-28 11:33:07
