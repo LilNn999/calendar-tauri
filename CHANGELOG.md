@@ -2,6 +2,16 @@
 
 本项目变更记录。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循语义化版本。
 
+## [0.3.6] — 2026-08-28
+
+### 优化
+- 升级安装默认直接覆盖：检测到已安装旧版本时，安装页面默认选中"不卸载直接安装"，旧进程停止与安装目录清理仍由安装器自动完成（`installer-hooks.nsh`），用户数据目录不受影响；用户仍可手动改选"卸载后安装"，同版本重装页保持原默认。
+
+### 构建
+- 版本号由 0.3.5 升级至 0.3.6（`package.json` / `package-lock.json` / `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` / `src-tauri/Cargo.lock` 同步）。
+- 引入自定义 NSIS 模板 `src-tauri/windows/installer.nsi`（基于 `tauri-cli-v2.11.4` 官方模板最小改动，经 `bundle.windows.nsis.template` 启用）：仅调整重装选择页的默认勾选项；升级 `@tauri-apps/cli` 时必须用对应 tag 重新同步模板，并通过构建后 diff 生成脚本核验。
+- 同步发布用户端更新公告（`src/data/whatsNew.ts`），首次启动 0.3.6 自动弹出。
+
 ## [0.3.5] — 2026-08-28
 
 ### 修复

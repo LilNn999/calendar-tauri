@@ -8,6 +8,13 @@ export interface VersionNote {
 /** 更新历史（最新版本在最前） */
 export const VERSION_NOTES: VersionNote[] = [
   {
+    version: '0.3.6',
+    date: '2026-08-28',
+    features: [
+      '升级安装更省心：检测到旧版本时默认直接覆盖安装并自动清理旧文件，不再默认先卸载（仍可手动选择先卸载）',
+    ],
+  },
+  {
     version: '0.3.5',
     date: '2026-08-28',
     fixes: [
