@@ -8,6 +8,15 @@ export interface VersionNote {
 /** 更新历史（最新版本在最前） */
 export const VERSION_NOTES: VersionNote[] = [
   {
+    version: '0.3.8',
+    date: '2026-08-28',
+    features: [
+      '新增蒸汽波皮肤：霓虹粉 × 电光蓝 × 深紫的复古未来感，支持浅色/深色',
+      '深色为霓虹深紫夜色配网格地平线，浅色为马卡龙粉紫青粉彩色盘',
+      '皮肤总数达到 6 款，均支持浅色/深色模式',
+    ],
+  },
+  {
     version: '0.3.7',
     date: '2026-08-28',
     features: [

@@ -2,6 +2,16 @@
 
 本项目变更记录。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循语义化版本。
 
+## [0.3.8] — 2026-08-28
+
+### 新增
+- 皮肤列表新增「蒸汽波 Vaporwave」（`skin-vapor`，取自 UI 画廊风格 35，含浅色/深色）：浅色为马卡龙粉紫青 pastel 色盘 + 三处柔光；深色为霓虹深紫夜色 + 电光蓝网格地平线 + 粉青渐变点缀（进度条与图表渐变同步粉青化）。
+- 涉及文件：`src/styles/globals.css`（新增 `.skin-vapor` / `.dark.skin-vapor` 两组变量）、`src/lib/skin.ts`（注册 `vapor`）、`src/components/layout/SkinSwitcher.tsx`（新增预览色卡）、`src/lib/skin.test.ts`（断言更新为 6 款皮肤）。
+
+### 构建
+- 版本号由 0.3.7 升级至 0.3.8（`package.json` / `package-lock.json` / `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` / `src-tauri/Cargo.lock` 同步）。
+- 同步发布用户端更新公告（`src/data/whatsNew.ts`），首次启动 0.3.8 自动弹出。
+
 ## [0.3.7] — 2026-08-28
 
 ### 新增
