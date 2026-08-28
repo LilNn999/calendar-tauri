@@ -96,7 +96,7 @@ npm run tauri build
 5. 安装包内禁止捆绑数据库、测试数据或任何用户数据：不要配置 `bundle.resources` 复制 `*.db`，构建后确认 `dist` 与安装包内不含数据库文件。
 6. 数据库必须分离：正式模式使用 `calendar.db`，测试模式使用 `test-calendar.db`，测试模式由 `CALENDAR_TEST_MODE=1` 触发，主窗口与悬浮窗必须使用同一选择逻辑，示例数据只由主窗口写入；测试模式不注册单实例，允许与正式版并行。
 7. 迭代升级安装包需停止旧进程并清空安装目录后写入新版本，避免残留旧版本文件；升级/卸载不得删除应用数据目录中的正式库。旧进程停止与目录清理由 `src-tauri/windows/installer-hooks.nsh` 的 `NSIS_HOOK_PREINSTALL` 完成，升级默认直接覆盖安装、不先卸载旧版（默认勾选项由自定义模板控制）。
-8. `src-tauri/windows/installer.nsi` 是基于官方 `tauri-cli-v2.11.4` tag 的自定义 NSIS 模板（仅改动重装选择页默认勾选项），经 `bundle.windows.nsis.template` 启用。升级 `@tauri-apps/cli` 时必须用对应 tag 重新拉取模板并重新应用改动；每次打包后 diff `src-tauri/target/release/nsis/x64/installer.nsi` 与上一版本基线，确认除预期改动外无其他差异。
+8. `src-tauri/windows/installer.nsi` 是基于官方 `tauri-cli-v2.11.4` tag 的自定义 NSIS 模板（改动：升级/降级页选项顺序与文案——第一行"覆盖旧版本并升级"默认勾选、第二行"安装前卸载"；窗口标题带版本号），经 `bundle.windows.nsis.template` 启用。升级 `@tauri-apps/cli` 时必须用对应 tag 重新拉取模板并重新应用改动；每次打包后 diff `src-tauri/target/release/nsis/x64/installer.nsi` 与上一版本基线，确认除预期改动外无其他差异。
 
 ## Rust 后端规范
 

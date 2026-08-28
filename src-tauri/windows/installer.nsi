@@ -1,7 +1,10 @@
 ; 日历项目自定义 NSIS 模板。
 ; 来源：https://github.com/tauri-apps/tauri/blob/tauri-cli-v2.11.4/crates/tauri-bundler/src/bundle/windows/nsis/installer.nsi
-; 本地改动（仅一处）：PageReinstall 中升级/降级默认勾选"不卸载直接安装"，同版本重装保持原默认。
-; 维护约定：升级 @tauri-apps/cli 时必须用对应 tag 重新拉取本模板并重新应用该改动，
+; 本地改动：
+;   1. 升级/降级页选项顺序对调：第一行"覆盖旧版本并升级"（默认勾选，直接覆盖不卸载），第二行"安装前卸载"；
+;      同版本重装页保持原样（第一行"添加/重新安装组件"，第二行"卸载 应用"）。
+;   2. 窗口标题带版本号，便于区分正在运行的安装包版本。
+; 维护约定：升级 @tauri-apps/cli 时必须用对应 tag 重新拉取本模板并重新应用上述改动，
 ; 构建后 diff target/release/nsis/x64/installer.nsi 与旧版基线确认无其他差异。
 Unicode true
 ManifestDPIAware true
@@ -190,6 +193,10 @@ VIAddVersionKey "ProductVersion" "${VERSION}"
 ; 4. Custom page to ask user if he wants to reinstall/uninstall
 ;    only if a previous installation was detected
 Var ReinstallPageCheck
+
+; 日历本地改动：升级/降级页第一行选项的自定义文案
+LangString coverUpgrade 1033 "Overwrite old version and upgrade"
+LangString coverUpgrade 2052 "覆盖旧版本并升级"
 Page custom PageReinstall PageLeaveReinstall
 Function PageReinstall
   ; Uninstall previous WiX installation if exists.
@@ -247,17 +254,18 @@ Function PageReinstall
   ; Upgrading
   ${ElseIf} $R0 = 1
     StrCpy $R1 "$(olderOrUnknownVersionInstalled)"
-    StrCpy $R2 "$(uninstallBeforeInstalling)"
-    StrCpy $R3 "$(dontUninstall)"
+    ; 日历本地改动：第一行"覆盖旧版本并升级"，第二行"安装前卸载"
+    StrCpy $R2 "$(coverUpgrade)"
+    StrCpy $R3 "$(uninstallBeforeInstalling)"
     !insertmacro MUI_HEADER_TEXT "$(alreadyInstalled)" "$(choowHowToInstall)"
   ; Downgrading
   ${ElseIf} $R0 = -1
     StrCpy $R1 "$(newerVersionInstalled)"
-    StrCpy $R2 "$(uninstallBeforeInstalling)"
+    StrCpy $R2 "$(coverUpgrade)"
     !if "${ALLOWDOWNGRADES}" == "true"
-      StrCpy $R3 "$(dontUninstall)"
+      StrCpy $R3 "$(uninstallBeforeInstalling)"
     !else
-      StrCpy $R3 "$(dontUninstallDowngrade)"
+      StrCpy $R3 "$(uninstallBeforeInstalling)"
     !endif
     !insertmacro MUI_HEADER_TEXT "$(alreadyInstalled)" "$(choowHowToInstall)"
   ${Else}
@@ -287,29 +295,20 @@ Function PageReinstall
     ${NSD_CreateRadioButton} 30u 70u -30u 8u $R3
     Pop $R3
     ; Disable this radio button if downgrading and downgrades are disabled
+    ; 日历本地改动：对调后"覆盖旧版本并升级"位于第一行（$R2），禁用它以强制走卸载路径
     !if "${ALLOWDOWNGRADES}" == "false"
-      ${IfThen} $R0 = -1 ${|} EnableWindow $R3 0 ${|}
+      ${IfThen} $R0 = -1 ${|} EnableWindow $R2 0 ${|}
     !endif
     ${NSD_OnClick} $R3 PageReinstallUpdateSelection
 
-    ; 日历本地改动（基于 tauri-cli-v2.11.4 官方模板）：
-    ; $R0 为 SemverCompare 结果（0=同版本 1=升级 -1=降级）。
-    ; 升级/降级默认勾选"不卸载直接安装"($R3)；同版本重装保持原默认"添加或重新安装"($R2)。
-    ${If} $R0 = 0
-      ${If} $ReinstallPageCheck <> 2
-        SendMessage $R2 ${BM_SETCHECK} ${BST_CHECKED} 0
-      ${Else}
-        SendMessage $R3 ${BM_SETCHECK} ${BST_CHECKED} 0
-      ${EndIf}
-      ${NSD_SetFocus} $R2
+    ; 日历本地改动：各分支第一行（$R2）均为推荐项，默认勾选第一行
+    ${If} $ReinstallPageCheck <> 2
+      SendMessage $R2 ${BM_SETCHECK} ${BST_CHECKED} 0
     ${Else}
-      ${If} $ReinstallPageCheck = 1
-        SendMessage $R2 ${BM_SETCHECK} ${BST_CHECKED} 0
-      ${Else}
-        SendMessage $R3 ${BM_SETCHECK} ${BST_CHECKED} 0
-      ${EndIf}
-      ${NSD_SetFocus} $R3
+      SendMessage $R3 ${BM_SETCHECK} ${BST_CHECKED} 0
     ${EndIf}
+
+    ${NSD_SetFocus} $R2
     nsDialogs::Show
   ${EndIf}
 FunctionEnd
@@ -345,16 +344,18 @@ Function PageLeaveReinstall
       Goto reinst_uninstall
     ${EndIf}
   ${ElseIf} $R0 = 1 ; Upgrading
-    ${If} $R1 = 1              ; User chose to uninstall
+    ; 日历本地改动：$R1=1 表示第一行"覆盖旧版本并升级"被选中 → 直接覆盖安装
+    ${If} $R1 = 1
+      Goto reinst_done
+    ${Else}                    ; User chose uninstall
       Goto reinst_uninstall
-    ${Else}
-      Goto reinst_done         ; User chose NOT to uninstall
     ${EndIf}
   ${ElseIf} $R0 = -1 ; Downgrading
-    ${If} $R1 = 1              ; User chose to uninstall
-      Goto reinst_uninstall
+    ; 日历本地改动：同升级，第一行为"覆盖旧版本并升级"
+    ${If} $R1 = 1
+      Goto reinst_done
     ${Else}
-      Goto reinst_done         ; User chose NOT to uninstall
+      Goto reinst_uninstall
     ${EndIf}
   ${EndIf}
 
