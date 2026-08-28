@@ -788,7 +788,13 @@ class SqliteDb implements Db {
         await this.db.execute(`INSERT INTO subtasks (taskId, title, sortOrder, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?)`, [id, payload.subtasks[i], i, ts, ts]);
       }
     }
-    return (await this.getTaskById(id))!;
+    const task = (await this.getTaskById(id))!;
+    if (payload.subtasks?.length) {
+      // 返回值必须带上子任务：store 会直接使用该对象渲染，否则新建任务的子任务在下次整体刷新前不显示
+      const rows = await this.db.select<SqlRow[]>(`SELECT * FROM subtasks WHERE taskId = ? ORDER BY sortOrder ASC`, [id]);
+      task.subtasks = rows.map(mapSubtaskRow);
+    }
+    return task;
   }
 
   private async getTaskById(id: number): Promise<Task | null> {
@@ -1295,9 +1301,14 @@ class MemoryDb implements Db {
       updatedAt: ts,
     };
     this.tasks.push(task);
-    payload.subtasks?.forEach((title, i) => {
-      this.subtasks.push({ id: this.nid(), taskId: task.id, title, sortOrder: i, createdAt: ts, updatedAt: ts });
-    });
+    if (payload.subtasks?.length) {
+      // 与 SQLite 版保持一致：返回值带上子任务，避免新建任务在 UI 上看不到子任务
+      task.subtasks = payload.subtasks.map((title, i) => {
+        const st: Subtask = { id: this.nid(), taskId: task.id, title, sortOrder: i, createdAt: ts, updatedAt: ts };
+        this.subtasks.push(st);
+        return { ...st };
+      });
+    }
     return task;
   }
 

@@ -8,6 +8,14 @@ export interface VersionNote {
 /** 更新历史（最新版本在最前） */
 export const VERSION_NOTES: VersionNote[] = [
   {
+    version: '0.3.5',
+    date: '2026-08-28',
+    fixes: [
+      '修复新建任务时添加的子任务不显示的问题，现在创建后立即显示（历史任务的子任务不受影响）',
+      '修复在子任务输入框按回车会直接创建任务的问题，回车现在确认当前子任务并自动开始下一条',
+    ],
+  },
+  {
     version: '0.3.4',
     date: '2026-08-27',
     fixes: [
