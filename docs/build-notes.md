@@ -12,6 +12,24 @@
 - 测试窗口规则：`启动测试窗口.bat` 使用 `scripts/check-test-build-stale.mjs` 自动判断源码/配置/dist 是否新于 release exe；如有更新，先执行 `npm run tauri build -- --no-bundle` 再启动最新测试版，禁止直接启动旧 exe。
 - Codex 内部验收必须主动执行 `npm run tauri build -- --no-bundle`，并确认 `node scripts/check-test-build-stale.mjs` 输出 `0`；此后用户直接打开 `启动测试窗口.bat` 应直接启动最新版，不得再次构建。
 
+## 2026-08-28 0.3.7 正式版
+
+- 时间：2026-08-28 15:52:38
+- 分支：`codex/release-0.3.4`
+- 提交：`43329b3`（`release: 0.3.7 新增新年中国红与报纸印刷皮肤`，前置功能提交 `02a96f0`）
+- 版本：`0.3.7`
+- 命令：`npm run tauri build`
+- 构建结果：成功（退出码 0）
+- 安装包源文件：`src-tauri/target/release/bundle/nsis/日历_0.3.7_x64-setup.exe`
+- 已交付：`安装包/日历_0.3.7_x64-setup.exe`
+- 大小：2,223,422 bytes（约 2.1 MB）
+- SHA256：`B8901E643901DB835BE1ECA3B79A21EF1F2FCBE7225A6C96BB530C99995D61C3`
+- 耗时：前端约 3.9 秒；Cargo release 约 1 分 58 秒；NSIS 打包成功。
+- 本次改动：皮肤列表新增两款（含浅色/深色）——新年中国红（`skin-cny`，象牙纸底 + 朱红鎏金，深色朱漆夜宴）与报纸印刷（`skin-press`，新闻纸米白 + 衬线墨黑，深色油墨夜报），取自 UI 画廊风格 13 与风格 30；版本号 0.3.6 → 0.3.7，公告与 CHANGELOG 同步。
+- 模板校验：`diff --strip-trailing-cr` 对比 0.3.5 官方基线（`src-tauri/target/installer-baseline-0.3.5.nsi`），共 55 行差异，全部为既有自定义改动（模板头注释、版本号 define、窗口标题带版本、`coverUpgrade` 文案、升级/降级页选项对调与默认勾选逻辑、降级禁用项 $R3→$R2）及 `ESTIMATEDSIZE` 5038→5039（体积正常波动），无其他差异；生成脚本仍含 `installer-hooks.nsh` include 与 `NSIS_HOOK_PREINSTALL`。
+- 验证：`npm test` 8/8；`npm run build` 通过；`npm run tauri build` 成功；`dist` 无 `*.db`；`bundle.resources` 未配置。
+- 注意事项：安装包已交付但未由代理启动，用户自行双击安装测试（可在设置→换肤中查看 5 款皮肤的浅色/深色效果）；测试窗口由用户自行打开；本次随发布一并推送码云（含 0.3.6 遗留未推送提交 `f0a9c8a`）。
+
 ## 2026-08-28 0.3.6 正式版
 
 - 时间：2026-08-28 12:16:36
