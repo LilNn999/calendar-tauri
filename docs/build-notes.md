@@ -12,6 +12,23 @@
 - 测试窗口规则：`启动测试窗口.bat` 使用 `scripts/check-test-build-stale.mjs` 自动判断源码/配置/dist 是否新于 release exe；如有更新，先执行 `npm run tauri build -- --no-bundle` 再启动最新测试版，禁止直接启动旧 exe。
 - Codex 内部验收必须主动执行 `npm run tauri build -- --no-bundle`，并确认 `node scripts/check-test-build-stale.mjs` 输出 `0`；此后用户直接打开 `启动测试窗口.bat` 应直接启动最新版，不得再次构建。
 
+## 2026-08-28 0.3.5 正式版
+
+- 时间：2026-08-28 11:33:07
+- 分支：`codex/release-0.3.4`
+- 提交：`8650547`（`release: 0.3.5 修复新建任务子任务不显示与回车误提交`）
+- 版本：`0.3.5`
+- 命令：`npm run tauri build`
+- 构建结果：成功（退出码 0）
+- 安装包源文件：`src-tauri/target/release/bundle/nsis/日历_0.3.5_x64-setup.exe`
+- 已交付：`安装包/日历_0.3.5_x64-setup.exe`
+- 大小：2,221,137 bytes（约 2.1 MB）
+- SHA256：`3D7C520940E1929523B73567880CEA6F302197519AD8BF62B8E6AEFEB301DEE6`
+- 耗时：前端约 3.4 秒；Cargo release 约 1 分 38 秒；NSIS 打包成功。
+- 本次改动：修复新建任务后子任务不显示的问题（`createTask` 返回值补带 `subtasks`，SQLite 与内存降级实现同步修复）；修复子任务输入框按回车误提交整个表单的问题，回车改为确认当前条目并自动追加下一行；应用公告与版本号同步更新至 0.3.5。
+- 验证：`npm test` 7/7；`npm run build` 通过；`npm run tauri build` 成功；`dist` 无 `*.db`；`bundle.resources` 未配置。
+- 注意事项：安装包已交付但未由代理启动，用户自行双击安装并测试，测试窗口也由用户自行打开。
+
 ## 2026-08-27 0.3.4 正式版
 
 - 时间：2026-08-27 17:24:59
