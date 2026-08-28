@@ -2,6 +2,18 @@
 
 本项目变更记录。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循语义化版本。
 
+## [0.3.7] — 2026-08-28
+
+### 新增
+- 皮肤列表新增两款（均含浅色/深色双模式，取自 UI 画廊风格 13「新年中国红」与风格 30「报纸印刷」）：
+  - 新年中国红（`skin-cny`）：浅色为象牙纸底 + 朱红鎏金、宋体标题、红金渐变标题栏；深色为朱漆夜宴檀木黑底，页面带朱红/鎏金氛围光。
+  - 报纸印刷（`skin-press`）：浅色为新闻纸米白 + 衬线字体 + 墨黑主色、锐利小圆角，红色仅作点缀；深色为油墨黑纸面 + 象牙白铅字、象牙色标题栏分割线。
+- 涉及文件：`src/styles/globals.css`（新增 `.skin-cny` / `.dark.skin-cny` / `.skin-press` / `.dark.skin-press` 四组变量）、`src/lib/skin.ts`（注册 `cny`、`press`）、`src/components/layout/SkinSwitcher.tsx`（新增两张预览色卡）、`src/lib/skin.test.ts`（断言更新为 5 款皮肤）。
+
+### 构建
+- 版本号由 0.3.6 升级至 0.3.7（`package.json` / `package-lock.json` / `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` / `src-tauri/Cargo.lock` 同步）。
+- 同步发布用户端更新公告（`src/data/whatsNew.ts`），首次启动 0.3.7 自动弹出。
+
 ## [0.3.6] — 2026-08-28
 
 ### 优化

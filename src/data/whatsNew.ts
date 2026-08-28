@@ -8,6 +8,15 @@ export interface VersionNote {
 /** 更新历史（最新版本在最前） */
 export const VERSION_NOTES: VersionNote[] = [
   {
+    version: '0.3.7',
+    date: '2026-08-28',
+    features: [
+      '新增两款皮肤：新年中国红、报纸印刷，均支持浅色/深色模式',
+      '新年中国红：浅色象牙纸底配朱红鎏金，深色朱漆夜宴檀木黑底',
+      '报纸印刷：浅色新闻纸米白配衬线标题，深色油墨黑纸面配象牙铅字',
+    ],
+  },
+  {
     version: '0.3.6',
     date: '2026-08-28',
     features: [
