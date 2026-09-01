@@ -12,6 +12,24 @@
 - 测试窗口规则：`启动测试窗口.bat` 使用 `scripts/check-test-build-stale.mjs` 自动判断源码/配置/dist 是否新于 release exe；如有更新，先执行 `npm run tauri build -- --no-bundle` 再启动最新测试版，禁止直接启动旧 exe。
 - Codex 内部验收必须主动执行 `npm run tauri build -- --no-bundle`，并确认 `node scripts/check-test-build-stale.mjs` 输出 `0`；此后用户直接打开 `启动测试窗口.bat` 应直接启动最新版，不得再次构建。
 
+## 2026-09-01 0.3.9 正式版
+
+- 时间：2026-09-01 09:04:00
+- 分支：`codex/release-0.3.4`
+- 提交：见下（`fix: 编辑任务弹窗展示子任务完成状态并可切换` + `release: 0.3.9 修复编辑任务弹窗子任务完成状态展示` + `docs: 记录 0.3.9 构建信息`）
+- 版本：`0.3.9`
+- 命令：`npm run tauri build`
+- 构建结果：成功（退出码 0）
+- 安装包源文件：`src-tauri/target/release/bundle/nsis/日历_0.3.9_x64-setup.exe`
+- 已交付：`安装包/日历_0.3.9_x64-setup.exe`
+- 大小：2,223,990 bytes（约 2.1 MB）
+- SHA256：`2c37c67dbaca1b5fd7ad8d299dc3e0f952fdc7133ca0b47970226cf97fe59377`
+- 耗时：前端约 3.9 秒；Cargo release 约 1 分 52 秒；NSIS 打包成功。
+- 本次改动：修复编辑任务弹窗中子任务不展示完成状态的问题——子任务项前新增勾选框（绿色勾选 + 删除线置灰，与日历/侧边栏样式一致），可点击切换，保存时经 `toggleSubtask` 按任务原截止日期同步 `subtask_occurrences`；新建任务时子任务未持久化不显示勾选框；版本号 0.3.8 → 0.3.9，公告与 CHANGELOG 同步。
+- 模板校验：`diff --strip-trailing-cr` 对比 0.3.5 官方基线共 55 行差异，与 0.3.8 构建完全一致（均为既有自定义改动与版本号/ESTIMATEDSIZE 行，`ESTIMATEDSIZE` 5041 正常波动），无新增差异；`NSIS_HOOK_PREINSTALL` 在位。
+- 验证：`npm test` 8/8；`npm run build` 通过；`npm run tauri build` 成功；`dist` 无 `*.db`；`bundle.resources` 未配置。
+- 注意事项：打包前旧版 `calendar-tauri.exe`（主窗口 + 悬浮窗两个进程）正在运行导致首次构建失败（os error 5 拒绝访问），已结束进程后重试成功；安装包未由代理启动，用户自行双击安装测试；本次发布完成后分支与 main 同步合并并推送码云。
+
 ## 2026-08-28 0.3.8 正式版
 
 - 时间：2026-08-28 16:30:50
