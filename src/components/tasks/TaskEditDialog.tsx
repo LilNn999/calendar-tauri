@@ -33,13 +33,15 @@ export function TaskEditDialog({
   occurrenceDate,
   onAfterChange,
 }: TaskEditDialogProps) {
-  const { updateTask, deleteTask, skipOccurrence, deleteFromDate, detachOccurrence, splitFromDate, updateSubtasks } = useTaskStore()
+  const { updateTask, deleteTask, skipOccurrence, deleteFromDate, detachOccurrence, splitFromDate, updateSubtasks, toggleSubtask } = useTaskStore()
 
   const [title, setTitle] = useState('')
   const [date, setDate] = useState('')
   const [priority, setPriority] = useState<Priority>('none')
   const [notes, setNotes] = useState('')
   const [subtasks, setSubtasks] = useState<SubtaskInputItem[]>([])
+  // 打开弹窗时的子任务完成状态快照，保存时仅同步发生变化的项
+  const initialCompletedRef = useRef<Map<number, boolean>>(new Map())
   const [recurrenceType, setRecurrenceType] = useState<RecurrenceType | ''>('')
   const [recurrenceEnd, setRecurrenceEnd] = useState('')
   const [loading, setLoading] = useState(false)
@@ -57,7 +59,8 @@ export function TaskEditDialog({
       setDate(task.dueDate)
       setPriority(task.priority as Priority)
       setNotes(task.notes ?? '')
-      setSubtasks(task.subtasks?.map((s) => ({ id: s.id, title: s.title })) ?? [])
+      setSubtasks(task.subtasks?.map((s) => ({ id: s.id, title: s.title, isCompleted: s.isCompleted ?? false })) ?? [])
+      initialCompletedRef.current = new Map(task.subtasks?.map((s) => [s.id, s.isCompleted ?? false]) ?? [])
       setRecurrenceType((task.recurrenceType as RecurrenceType | '') ?? '')
       setRecurrenceEnd(task.recurrenceEnd ?? '')
     }
@@ -99,6 +102,14 @@ export function TaskEditDialog({
           .map((s) => ({ id: s.id, title: s.title.trim() }))
           .filter((s) => s.title.length > 0)
       )
+      // 同步子任务完成状态变化（完成状态按日期记录，对应任务原截止日期）
+      for (const s of subtasks) {
+        if (!s.id || !initialCompletedRef.current.has(s.id)) continue
+        const now = !!s.isCompleted
+        if (initialCompletedRef.current.get(s.id) !== now) {
+          await toggleSubtask(s.id, task.dueDate, now)
+        }
+      }
       closeMain()
       onAfterChange?.()
     } finally {

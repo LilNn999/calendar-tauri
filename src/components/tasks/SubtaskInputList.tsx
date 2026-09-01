@@ -1,9 +1,12 @@
 import { useRef } from 'react'
-import { Plus, X } from 'lucide-react'
+import { Check, Plus, X } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export interface SubtaskInputItem {
   id?: number
   title: string
+  /** 打开弹窗时按日期注入的完成状态，可点击切换，保存时同步 */
+  isCompleted?: boolean
 }
 
 interface SubtaskInputListProps {
@@ -18,6 +21,11 @@ export function SubtaskInputList({ value, onChange, placeholder = '子任务…'
   const updateAt = (i: number, title: string) => {
     const next = [...value]
     next[i] = { ...next[i], title }
+    onChange(next)
+  }
+  const toggleAt = (i: number) => {
+    const next = [...value]
+    next[i] = { ...next[i], isCompleted: !next[i].isCompleted }
     onChange(next)
   }
   const removeAt = (i: number) => {
@@ -41,13 +49,32 @@ export function SubtaskInputList({ value, onChange, placeholder = '子任务…'
       <label className="text-xs text-muted-foreground">子任务</label>
       {value.map((item, i) => (
         <div key={i} className="flex items-center gap-1.5">
+          {/* 仅已持久化的子任务有完成状态（完成状态按日期记录，新建时不存在） */}
+          {item.id != null && (
+            <button
+              type="button"
+              onClick={() => toggleAt(i)}
+              title={item.isCompleted ? '标记未完成' : '标记完成'}
+              className={cn(
+                'shrink-0 h-3.5 w-3.5 rounded-[3px] border flex items-center justify-center transition-colors',
+                item.isCompleted
+                  ? 'bg-success border-success'
+                  : 'border-current bg-current/10 hover:border-primary'
+              )}
+            >
+              {item.isCompleted && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3.5} />}
+            </button>
+          )}
           <input
             ref={(el) => { inputRefs.current[i] = el }}
             value={item.title}
             onChange={(e) => updateAt(i, e.target.value)}
             onKeyDown={(e) => handleKeyDown(i, e)}
             placeholder={placeholder}
-            className="flex-1 rounded-xl border border-input bg-card/60 px-2.5 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground transition-colors hover:border-primary/40"
+            className={cn(
+              'flex-1 rounded-xl border border-input bg-card/60 px-2.5 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground transition-colors hover:border-primary/40',
+              item.isCompleted && 'line-through text-muted-foreground'
+            )}
           />
           <button
             type="button"
