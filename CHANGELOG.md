@@ -2,6 +2,15 @@
 
 本项目变更记录。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循语义化版本。
 
+## [0.3.9] — 2026-09-01
+
+### 修复
+- 编辑任务弹窗中子任务不展示完成状态：子任务项前新增勾选框（绿色勾选 + 删除线置灰，样式与日历/侧边栏一致），可点击切换，保存时通过 `toggleSubtask` 按任务原截止日期同步到 `subtask_occurrences`；新建任务时的子任务因尚未持久化不显示勾选框。涉及文件：`src/components/tasks/SubtaskInputList.tsx`、`src/components/tasks/TaskEditDialog.tsx`。
+
+### 构建
+- 版本号由 0.3.8 升级至 0.3.9（`package.json` / `package-lock.json` / `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` / `src-tauri/Cargo.lock` 同步）。
+- 同步发布用户端更新公告（`src/data/whatsNew.ts`），首次启动 0.3.9 自动弹出。
+
 ## [0.3.8] — 2026-08-28
 
 ### 新增

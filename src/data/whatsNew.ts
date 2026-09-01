@@ -8,6 +8,14 @@ export interface VersionNote {
 /** 更新历史（最新版本在最前） */
 export const VERSION_NOTES: VersionNote[] = [
   {
+    version: '0.3.9',
+    date: '2026-09-01',
+    fixes: [
+      '修复编辑任务弹窗中已完成的子任务不展示完成状态的问题，现在会显示绿色勾选和删除线',
+      '编辑弹窗中子任务支持直接勾选/取消完成，点击保存后生效',
+    ],
+  },
+  {
     version: '0.3.8',
     date: '2026-08-28',
     features: [
