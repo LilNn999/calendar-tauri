@@ -8,6 +8,14 @@ export interface VersionNote {
 /** 更新历史（最新版本在最前） */
 export const VERSION_NOTES: VersionNote[] = [
   {
+    version: '0.3.11',
+    date: '2026-09-02',
+    fixes: [
+      '修复子任务拖拽到列表最上方或最下方时无法正常落位的问题，现在首尾位置可以正常放置',
+      '优化拖拽到首尾时的排序动画，被拖动行不再与首尾行重合',
+    ],
+  },
+  {
     version: '0.3.10',
     date: '2026-09-02',
     features: [

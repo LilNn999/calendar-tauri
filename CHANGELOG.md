@@ -2,6 +2,16 @@
 
 本项目变更记录。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循语义化版本。
 
+## [0.3.11] — 2026-09-02
+
+### 修复
+- 拖拽排序无法直达列表首尾位置：此前拖拽位移钳制在首/末行中线处，而落点判定要求行中线严格越过阈值，导致拖到最上/最下时永远差一点触发不了——其余行不让位（无排序动画）且被拖行与首/末行重合。现改为按行边缘钳制并留 2px 越界余量，首尾落点可正常触发，被拖行贴合目标槽位。涉及文件：`src/components/tasks/SubtaskInputList.tsx`。
+
+### 构建
+- 版本号由 0.3.10 升级至 0.3.11（`package.json` / `package-lock.json` / `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` / `src-tauri/Cargo.lock` 同步）。
+- 同步发布用户端更新公告（`src/data/whatsNew.ts`），首次启动 0.3.11 自动弹出。
+- 说明：该修复此前曾以 0.3.10 二次交付（见 `docs/build-notes.md`），现随 0.3.11 正式发布。
+
 ## [0.3.10] — 2026-09-02
 
 ### 新增
@@ -9,7 +19,6 @@
 
 ### 修复
 - 编辑循环任务时不显示子任务：`TaskEditDialog` 此前在循环任务模式下隐藏了子任务区块，且循环保存路径（仅此次/此后全部）不处理子任务。现循环任务编辑弹窗同样展示子任务列表（可勾选、可拖拽排序），保存时随所选范围应用：「仅此次」拆出的单次任务带上编辑后的子任务及当天勾选状态；「此后全部」新序列带上子任务，并按原子任务 id 把起始日期之后的完成记录迁移到新序列（保留历史进度，当天以弹窗状态为准）；起始日当天选「此后全部」时为同序列原地更新（按 id 保留完成记录）。涉及文件：`src/components/tasks/TaskEditDialog.tsx`、`src/store/useTaskStore.ts`、`src/api/index.ts`、`src/lib/db.ts`、`src/shared/types.ts`（新增 `SubtaskPatchItem`）。
-- 拖拽排序无法直达列表首尾位置：此前拖拽位移钳制在首/末行中线处，而落点判定要求行中线严格越过阈值，导致拖到最上/最下时永远差一点触发不了——其余行不让位（无排序动画）且被拖行与首/末行重合。现改为按行边缘钳制并留 2px 越界余量，首尾落点可正常触发，被拖行贴合目标槽位。涉及文件：`src/components/tasks/SubtaskInputList.tsx`。
 
 ### 构建
 - 版本号由 0.3.9 升级至 0.3.10（`package.json` / `package-lock.json` / `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` / `src-tauri/Cargo.lock` 同步）。

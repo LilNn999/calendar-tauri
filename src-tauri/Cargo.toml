@@ -1,6 +1,6 @@
 [package]
 name = "calendar-tauri"
-version = "0.3.10"
+version = "0.3.11"
 description = "日历 · 任务 · 打卡 —— 本地优先的桌面日历应用"
 authors = ["Calendar Team"]
 edition = "2021"
