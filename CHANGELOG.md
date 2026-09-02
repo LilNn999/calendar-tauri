@@ -2,6 +2,11 @@
 
 本项目变更记录。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循语义化版本。
 
+## [未发布]
+
+### 新增
+- 打卡项支持删除：此前打卡项没有任何可用的删除入口（带归档按钮的打卡组件管理器从未接入界面）。现打卡值编辑弹窗（日历格子点击打卡项弹出，四种类型共用）底部新增「删除打卡」按钮；日历详情弹窗内各打卡行悬停显示垃圾桶按钮可直接删除。开关/数值/文字/时间四种类型全部覆盖，删除采用既有归档机制（列表与当日弹窗立即移除，历史打卡记录保留在库中）。涉及文件：`src/components/checkins/CheckinValueDialog.tsx`、`BooleanCheckin.tsx`、`NumericCheckin.tsx`、`TimeCheckin.tsx`、`TextCheckin.tsx`、`src/components/calendar/DayDetailPopup.tsx`。
+
 ## [0.4.1] — 2026-09-02
 
 ### 修复

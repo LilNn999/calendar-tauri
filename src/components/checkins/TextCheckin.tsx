@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { Trash2 } from 'lucide-react'
 import { Textarea } from '@/components/ui/textarea'
 import type { CheckinDefinition } from '@shared/types'
 
@@ -6,9 +7,11 @@ interface TextCheckinProps {
   definition: CheckinDefinition
   value: string
   onChange: (value: string) => void
+  /** 悬停显示的删除按钮（归档该打卡） */
+  onDelete?: () => void
 }
 
-export function TextCheckin({ definition, value, onChange }: TextCheckinProps) {
+export function TextCheckin({ definition, value, onChange, onDelete }: TextCheckinProps) {
   const [local, setLocal] = useState(value)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -30,8 +33,19 @@ export function TextCheckin({ definition, value, onChange }: TextCheckinProps) {
   }
 
   return (
-    <div className="flex flex-col gap-1">
-      <span className="text-xs text-muted-foreground">{definition.name}</span>
+    <div className="group flex flex-col gap-1">
+      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+        <span className="flex-1">{definition.name}</span>
+        {onDelete && (
+          <button
+            onClick={onDelete}
+            title="删除该打卡"
+            className="shrink-0 h-5 w-5 flex items-center justify-center rounded-full text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <Trash2 className="h-3 w-3" />
+          </button>
+        )}
+      </div>
       <Textarea
         value={local}
         onChange={(e) => handleChange(e.target.value)}

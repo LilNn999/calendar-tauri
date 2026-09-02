@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react'
+import { Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import type { CheckinDefinition } from '@shared/types'
 
@@ -6,9 +7,11 @@ interface NumericCheckinProps {
   definition: CheckinDefinition
   value: string
   onChange: (value: string) => void
+  /** 悬停显示的删除按钮（归档该打卡） */
+  onDelete?: () => void
 }
 
-export function NumericCheckin({ definition, value, onChange }: NumericCheckinProps) {
+export function NumericCheckin({ definition, value, onChange, onDelete }: NumericCheckinProps) {
   const [local, setLocal] = useState(value)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -34,7 +37,7 @@ export function NumericCheckin({ definition, value, onChange }: NumericCheckinPr
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="group flex items-center gap-2">
       <span className="text-sm flex-1 text-foreground">{definition.name}</span>
       <div className="flex items-center gap-1">
         <Input
@@ -50,6 +53,15 @@ export function NumericCheckin({ definition, value, onChange }: NumericCheckinPr
           <span className="text-xs text-muted-foreground w-6">{definition.unit}</span>
         )}
       </div>
+      {onDelete && (
+        <button
+          onClick={onDelete}
+          title="删除该打卡"
+          className="shrink-0 h-6 w-6 flex items-center justify-center rounded-full text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
   )
 }

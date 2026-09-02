@@ -1,14 +1,16 @@
 import { useState, useRef } from 'react'
-import { Clock } from 'lucide-react'
+import { Clock, Trash2 } from 'lucide-react'
 import type { CheckinDefinition } from '@shared/types'
 
 interface TimeCheckinProps {
   definition: CheckinDefinition
   value: string
   onChange: (value: string) => void
+  /** 悬停显示的删除按钮（归档该打卡） */
+  onDelete?: () => void
 }
 
-export function TimeCheckin({ definition, value, onChange }: TimeCheckinProps) {
+export function TimeCheckin({ definition, value, onChange, onDelete }: TimeCheckinProps) {
   const [local, setLocal] = useState(value)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -28,9 +30,18 @@ export function TimeCheckin({ definition, value, onChange }: TimeCheckinProps) {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+      <div className="group flex items-center gap-1 text-xs text-muted-foreground">
         <Clock className="h-3 w-3" />
-        <span>{definition.name}</span>
+        <span className="flex-1">{definition.name}</span>
+        {onDelete && (
+          <button
+            onClick={onDelete}
+            title="删除该打卡"
+            className="shrink-0 h-5 w-5 flex items-center justify-center rounded-full text-muted-foreground/50 hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <Trash2 className="h-3 w-3" />
+          </button>
+        )}
       </div>
       <div className="relative">
         <input

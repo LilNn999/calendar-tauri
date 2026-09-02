@@ -31,7 +31,7 @@ interface DayDetailPopupProps {
 
 export function DayDetailPopup({ date, definitions, onClose, onTaskToggle, onAfterTaskChange }: DayDetailPopupProps) {
   const { tasks: allTasks, deleteTask, skipOccurrence, deleteFromDate, deleteBeforeDate, createTask, toggleSubtask } = useTaskStore()
-  const { getEntriesForDate, upsertEntry } = useCheckinStore()
+  const { getEntriesForDate, upsertEntry, archiveDefinition } = useCheckinStore()
   const { upsertNote } = useNotesStore()
   const [editTask, setEditTask] = useState<Task | null>(null)
   const [editOccurrenceDate, setEditOccurrenceDate] = useState<string | undefined>(undefined)
@@ -212,10 +212,10 @@ export function DayDetailPopup({ date, definitions, onClose, onTaskToggle, onAft
                         const value = entry?.value ?? ''
                         const onChange = (v: string) => date && upsertEntry(def.id, date, v)
 
-                        if (def.type === 'numeric') return <NumericCheckin key={def.id} definition={def} value={value} onChange={onChange} />
-                        if (def.type === 'boolean') return <BooleanCheckin key={def.id} definition={def} value={value} onChange={onChange} />
-                        if (def.type === 'time') return <TimeCheckin key={def.id} definition={def} value={value} onChange={onChange} />
-                        return <TextCheckin key={def.id} definition={def} value={value} onChange={onChange} />
+                        if (def.type === 'numeric') return <NumericCheckin key={def.id} definition={def} value={value} onChange={onChange} onDelete={() => archiveDefinition(def.id)} />
+                        if (def.type === 'boolean') return <BooleanCheckin key={def.id} definition={def} value={value} onChange={onChange} onDelete={() => archiveDefinition(def.id)} />
+                        if (def.type === 'time') return <TimeCheckin key={def.id} definition={def} value={value} onChange={onChange} onDelete={() => archiveDefinition(def.id)} />
+                        return <TextCheckin key={def.id} definition={def} value={value} onChange={onChange} onDelete={() => archiveDefinition(def.id)} />
                       })}
                     </div>
                   </section>
