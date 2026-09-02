@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef } from 'react'
-import { Plus, Pencil, Trash2, Check, X, RefreshCw, ChevronDown, ChevronUp, RotateCcw, Clock, Archive } from 'lucide-react'
+import { Plus, Pencil, Trash2, Check, X, RefreshCw, RotateCcw, Clock, Archive } from 'lucide-react'
 import { RecycleBinDialog } from '@/components/tasks/RecycleBinDialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -35,13 +35,11 @@ interface DateGroup {
 }
 
 export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | null }) {
-  const { tasks, createTask, updateTask, updateOccurrence, deleteTask, skipOccurrence, deleteFromDate, deleteBeforeDate, fetchTasks, loading, toggleSubtask, updateSubtasks } = useTaskStore()
+  const { tasks, createTask, updateTask, updateOccurrence, deleteTask, skipOccurrence, deleteFromDate, deleteBeforeDate, fetchTasks, loading, toggleSubtask } = useTaskStore()
   const { definitions, getEntriesForDate, upsertEntry } = useCheckinStore()
   const { getVisibleRange } = useCalendarStore()
   const [filter, setFilter] = useState<FilterType>('pending')
   const [showCreate, setShowCreate] = useState(false)
-  const [editingId, setEditingId] = useState<number | null>(null)
-  const [editingDate, setEditingDate] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   // 循环任务删除范围选择（垃圾桶直接进入删除流程，不经过编辑弹窗）
   const [deleteDialogTask, setDeleteDialogTask] = useState<Task | null>(null)
@@ -53,15 +51,7 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
   const [newSubtasks, setNewSubtasks] = useState<SubtaskInputItem[]>([])
   const [newRecurrence, setNewRecurrence] = useState<RecurrenceType | ''>('')
   const [newRecurrenceEnd, setNewRecurrenceEnd] = useState('')
-
-  const [editTitle, setEditTitle] = useState('')
-  const [editDate, setEditDate] = useState('')
-  const [editPriority, setEditPriority] = useState<Priority>('none')
-  const [editNotes, setEditNotes] = useState('')
-  const [editSubtasks, setEditSubtasks] = useState<SubtaskInputItem[]>([])
-  const [showEditDetails, setShowEditDetails] = useState(false)
   const newTitleRef = useRef<HTMLTextAreaElement>(null)
-  const editTitleRef = useRef<HTMLTextAreaElement>(null)
   const autoResize = (el: HTMLTextAreaElement) => { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' }
   const [editingCheckinId, setEditingCheckinId] = useState<number | null>(null)
   // 重复任务编辑/删除使用 TaskEditDialog（含范围选择）
@@ -186,32 +176,6 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
     } finally { setSubmitting(false) }
   }
 
-  const startEdit = (task: Task) => {
-    setEditingId(task.id)
-    setEditingDate(task.dueDate)
-    setEditTitle(task.title)
-    setEditDate(task.dueDate)
-    setEditPriority(task.priority)
-    setEditNotes(task.notes ?? '')
-    setEditSubtasks(task.subtasks?.map((s) => ({ id: s.id, title: s.title })) ?? [])
-    setShowEditDetails(false)
-  }
-
-  const handleSaveEdit = async () => {
-    if (!editingId || !editTitle.trim()) return
-    setSubmitting(true)
-    try {
-      await updateTask(editingId, { title: editTitle.trim(), dueDate: editDate, priority: editPriority, notes: editNotes || undefined })
-      await updateSubtasks(
-        editingId,
-        editSubtasks
-          .map((s) => ({ id: s.id, title: s.title.trim() }))
-          .filter((s) => s.title.length > 0)
-      )
-      setEditingId(null); setEditingDate(null)
-    } finally { setSubmitting(false) }
-  }
-
   const handleToggle = async (task: Task) => {
     const nextCompleted = !task.isCompleted
     if (task.isRecurring) {
@@ -228,33 +192,8 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
   }
 
   const renderTaskItem = (task: Task) => {
-    const isEditing = editingId === task.id && editingDate === task.dueDate
     const priorityCfg = PRIORITY_CONFIG[task.priority]
 
-    if (isEditing) {
-      return (
-        <div key={`edit-${task.id}-${task.dueDate}`} className="card-elevated rounded-2xl p-3 flex flex-col gap-2 ring-1 ring-primary/30">
-          <textarea ref={editTitleRef} autoFocus value={editTitle} rows={1}
-            onChange={(e) => { setEditTitle(e.target.value); autoResize(e.target) }}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveEdit() } }}
-            className="text-xs rounded-xl w-full border border-input bg-background px-3 py-2 resize-none overflow-hidden focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground leading-snug" />
-          <Input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} className="text-xs rounded-xl" />
-          <PrioritySelector value={editPriority} onChange={setEditPriority} />
-          <SubtaskInputList value={editSubtasks} onChange={setEditSubtasks} />
-          {showEditDetails && (
-            <Textarea placeholder="备注…" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} rows={2} className="text-xs rounded-xl resize-none" />
-          )}
-          <button className="text-[10px] text-muted-foreground flex items-center gap-1" onClick={() => setShowEditDetails(!showEditDetails)}>
-            {showEditDetails ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-            {showEditDetails ? '收起备注' : '展开备注'}
-          </button>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="flex-1 rounded-xl text-xs" onClick={() => { setEditingId(null); setEditingDate(null) }}>取消</Button>
-            <Button size="sm" className="flex-1 rounded-xl text-xs" onClick={handleSaveEdit} disabled={!editTitle.trim() || submitting}>保存</Button>
-          </div>
-        </div>
-      )
-    }
 
     return (
       <div key={`${task.id}-${task.dueDate}`} className="flex flex-col">
@@ -296,7 +235,7 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
           </div>
           <div className="flex items-center gap-0.5 shrink-0">
             <button
-              onClick={() => task.isRecurring ? setEditDialogTask(task) : startEdit(task)}
+              onClick={() => setEditDialogTask(task)}
               className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
             >
               <Pencil className="h-3 w-3" />
@@ -419,7 +358,7 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
           <Archive className="h-3.5 w-3.5" />
         </button>
         <Button size="sm" variant="outline" className="h-7 text-xs rounded-xl"
-          onClick={() => { setShowCreate(!showCreate); setEditingId(null) }}>
+          onClick={() => setShowCreate(!showCreate)}>
           <Plus className="h-3 w-3 mr-1" />新增
         </Button>
         </div>
