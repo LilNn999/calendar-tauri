@@ -8,6 +8,8 @@ import { PrioritySelector } from '@/components/tasks/PrioritySelector'
 import { RecurrenceSelector } from '@/components/tasks/RecurrenceSelector'
 import { SubtaskInputList, type SubtaskInputItem } from '@/components/tasks/SubtaskInputList'
 import { TaskEditDialog } from '@/components/tasks/TaskEditDialog'
+import { RecurringChangeDialog } from '@/components/tasks/RecurringChangeDialog'
+import { applyRecurringDelete } from '@/components/tasks/recurringActions'
 import { NumericCheckin } from '@/components/checkins/NumericCheckin'
 import { BooleanCheckin } from '@/components/checkins/BooleanCheckin'
 import { TextCheckin } from '@/components/checkins/TextCheckin'
@@ -33,7 +35,7 @@ interface DateGroup {
 }
 
 export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | null }) {
-  const { tasks, createTask, updateTask, updateOccurrence, deleteTask, fetchTasks, loading, toggleSubtask, updateSubtasks } = useTaskStore()
+  const { tasks, createTask, updateTask, updateOccurrence, deleteTask, skipOccurrence, deleteFromDate, deleteBeforeDate, fetchTasks, loading, toggleSubtask, updateSubtasks } = useTaskStore()
   const { definitions, getEntriesForDate, upsertEntry } = useCheckinStore()
   const { getVisibleRange } = useCalendarStore()
   const [filter, setFilter] = useState<FilterType>('pending')
@@ -41,6 +43,8 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editingDate, setEditingDate] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  // 循环任务删除范围选择（垃圾桶直接进入删除流程，不经过编辑弹窗）
+  const [deleteDialogTask, setDeleteDialogTask] = useState<Task | null>(null)
 
   const [newTitle, setNewTitle] = useState('')
   const [newDate, setNewDate] = useState(selectedDate ?? toDateString(new Date()))
@@ -298,7 +302,7 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
               <Pencil className="h-3 w-3" />
             </button>
             <button
-              onClick={() => task.isRecurring ? setEditDialogTask(task) : deleteTask(task.id)}
+              onClick={() => task.isRecurring ? setDeleteDialogTask(task) : deleteTask(task.id)}
               className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
             >
               <Trash2 className="h-3 w-3" />
@@ -508,6 +512,22 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
           }}
         />
       )}
+
+      {/* 重复任务删除范围选择（垃圾桶直达，不经过编辑弹窗） */}
+      <RecurringChangeDialog
+        open={!!deleteDialogTask}
+        mode="delete"
+        taskTitle={deleteDialogTask?.title ?? ''}
+        occurrenceDate={deleteDialogTask?.dueDate ?? toDateString(new Date())}
+        onConfirm={async (scope) => {
+          if (!deleteDialogTask) return
+          await applyRecurringDelete({ skipOccurrence, deleteBeforeDate, deleteFromDate }, deleteDialogTask.id, deleteDialogTask.dueDate, scope)
+          setDeleteDialogTask(null)
+          const range = getVisibleRange()
+          fetchTasks(range.start, range.end)
+        }}
+        onCancel={() => setDeleteDialogTask(null)}
+      />
 
       {/* 回收箱对话框 */}
       <RecycleBinDialog

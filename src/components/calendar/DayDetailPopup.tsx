@@ -17,6 +17,8 @@ import { Button } from '@/components/ui/button'
 import { PrioritySelector } from '@/components/tasks/PrioritySelector'
 import { SubtaskInputList, type SubtaskInputItem } from '@/components/tasks/SubtaskInputList'
 import { TaskEditDialog } from '@/components/tasks/TaskEditDialog'
+import { RecurringChangeDialog } from '@/components/tasks/RecurringChangeDialog'
+import { applyRecurringDelete } from '@/components/tasks/recurringActions'
 import type { Task, CheckinDefinition, Priority } from '@shared/types'
 
 interface DayDetailPopupProps {
@@ -28,11 +30,13 @@ interface DayDetailPopupProps {
 }
 
 export function DayDetailPopup({ date, definitions, onClose, onTaskToggle, onAfterTaskChange }: DayDetailPopupProps) {
-  const { tasks: allTasks, deleteTask, createTask, toggleSubtask } = useTaskStore()
+  const { tasks: allTasks, deleteTask, skipOccurrence, deleteFromDate, deleteBeforeDate, createTask, toggleSubtask } = useTaskStore()
   const { getEntriesForDate, upsertEntry } = useCheckinStore()
   const { upsertNote } = useNotesStore()
   const [editTask, setEditTask] = useState<Task | null>(null)
   const [editOccurrenceDate, setEditOccurrenceDate] = useState<string | undefined>(undefined)
+  // 循环任务删除范围选择（垃圾桶直达，不经过编辑弹窗）
+  const [deleteScopeTask, setDeleteScopeTask] = useState<Task | null>(null)
   const [showCreate, setShowCreate] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newPriority, setNewPriority] = useState<Priority>('none')
@@ -186,9 +190,8 @@ export function DayDetailPopup({ date, definitions, onClose, onTaskToggle, onAft
                           onSubtaskToggle={(subtaskId, done) => toggleSubtask(subtaskId, date!, done)}
                           onDelete={() => {
                             if (task.isRecurring) {
-                              // 循环任务：打开编辑对话框（含范围选择的删除流程）
-                              setEditTask(task)
-                              setEditOccurrenceDate(date!)
+                              // 循环任务：直接打开删除范围选择
+                              setDeleteScopeTask(task)
                             } else {
                               deleteTask(task.id)
                             }
@@ -243,6 +246,21 @@ export function DayDetailPopup({ date, definitions, onClose, onTaskToggle, onAft
         }}
         occurrenceDate={editOccurrenceDate}
         onAfterChange={onAfterTaskChange}
+      />
+
+      {/* 循环任务删除范围选择（垃圾桶直达，不经过编辑弹窗） */}
+      <RecurringChangeDialog
+        open={!!deleteScopeTask}
+        mode="delete"
+        taskTitle={deleteScopeTask?.title ?? ''}
+        occurrenceDate={deleteScopeTask?.dueDate ?? date ?? ''}
+        onConfirm={async (scope) => {
+          if (!deleteScopeTask) return
+          await applyRecurringDelete({ skipOccurrence, deleteBeforeDate, deleteFromDate }, deleteScopeTask.id, deleteScopeTask.dueDate, scope)
+          setDeleteScopeTask(null)
+          onAfterTaskChange?.()
+        }}
+        onCancel={() => setDeleteScopeTask(null)}
       />
     </>
   )

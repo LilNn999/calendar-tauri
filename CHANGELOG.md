@@ -4,6 +4,9 @@
 
 ## [未发布]
 
+### 修复
+- 点击循环任务的删除按钮误开编辑弹窗：任务总览侧栏与日历详情弹窗中，循环任务的垃圾桶按钮此前与编辑按钮共用同一处理（打开「编辑循环任务」弹窗），需再点弹窗内「删除」才能进入删除流程。现垃圾桶直接弹出「删除重复任务」范围选择（仅限此日程 / 此日程及此前所有 / 此日程及未来所有），确认即删；任务总览删除后按当前可见范围刷新列表。三处删除入口（编辑弹窗内删除、侧栏垃圾桶、日历详情垃圾桶）统一走 `applyRecurringDelete` 助手，范围→动作映射单一来源。涉及文件：`src/components/tasks/recurringActions.ts`（新增）、`src/components/tasks/TaskEditDialog.tsx`、`src/components/sidebar/TaskOverviewPanel.tsx`、`src/components/calendar/DayDetailPopup.tsx`。
+
 ### 新增
 - 循环任务删除新增「此日程及此前所有」范围：删除范围弹窗（仅删除模式）在「仅限此日程」与「此日程及未来所有」之间新增该选项，选中后删除该日期（含）之前的所有循环，之后的循环保持不变。因循环规则以 `dueDate` 为锚点（weekly/monthly 依赖锚日星期/日期），实现为把此前循环日批量标记 `isSkipped`（展开与统计均不再生成/计入），若所选日期已覆盖序列末尾则整条任务移入回收站。涉及文件：`src/components/tasks/RecurringChangeDialog.tsx`、`src/components/tasks/TaskEditDialog.tsx`、`src/store/useTaskStore.ts`、`src/api/index.ts`、`src/lib/ipc-bridge.ts`、`src/shared/ipc-channels.ts`、`src/lib/db.ts`（新增 `deleteBeforeDate`，SQLite 与内存实现）。
 

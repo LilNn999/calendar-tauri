@@ -10,6 +10,7 @@ import { PrioritySelector } from './PrioritySelector'
 import { RecurrenceSelector } from './RecurrenceSelector'
 import { RecurringChangeDialog } from './RecurringChangeDialog'
 import { SubtaskInputList, type SubtaskInputItem } from './SubtaskInputList'
+import { applyRecurringDelete } from './recurringActions'
 import type { RecurringChangeScope } from './RecurringChangeDialog'
 import { useTaskStore } from '@/store/useTaskStore'
 import type { Task, Priority, RecurrenceType } from '@shared/types'
@@ -141,14 +142,8 @@ export function TaskEditDialog({
     setLoading(true)
     try {
       if (pendingAction.type === 'delete') {
-        if (scope === 'this') {
-          await skipOccurrence(task.id, occurrenceDate)
-        } else if (scope === 'before') {
-          // 此日程及此前所有：标记跳过（若已覆盖序列末尾则整条任务进回收站）
-          await deleteBeforeDate(task.id, occurrenceDate)
-        } else {
-          await deleteFromDate(task.id, occurrenceDate)
-        }
+        // 范围删除统一走 applyRecurringDelete（与侧栏/日历详情的删除入口共用）
+        await applyRecurringDelete({ skipOccurrence, deleteBeforeDate, deleteFromDate }, task.id, occurrenceDate, scope)
       } else {
         // edit：子任务（顺序 + 当天勾选状态）随范围选择一并应用
         // —— 仅此次：落到拆出的单次任务上；此后全部：落到新序列（date 之前的原序列不受影响）
