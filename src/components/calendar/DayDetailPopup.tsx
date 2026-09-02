@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from '@/lib/motion'
 import { X, Plus, FileText, RefreshCw } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import { matchesCheckinFrequency } from '@/lib/utils'
+import { matchesCheckinFrequency, toDateString } from '@/lib/utils'
 import { useTaskStore } from '@/store/useTaskStore'
 import { useCheckinStore } from '@/store/useCheckinStore'
 import { useNotesStore } from '@/store/useNotesStore'
@@ -253,7 +253,7 @@ export function DayDetailPopup({ date, definitions, onClose, onTaskToggle, onAft
         open={!!deleteScopeTask}
         mode="delete"
         taskTitle={deleteScopeTask?.title ?? ''}
-        occurrenceDate={deleteScopeTask?.dueDate ?? date ?? ''}
+        occurrenceDate={deleteScopeTask?.dueDate ?? date ?? toDateString(new Date())}
         onConfirm={async (scope) => {
           if (!deleteScopeTask) return
           await applyRecurringDelete({ skipOccurrence, deleteBeforeDate, deleteFromDate }, deleteScopeTask.id, deleteScopeTask.dueDate, scope)

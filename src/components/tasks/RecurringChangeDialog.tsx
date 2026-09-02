@@ -6,7 +6,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
-import { format, parseISO } from 'date-fns'
+import { format, parseISO, isValid } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 
 export type RecurringChangeScope = 'this' | 'before' | 'future'
@@ -34,7 +34,11 @@ export function RecurringChangeDialog({
   const [scope, setScope] = useState<RecurringChangeScope>('this')
   const [newRecurrenceEnd, setNewRecurrenceEnd] = useState(currentRecurrenceEnd ?? '')
 
-  const dateLabel = format(parseISO(occurrenceDate), 'M月d日 EEEE', { locale: zhCN })
+  // 弹窗未挂载目标日程时 occurrenceDate 可能为空串，parseISO 得到 Invalid Date，format 会抛异常白屏
+  const parsedOccurrence = parseISO(occurrenceDate)
+  const dateLabel = isValid(parsedOccurrence)
+    ? format(parsedOccurrence, 'M月d日 EEEE', { locale: zhCN })
+    : occurrenceDate
   const verb = mode === 'edit' ? '更改' : '删除'
 
   const endDateInvalid = mode === 'edit' && scope === 'future'
