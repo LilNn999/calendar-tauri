@@ -29,6 +29,7 @@
 - 模板校验：`diff --strip-trailing-cr` 对比 0.3.5 官方基线共 55 行差异，与 0.3.8/0.3.9 构建完全一致（均为既有自定义改动与版本号/ESTIMATEDSIZE 行，`ESTIMATEDSIZE` 5038→5042 正常波动），无新增差异；`NSIS_HOOK_PREINSTALL` 在位。
 - 验证：`npm test` 8/8；`npm run build` 通过；`npm run tauri build` 成功；`dist` 无 `*.db`；`bundle.resources` 未配置。
 - 注意事项：打包前旧版 `calendar-tauri.exe` 正在运行，已结束进程后构建一次成功；安装包未由代理启动，用户自行双击安装测试；本次发布完成后合并 main 并推送码云。
+- **二次交付（2026-09-02）**：用户实测反馈子任务拖拽无法直达列表最上/最下位置（无让位动画且与首/末行重合）。根因：拖拽位移钳制在首/末行中线处，而落点判定要求行中线严格越过阈值，钳制极限恰等于阈值导致首尾落点永远无法触发。修复：位移改按行边缘钳制并留 2px 越界余量（`SubtaskInputList.tsx`）。`npm run build` 通过、`npm test` 8/8；模板校验仍为 55 行既有差异；`dist` 无 `*.db`。重新打包覆盖交付：大小 2,225,264 bytes，SHA256 `2b2464fb2d4b904a73dcf39288fb35be4bad0b4d1446a8eb0e05ffd734f98045`，覆盖 `安装包/日历_0.3.10_x64-setup.exe`（首版 SHA256 `b7cb60ab0fa2750dc989c9777c66d8ceffafc7084c639cbee7ccfc36b9828a7b` 作废）。
 
 ## 2026-09-01 0.3.9 正式版
 
