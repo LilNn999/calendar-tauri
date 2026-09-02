@@ -8,6 +8,17 @@ export interface VersionNote {
 /** 更新历史（最新版本在最前） */
 export const VERSION_NOTES: VersionNote[] = [
   {
+    version: '0.4.0',
+    date: '2026-09-02',
+    features: [
+      '循环任务删除新增「此日程及此前所有」范围：可一次删除某天及之前的所有循环，之后的保持不变',
+    ],
+    fixes: [
+      '点击循环任务的删除按钮现在直接弹出删除范围选择，不再先打开编辑窗口',
+      '修复删除确认弹窗在特定情况下导致界面空白的问题',
+    ],
+  },
+  {
     version: '0.3.11',
     date: '2026-09-02',
     fixes: [

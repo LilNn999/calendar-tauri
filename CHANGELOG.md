@@ -2,13 +2,18 @@
 
 本项目变更记录。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循语义化版本。
 
-## [未发布]
-
-### 修复
-- 点击循环任务的删除按钮误开编辑弹窗：任务总览侧栏与日历详情弹窗中，循环任务的垃圾桶按钮此前与编辑按钮共用同一处理（打开「编辑循环任务」弹窗），需再点弹窗内「删除」才能进入删除流程。现垃圾桶直接弹出「删除重复任务」范围选择（仅限此日程 / 此日程及此前所有 / 此日程及未来所有），确认即删；任务总览删除后按当前可见范围刷新列表。三处删除入口（编辑弹窗内删除、侧栏垃圾桶、日历详情垃圾桶）统一走 `applyRecurringDelete` 助手，范围→动作映射单一来源。涉及文件：`src/components/tasks/recurringActions.ts`（新增）、`src/components/tasks/TaskEditDialog.tsx`、`src/components/sidebar/TaskOverviewPanel.tsx`、`src/components/calendar/DayDetailPopup.tsx`。
+## [0.4.0] — 2026-09-02
 
 ### 新增
 - 循环任务删除新增「此日程及此前所有」范围：删除范围弹窗（仅删除模式）在「仅限此日程」与「此日程及未来所有」之间新增该选项，选中后删除该日期（含）之前的所有循环，之后的循环保持不变。因循环规则以 `dueDate` 为锚点（weekly/monthly 依赖锚日星期/日期），实现为把此前循环日批量标记 `isSkipped`（展开与统计均不再生成/计入），若所选日期已覆盖序列末尾则整条任务移入回收站。涉及文件：`src/components/tasks/RecurringChangeDialog.tsx`、`src/components/tasks/TaskEditDialog.tsx`、`src/store/useTaskStore.ts`、`src/api/index.ts`、`src/lib/ipc-bridge.ts`、`src/shared/ipc-channels.ts`、`src/lib/db.ts`（新增 `deleteBeforeDate`，SQLite 与内存实现）。
+
+### 修复
+- 点击循环任务的删除按钮误开编辑弹窗：任务总览侧栏与日历详情弹窗中，循环任务的垃圾桶按钮此前与编辑按钮共用同一处理（打开「编辑循环任务」弹窗），需再点弹窗内「删除」才能进入删除流程。现垃圾桶直接弹出「删除重复任务」范围选择（仅限此日程 / 此日程及此前所有 / 此日程及未来所有），确认即删；任务总览删除后按当前可见范围刷新列表。三处删除入口（编辑弹窗内删除、侧栏垃圾桶、日历详情垃圾桶）统一走 `applyRecurringDelete` 助手，范围→动作映射单一来源。涉及文件：`src/components/tasks/recurringActions.ts`（新增）、`src/components/tasks/TaskEditDialog.tsx`、`src/components/sidebar/TaskOverviewPanel.tsx`、`src/components/calendar/DayDetailPopup.tsx`。
+- 删除范围弹窗日期兜底值为空串导致启动白屏：`DayDetailPopup` 向 `RecurringChangeDialog` 传入的 `occurrenceDate` 兜底为空字符串，弹窗组件渲染期无条件 `format(parseISO(...))` 抛 `Invalid time value`，整树渲染失败。现调用方兜底为当天日期，组件内对日期解析增加 `isValid` 守卫。涉及文件：`src/components/calendar/DayDetailPopup.tsx`、`src/components/tasks/RecurringChangeDialog.tsx`。
+
+### 构建
+- 版本号由 0.3.11 升级至 0.4.0（`package.json` / `package-lock.json` / `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` / `src-tauri/Cargo.lock` 同步）。本版本起版本规则明确：带新功能的发布进位次版本（x.Y.0），纯修复进位修订号（x.y.Z）。
+- 同步发布用户端更新公告（`src/data/whatsNew.ts`），首次启动 0.4.0 自动弹出。
 
 ## [0.3.11] — 2026-09-02
 
