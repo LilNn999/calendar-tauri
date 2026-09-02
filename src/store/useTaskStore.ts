@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { tasksApi } from '@/api'
 import { IPC } from '@shared/ipc-channels'
-import type { Task, CreateTaskPayload, UpdateTaskPayload } from '@shared/types'
+import type { Task, CreateTaskPayload, UpdateTaskPayload, SubtaskPatchItem } from '@shared/types'
 
 function notifyWidget() {
   window.electronAPI.invoke(IPC.PUSH_WIDGET_DATA_REFRESH as never).catch(() => {/* ignore */})
@@ -19,8 +19,8 @@ interface TaskState {
   deleteTask: (id: number) => Promise<void>
   skipOccurrence: (taskId: number, date: string) => Promise<void>
   deleteFromDate: (taskId: number, date: string) => Promise<void>
-  detachOccurrence: (taskId: number, date: string, patch: { title?: string; priority?: string; notes?: string }) => Promise<Task>
-  splitFromDate: (taskId: number, date: string, patch: { title?: string; priority?: string; notes?: string; recurrenceEnd?: string }) => Promise<Task>
+  detachOccurrence: (taskId: number, date: string, patch: { title?: string; priority?: string; notes?: string; subtasks?: SubtaskPatchItem[] }) => Promise<Task>
+  splitFromDate: (taskId: number, date: string, patch: { title?: string; priority?: string; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }) => Promise<Task>
   getTasksForDate: (date: string) => Task[]
   restoreTask: (id: number) => Promise<void>
 }
@@ -130,7 +130,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   },
 
   // 修改当天及之后：本地移除该任务从 date 起的所有 occurrence（后续 onAfterChange 会重新 fetch）
-  splitFromDate: async (taskId: number, date: string, patch: { title?: string; priority?: string; notes?: string; recurrenceEnd?: string }) => {
+  splitFromDate: async (taskId: number, date: string, patch: { title?: string; priority?: string; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }) => {
     const newTask = await tasksApi.splitFromDate(taskId, date, patch)
     set((s) => ({
       tasks: s.tasks.filter((t) => !(t.id === taskId && t.dueDate >= date)),

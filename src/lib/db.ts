@@ -6,7 +6,7 @@ import {
 } from "date-fns";
 import type {
   CheckinDefinition, CheckinEntry, CreateCheckinDefPayload, CreateTaskPayload,
-  DailyNote, Priority, RecurrenceType, StreakData, Subtask, Task,
+  DailyNote, Priority, RecurrenceType, StreakData, Subtask, SubtaskPatchItem, Task,
   TimeRange, TrendPoint, UpdateTaskPayload, UpsertCheckinEntryPayload,
 } from "@/shared/types";
 
@@ -176,8 +176,8 @@ export interface Db {
   markFailed(ids: number[]): Promise<void>;
   skipOccurrence(taskId: number, date: string): Promise<void>;
   deleteFromDate(taskId: number, date: string): Promise<void>;
-  detachOccurrence(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string }): Promise<Task | null>;
-  splitFromDate(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string; recurrenceEnd?: string }): Promise<Task | null>;
+  detachOccurrence(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null>;
+  splitFromDate(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null>;
   toggleSubtask(subtaskId: number, date: string, isCompleted: boolean): Promise<void>;
   updateSubtasks(taskId: number, items: { id?: number; title: string }[]): Promise<void>;
   listDeleted(): Promise<Task[]>;
@@ -869,35 +869,73 @@ class SqliteDb implements Db {
     }
   }
 
-  async detachOccurrence(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string }): Promise<Task | null> {
+  /** 按序号把弹窗里的勾选状态落到新任务的子任务上（detach/split 拆出的新子任务，序号与提交项一一对应） */
+  private async applySubtaskCompletion(newSubtasks: Subtask[], items: SubtaskPatchItem[], date: string): Promise<void> {
+    for (let i = 0; i < items.length && i < newSubtasks.length; i++) {
+      const done = items[i].isCompleted;
+      if (done === undefined) continue;
+      await this.db.execute(
+        `INSERT INTO subtask_occurrences (subtaskId, date, isCompleted) VALUES (?, ?, ?)
+         ON CONFLICT(subtaskId, date) DO UPDATE SET isCompleted = ?`,
+        [newSubtasks[i].id, date, done ? 1 : 0, done ? 1 : 0],
+      );
+    }
+  }
+
+  async detachOccurrence(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null> {
     const task = await this.getTaskById(taskId);
     if (!task) return null;
     await this.skipOccurrence(taskId, date);
-    return this.createTask({
+    const titles = patch.subtasks?.map((s) => s.title.trim()).filter(Boolean);
+    const newTask = await this.createTask({
       title: patch.title ?? task.title,
       priority: patch.priority ?? task.priority,
       dueDate: date,
       notes: patch.notes !== undefined ? patch.notes || undefined : task.notes ?? undefined,
+      subtasks: titles?.length ? titles : undefined,
     });
+    if (patch.subtasks?.length && newTask.subtasks?.length) {
+      await this.applySubtaskCompletion(newTask.subtasks, patch.subtasks, date);
+    }
+    return newTask;
   }
 
-  async splitFromDate(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string; recurrenceEnd?: string }): Promise<Task | null> {
+  async splitFromDate(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null> {
     const task = await this.getTaskById(taskId);
     if (!task) return null;
     const prevDay = format(subDays(parseISO(date), 1), "yyyy-MM-dd");
     if (date <= task.dueDate) {
-      return this.updateTask(taskId, {
+      const updated = await this.updateTask(taskId, {
         title: patch.title ?? task.title,
         priority: patch.priority ?? task.priority,
         notes: patch.notes !== undefined ? patch.notes || undefined : task.notes ?? undefined,
         recurrenceEnd: patch.recurrenceEnd !== undefined ? patch.recurrenceEnd || null : task.recurrenceEnd,
       });
+      // 同一序列原地更新：子任务按 id 保留（完成记录不丢），再按提交状态落当天的勾选
+      if (patch.subtasks) {
+        await this.updateSubtasks(
+          taskId,
+          patch.subtasks
+            .map((s) => ({ id: s.id, title: s.title.trim() }))
+            .filter((s) => s.title.length > 0),
+        );
+        for (const s of patch.subtasks) {
+          if (!s.id || s.isCompleted === undefined || !s.title.trim()) continue;
+          await this.db.execute(
+            `INSERT INTO subtask_occurrences (subtaskId, date, isCompleted) VALUES (?, ?, ?)
+             ON CONFLICT(subtaskId, date) DO UPDATE SET isCompleted = ?`,
+            [s.id, date, s.isCompleted ? 1 : 0, s.isCompleted ? 1 : 0],
+          );
+        }
+      }
+      return updated;
     }
     const occRows = await this.db.select<SqlRow[]>(`SELECT * FROM task_occurrences WHERE taskId = ? AND date = ?`, [taskId, date]);
     const existingOcc = occRows[0];
     await this.db.execute(`UPDATE tasks SET recurrenceEnd = ?, updatedAt = ? WHERE id = ?`, [prevDay, nowIso(), taskId]);
     await this.db.execute(`DELETE FROM task_occurrences WHERE taskId = ? AND date >= ?`, [taskId, date]);
     const newRecurrenceEnd = patch.recurrenceEnd !== undefined ? patch.recurrenceEnd || null : task.recurrenceEnd;
+    const titles = patch.subtasks?.map((s) => s.title.trim()).filter(Boolean);
     const newTask = await this.createTask({
       title: patch.title ?? task.title,
       priority: patch.priority ?? task.priority,
@@ -905,7 +943,22 @@ class SqliteDb implements Db {
       notes: patch.notes !== undefined ? patch.notes || undefined : task.notes ?? undefined,
       recurrenceType: task.recurrenceType ?? undefined,
       recurrenceEnd: newRecurrenceEnd ?? undefined,
+      subtasks: titles?.length ? titles : undefined,
     });
+    if (patch.subtasks?.length && newTask.subtasks?.length) {
+      // 保留历史进度：date 起的完成记录按原子任务 id 迁移到新序列对应子任务上
+      for (let i = 0; i < patch.subtasks.length && i < newTask.subtasks.length; i++) {
+        const oldId = patch.subtasks[i].id;
+        if (!oldId) continue;
+        await this.db.execute(
+          `INSERT INTO subtask_occurrences (subtaskId, date, isCompleted)
+           SELECT ?, date, isCompleted FROM subtask_occurrences WHERE subtaskId = ? AND date >= ?`,
+          [newTask.subtasks[i].id, oldId, date],
+        );
+      }
+      // 当天勾选以弹窗状态为准（覆盖迁移来的记录）
+      await this.applySubtaskCompletion(newTask.subtasks, patch.subtasks, date);
+    }
     if (existingOcc && (existingOcc.isCompleted || existingOcc.isFailed || existingOcc.isSkipped)) {
       await this.db.execute(`INSERT INTO task_occurrences (taskId, date, isCompleted, isFailed, isSkipped) VALUES (?, ?, ?, ?, ?)`,
         [newTask.id, date, existingOcc.isCompleted ? 1 : 0, existingOcc.isFailed ? 1 : 0, existingOcc.isSkipped ? 1 : 0]);
@@ -1364,26 +1417,68 @@ class MemoryDb implements Db {
     }
   }
 
-  async detachOccurrence(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string }): Promise<Task | null> {
+  /** 内存版：按序号把弹窗勾选状态落到新任务的子任务上 */
+  private applySubtaskCompletionMem(newSubtasks: Subtask[], items: SubtaskPatchItem[], date: string): void {
+    for (let i = 0; i < items.length && i < newSubtasks.length; i++) {
+      const done = items[i].isCompleted;
+      if (done === undefined) continue;
+      const occ = this.subtaskOccurrences.find((o) => o.subtaskId === newSubtasks[i].id && o.date === date);
+      if (occ) occ.isCompleted = done;
+      else this.subtaskOccurrences.push({ id: this.nid(), subtaskId: newSubtasks[i].id, date, isCompleted: done });
+    }
+  }
+
+  async detachOccurrence(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null> {
     const task = this.tasks.find((t) => t.id === taskId);
     if (!task) return null;
     await this.skipOccurrence(taskId, date);
-    return this.createTask({ title: patch.title ?? task.title, priority: patch.priority ?? task.priority, dueDate: date, notes: patch.notes !== undefined ? patch.notes || undefined : task.notes ?? undefined });
+    const titles = patch.subtasks?.map((s) => s.title.trim()).filter(Boolean);
+    const newTask = await this.createTask({ title: patch.title ?? task.title, priority: patch.priority ?? task.priority, dueDate: date, notes: patch.notes !== undefined ? patch.notes || undefined : task.notes ?? undefined, subtasks: titles?.length ? titles : undefined });
+    if (patch.subtasks?.length && newTask.subtasks?.length) {
+      this.applySubtaskCompletionMem(newTask.subtasks, patch.subtasks, date);
+    }
+    return newTask;
   }
 
-  async splitFromDate(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string; recurrenceEnd?: string }): Promise<Task | null> {
+  async splitFromDate(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null> {
     const task = this.tasks.find((t) => t.id === taskId);
     if (!task) return null;
     const prevDay = format(subDays(parseISO(date), 1), "yyyy-MM-dd");
     if (date <= task.dueDate) {
-      return this.updateTask(taskId, { title: patch.title ?? task.title, priority: patch.priority ?? task.priority, notes: patch.notes !== undefined ? patch.notes || undefined : task.notes ?? undefined, recurrenceEnd: patch.recurrenceEnd !== undefined ? patch.recurrenceEnd || null : task.recurrenceEnd });
+      const updated = await this.updateTask(taskId, { title: patch.title ?? task.title, priority: patch.priority ?? task.priority, notes: patch.notes !== undefined ? patch.notes || undefined : task.notes ?? undefined, recurrenceEnd: patch.recurrenceEnd !== undefined ? patch.recurrenceEnd || null : task.recurrenceEnd });
+      if (patch.subtasks) {
+        await this.updateSubtasks(taskId, patch.subtasks.map((s) => ({ id: s.id, title: s.title.trim() })).filter((s) => s.title.length > 0));
+        for (const s of patch.subtasks) {
+          if (!s.id || s.isCompleted === undefined || !s.title.trim()) continue;
+          const occ = this.subtaskOccurrences.find((o) => o.subtaskId === s.id && o.date === date);
+          if (occ) occ.isCompleted = s.isCompleted;
+          else this.subtaskOccurrences.push({ id: this.nid(), subtaskId: s.id, date, isCompleted: s.isCompleted });
+        }
+      }
+      return updated;
     }
     const existingOcc = this.taskOccurrences.find((o) => o.taskId === taskId && o.date === date);
     task.recurrenceEnd = prevDay;
     task.updatedAt = nowIso();
     this.taskOccurrences = this.taskOccurrences.filter((o) => !(o.taskId === taskId && o.date >= date));
     const newRecurrenceEnd = patch.recurrenceEnd !== undefined ? patch.recurrenceEnd || null : task.recurrenceEnd;
-    const newTask = await this.createTask({ title: patch.title ?? task.title, priority: patch.priority ?? task.priority, dueDate: date, notes: patch.notes !== undefined ? patch.notes || undefined : task.notes ?? undefined, recurrenceType: task.recurrenceType ?? undefined, recurrenceEnd: newRecurrenceEnd ?? undefined });
+    const titles = patch.subtasks?.map((s) => s.title.trim()).filter(Boolean);
+    const newTask = await this.createTask({ title: patch.title ?? task.title, priority: patch.priority ?? task.priority, dueDate: date, notes: patch.notes !== undefined ? patch.notes || undefined : task.notes ?? undefined, recurrenceType: task.recurrenceType ?? undefined, recurrenceEnd: newRecurrenceEnd ?? undefined, subtasks: titles?.length ? titles : undefined });
+    if (patch.subtasks?.length && newTask.subtasks?.length) {
+      // 保留历史进度：date 起的完成记录按原子任务 id 迁移到新序列对应子任务上
+      const snapshot = [...this.subtaskOccurrences];
+      for (let i = 0; i < patch.subtasks.length && i < newTask.subtasks.length; i++) {
+        const oldId = patch.subtasks[i].id;
+        if (!oldId) continue;
+        for (const o of snapshot) {
+          if (o.subtaskId === oldId && o.date >= date) {
+            this.subtaskOccurrences.push({ id: this.nid(), subtaskId: newTask.subtasks[i].id, date: o.date, isCompleted: o.isCompleted });
+          }
+        }
+      }
+      // 当天勾选以弹窗状态为准
+      this.applySubtaskCompletionMem(newTask.subtasks, patch.subtasks, date);
+    }
     if (existingOcc && (existingOcc.isCompleted || existingOcc.isFailed || existingOcc.isSkipped)) {
       this.taskOccurrences.push({ id: this.nid(), taskId: newTask.id, date, isCompleted: existingOcc.isCompleted, isFailed: existingOcc.isFailed, isSkipped: existingOcc.isSkipped });
     }

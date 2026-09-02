@@ -44,6 +44,14 @@ export interface CreateTaskPayload {
   subtasks?: string[]
 }
 
+/** 循环任务编辑时随范围选择提交的子任务项（数组顺序即排序） */
+export interface SubtaskPatchItem {
+  id?: number
+  title: string
+  /** 该子任务在目标日期的完成状态 */
+  isCompleted?: boolean
+}
+
 export interface UpdateTaskPayload {
   title?: string
   priority?: Priority

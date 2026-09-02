@@ -147,12 +147,17 @@ export function TaskEditDialog({
           await deleteFromDate(task.id, occurrenceDate)
         }
       } else {
-        // edit
+        // edit：子任务（顺序 + 当天勾选状态）随范围选择一并应用
+        // —— 仅此次：落到拆出的单次任务上；此后全部：落到新序列（date 之前的原序列不受影响）
+        const subtaskItems = subtasks
+          .map((s) => ({ id: s.id, title: s.title.trim(), isCompleted: !!s.isCompleted }))
+          .filter((s) => s.title.length > 0)
         const patch = {
           title: title.trim(),
           priority,
           notes: notes || '',
           recurrenceEnd: newRecurrenceEnd,
+          subtasks: subtaskItems,
         }
         if (scope === 'this') {
           await detachOccurrence(task.id, occurrenceDate, patch)
@@ -210,10 +215,8 @@ export function TaskEditDialog({
                 startDate={date}
               />
             )}
-            {/* 子任务管理（循环 occurrence 的仅此次/此后全部编辑不涉及子任务） */}
-            {!isRecurringOccurrence && (
-              <SubtaskInputList value={subtasks} onChange={setSubtasks} />
-            )}
+            {/* 子任务（循环 occurrence 同样可编辑，保存时随所选范围应用：仅此次落到拆出的单次任务，此后全部落到新序列） */}
+            <SubtaskInputList value={subtasks} onChange={setSubtasks} />
             <Textarea
               placeholder="备注（选填）"
               value={notes}

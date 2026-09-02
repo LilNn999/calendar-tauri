@@ -1,6 +1,6 @@
 import { IPC } from '@shared/ipc-channels'
 import type {
-  Task, CreateTaskPayload, UpdateTaskPayload,
+  Task, CreateTaskPayload, UpdateTaskPayload, SubtaskPatchItem,
   CheckinDefinition, CheckinEntry, CreateCheckinDefPayload, UpsertCheckinEntryPayload,
   DailyNote, CompletionStats, TrendPoint, StreakData, WidgetPrefs, TimeRange,
 } from '@shared/types'
@@ -26,9 +26,9 @@ export const tasksApi = {
     invoke<void>(IPC.TASKS_SKIP_OCCURRENCE, taskId, date),
   deleteFromDate: (taskId: number, date: string) =>
     invoke<void>(IPC.TASKS_DELETE_FROM_DATE, taskId, date),
-  detachOccurrence: (taskId: number, date: string, patch: { title?: string; priority?: string; notes?: string }) =>
+  detachOccurrence: (taskId: number, date: string, patch: { title?: string; priority?: string; notes?: string; subtasks?: SubtaskPatchItem[] }) =>
     invoke<Task>(IPC.TASKS_DETACH_OCCURRENCE, taskId, date, patch),
-  splitFromDate: (taskId: number, date: string, patch: { title?: string; priority?: string; notes?: string; recurrenceEnd?: string }) =>
+  splitFromDate: (taskId: number, date: string, patch: { title?: string; priority?: string; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }) =>
     invoke<Task>(IPC.TASKS_SPLIT_FROM_DATE, taskId, date, patch),
   toggleSubtask: (subtaskId: number, date: string, isCompleted: boolean) =>
     invoke<void>(IPC.SUBTASKS_TOGGLE, subtaskId, date, isCompleted),
