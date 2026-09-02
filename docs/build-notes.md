@@ -12,6 +12,24 @@
 - 测试窗口规则：`启动测试窗口.bat` 使用 `scripts/check-test-build-stale.mjs` 自动判断源码/配置/dist 是否新于 release exe；如有更新，先执行 `npm run tauri build -- --no-bundle` 再启动最新测试版，禁止直接启动旧 exe。
 - Codex 内部验收必须主动执行 `npm run tauri build -- --no-bundle`，并确认 `node scripts/check-test-build-stale.mjs` 输出 `0`；此后用户直接打开 `启动测试窗口.bat` 应直接启动最新版，不得再次构建。
 
+## 2026-09-02 0.3.11 正式版
+
+- 时间：2026-09-02
+- 分支：`codex/release-0.3.4`
+- 提交：见下（`fix: 修复子任务拖拽无法直达列表首尾位置（无让位动画且与首末行重合）` + `release: 0.3.11 修复子任务拖拽首尾落点` + `docs: 记录 0.3.11 构建信息`）
+- 版本：`0.3.11`
+- 命令：`npm run tauri build`
+- 构建结果：成功（退出码 0）
+- 安装包源文件：`src-tauri/target/release/bundle/nsis/日历_0.3.11_x64-setup.exe`
+- 已交付：`安装包/日历_0.3.11_x64-setup.exe`
+- 大小：2,225,974 bytes（约 2.1 MB）
+- SHA256：`a191fe222ad5bbccb68dc6f612d6cbe51dfdcc588545543f1ff6151384b1b951`
+- 耗时：前端约 3.4 秒；Cargo release 增量编译；NSIS 打包成功。
+- 本次改动：修复子任务拖拽无法直达列表首尾位置的问题（位移钳制从首/末行中线改为按行边缘 + 2px 余量，首尾落点可正常触发让位动画，被拖行贴合目标槽位）；版本号 0.3.10 → 0.3.11，公告与 CHANGELOG 同步。该修复曾以 0.3.10 二次交付，现随 0.3.11 正式发布，0.3.10 二次交付安装包作废。
+- 模板校验：`diff --strip-trailing-cr` 对比 0.3.5 官方基线共 55 行差异，与历史构建完全一致（均为既有自定义改动与版本号/ESTIMATEDSIZE 行），无新增差异；`NSIS_HOOK_PREINSTALL` 在位。
+- 验证：`npm test` 8/8；`npm run build` 通过；`npm run tauri build` 成功；`dist` 无 `*.db`；`bundle.resources` 未配置。
+- 注意事项：打包前无运行中的旧进程，一次构建成功；安装包未由代理启动，用户自行双击安装测试；本次发布完成后合并 main 并推送码云。
+
 ## 2026-09-02 0.3.10 正式版
 
 - 时间：2026-09-02（打包时刻见本节首行日期）
@@ -29,7 +47,7 @@
 - 模板校验：`diff --strip-trailing-cr` 对比 0.3.5 官方基线共 55 行差异，与 0.3.8/0.3.9 构建完全一致（均为既有自定义改动与版本号/ESTIMATEDSIZE 行，`ESTIMATEDSIZE` 5038→5042 正常波动），无新增差异；`NSIS_HOOK_PREINSTALL` 在位。
 - 验证：`npm test` 8/8；`npm run build` 通过；`npm run tauri build` 成功；`dist` 无 `*.db`；`bundle.resources` 未配置。
 - 注意事项：打包前旧版 `calendar-tauri.exe` 正在运行，已结束进程后构建一次成功；安装包未由代理启动，用户自行双击安装测试；本次发布完成后合并 main 并推送码云。
-- **二次交付（2026-09-02）**：用户实测反馈子任务拖拽无法直达列表最上/最下位置（无让位动画且与首/末行重合）。根因：拖拽位移钳制在首/末行中线处，而落点判定要求行中线严格越过阈值，钳制极限恰等于阈值导致首尾落点永远无法触发。修复：位移改按行边缘钳制并留 2px 越界余量（`SubtaskInputList.tsx`）。`npm run build` 通过、`npm test` 8/8；模板校验仍为 55 行既有差异；`dist` 无 `*.db`。重新打包覆盖交付：大小 2,225,264 bytes，SHA256 `2b2464fb2d4b904a73dcf39288fb35be4bad0b4d1446a8eb0e05ffd734f98045`，覆盖 `安装包/日历_0.3.10_x64-setup.exe`（首版 SHA256 `b7cb60ab0fa2750dc989c9777c66d8ceffafc7084c639cbee7ccfc36b9828a7b` 作废）。
+- **二次交付（2026-09-02）**：用户实测反馈子任务拖拽无法直达列表最上/最下位置（无让位动画且与首/末行重合）。根因：拖拽位移钳制在首/末行中线处，而落点判定要求行中线严格越过阈值，钳制极限恰等于阈值导致首尾落点永远无法触发。修复：位移改按行边缘钳制并留 2px 越界余量（`SubtaskInputList.tsx`）。`npm run build` 通过、`npm test` 8/8；模板校验仍为 55 行既有差异；`dist` 无 `*.db`。重新打包覆盖交付：大小 2,225,264 bytes，SHA256 `2b2464fb2d4b904a73dcf39288fb35be4bad0b4d1446a8eb0e05ffd734f98045`，覆盖 `安装包/日历_0.3.10_x64-setup.exe`（首版 SHA256 `b7cb60ab0fa2750dc989c9777c66d8ceffafc7084c639cbee7ccfc36b9828a7b` 作废）。**后该修复随 0.3.11 正式发布，本二次交付安装包作废，以 `安装包/日历_0.3.11_x64-setup.exe` 为准。**
 
 ## 2026-09-01 0.3.9 正式版
 
