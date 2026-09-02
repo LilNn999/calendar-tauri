@@ -12,6 +12,24 @@
 - 测试窗口规则：`启动测试窗口.bat` 使用 `scripts/check-test-build-stale.mjs` 自动判断源码/配置/dist 是否新于 release exe；如有更新，先执行 `npm run tauri build -- --no-bundle` 再启动最新测试版，禁止直接启动旧 exe。
 - Codex 内部验收必须主动执行 `npm run tauri build -- --no-bundle`，并确认 `node scripts/check-test-build-stale.mjs` 输出 `0`；此后用户直接打开 `启动测试窗口.bat` 应直接启动最新版，不得再次构建。
 
+## 2026-09-02 0.3.10 正式版
+
+- 时间：2026-09-02（打包时刻见本节首行日期）
+- 分支：`codex/release-0.3.4`
+- 提交：见下（`feat: 子任务支持拖拽排序，循环任务编辑弹窗展示并保存子任务` + `release: 0.3.10 新增子任务拖拽排序` + `docs: 记录 0.3.10 构建信息`）
+- 版本：`0.3.10`
+- 命令：`npm run tauri build`
+- 构建结果：成功（退出码 0）
+- 安装包源文件：`src-tauri/target/release/bundle/nsis/日历_0.3.10_x64-setup.exe`
+- 已交付：`安装包/日历_0.3.10_x64-setup.exe`
+- 大小：2,226,180 bytes（约 2.1 MB）
+- SHA256：`b7cb60ab0fa2750dc989c9777c66d8ceffafc7084c639cbee7ccfc36b9828a7b`
+- 耗时：前端约 3.3 秒；Cargo release 约 1 分 40 秒；NSIS 打包成功。
+- 本次改动：子任务支持拖拽排序（`SubtaskInputList` 每行新增握把手柄，指针事件自实现，7 处编辑/新建入口全部生效，顺序随保存写入 `sortOrder`）；修复编辑循环任务时子任务不显示的问题——循环任务编辑弹窗现在展示子任务列表（可勾选/增删改/拖拽），保存时随所选范围应用（仅此次落到拆出的单次任务，此后全部落到新序列并按原子任务 id 迁移起始日期后的完成记录，保留历史进度）；版本号 0.3.9 → 0.3.10，公告与 CHANGELOG 同步。
+- 模板校验：`diff --strip-trailing-cr` 对比 0.3.5 官方基线共 55 行差异，与 0.3.8/0.3.9 构建完全一致（均为既有自定义改动与版本号/ESTIMATEDSIZE 行，`ESTIMATEDSIZE` 5038→5042 正常波动），无新增差异；`NSIS_HOOK_PREINSTALL` 在位。
+- 验证：`npm test` 8/8；`npm run build` 通过；`npm run tauri build` 成功；`dist` 无 `*.db`；`bundle.resources` 未配置。
+- 注意事项：打包前旧版 `calendar-tauri.exe` 正在运行，已结束进程后构建一次成功；安装包未由代理启动，用户自行双击安装测试；本次发布完成后合并 main 并推送码云。
+
 ## 2026-09-01 0.3.9 正式版
 
 - 时间：2026-09-01 09:04:00
