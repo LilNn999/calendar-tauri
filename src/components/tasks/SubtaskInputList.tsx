@@ -88,10 +88,10 @@ export function SubtaskInputList({ value, onChange, placeholder = '子任务…'
       const geo = geoRef.current
       if (!geo) return
       const fromRect = rects[from]
-      const fromCenter = fromRect.top + fromRect.height / 2
-      // 位移限制在列表首尾行中线之间，避免拖出列表后行跟着飘走
-      const minDelta = rects[0].top + rects[0].height / 2 - fromCenter
-      const maxDelta = rects[rects.length - 1].top + rects[rects.length - 1].height / 2 - fromCenter
+      // 位移按行边缘钳制并留 2px 越界余量：拖动行能贴到首行顶/末行底，行中线才会严格
+      // 越过首/末行阈值——否则第一个/最后一个落点永远到不了，会卡在与首末行重合的状态
+      const minDelta = rects[0].top - fromRect.top - 2
+      const maxDelta = rects[rects.length - 1].bottom - fromRect.bottom + 2
       const delta = Math.min(Math.max(ev.clientY - geo.startY, minDelta), maxDelta)
       const to = computeTarget(from, delta)
       targetRef.current = to
