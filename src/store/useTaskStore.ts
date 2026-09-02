@@ -19,6 +19,7 @@ interface TaskState {
   deleteTask: (id: number) => Promise<void>
   skipOccurrence: (taskId: number, date: string) => Promise<void>
   deleteFromDate: (taskId: number, date: string) => Promise<void>
+  deleteBeforeDate: (taskId: number, date: string) => Promise<void>
   detachOccurrence: (taskId: number, date: string, patch: { title?: string; priority?: string; notes?: string; subtasks?: SubtaskPatchItem[] }) => Promise<Task>
   splitFromDate: (taskId: number, date: string, patch: { title?: string; priority?: string; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }) => Promise<Task>
   getTasksForDate: (date: string) => Task[]
@@ -114,6 +115,14 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     await tasksApi.deleteFromDate(taskId, date)
     set((s) => ({
       tasks: s.tasks.filter((t) => !(t.id === taskId && t.dueDate >= date)),
+    }))
+  },
+
+  // 删除当天及之前：本地移除该日期及更早的 occurrence
+  deleteBeforeDate: async (taskId, date) => {
+    await tasksApi.deleteBeforeDate(taskId, date)
+    set((s) => ({
+      tasks: s.tasks.filter((t) => !(t.id === taskId && t.dueDate <= date)),
     }))
   },
 

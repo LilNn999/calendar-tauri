@@ -33,7 +33,7 @@ export function TaskEditDialog({
   occurrenceDate,
   onAfterChange,
 }: TaskEditDialogProps) {
-  const { updateTask, deleteTask, skipOccurrence, deleteFromDate, detachOccurrence, splitFromDate, updateSubtasks, toggleSubtask } = useTaskStore()
+  const { updateTask, deleteTask, skipOccurrence, deleteFromDate, deleteBeforeDate, detachOccurrence, splitFromDate, updateSubtasks, toggleSubtask } = useTaskStore()
 
   const [title, setTitle] = useState('')
   const [date, setDate] = useState('')
@@ -143,6 +143,9 @@ export function TaskEditDialog({
       if (pendingAction.type === 'delete') {
         if (scope === 'this') {
           await skipOccurrence(task.id, occurrenceDate)
+        } else if (scope === 'before') {
+          // 此日程及此前所有：标记跳过（若已覆盖序列末尾则整条任务进回收站）
+          await deleteBeforeDate(task.id, occurrenceDate)
         } else {
           await deleteFromDate(task.id, occurrenceDate)
         }

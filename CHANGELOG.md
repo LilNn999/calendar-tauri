@@ -2,6 +2,11 @@
 
 本项目变更记录。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循语义化版本。
 
+## [未发布]
+
+### 新增
+- 循环任务删除新增「此日程及此前所有」范围：删除范围弹窗（仅删除模式）在「仅限此日程」与「此日程及未来所有」之间新增该选项，选中后删除该日期（含）之前的所有循环，之后的循环保持不变。因循环规则以 `dueDate` 为锚点（weekly/monthly 依赖锚日星期/日期），实现为把此前循环日批量标记 `isSkipped`（展开与统计均不再生成/计入），若所选日期已覆盖序列末尾则整条任务移入回收站。涉及文件：`src/components/tasks/RecurringChangeDialog.tsx`、`src/components/tasks/TaskEditDialog.tsx`、`src/store/useTaskStore.ts`、`src/api/index.ts`、`src/lib/ipc-bridge.ts`、`src/shared/ipc-channels.ts`、`src/lib/db.ts`（新增 `deleteBeforeDate`，SQLite 与内存实现）。
+
 ## [0.3.11] — 2026-09-02
 
 ### 修复

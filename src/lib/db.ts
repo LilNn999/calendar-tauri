@@ -176,6 +176,7 @@ export interface Db {
   markFailed(ids: number[]): Promise<void>;
   skipOccurrence(taskId: number, date: string): Promise<void>;
   deleteFromDate(taskId: number, date: string): Promise<void>;
+  deleteBeforeDate(taskId: number, date: string): Promise<void>;
   detachOccurrence(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null>;
   splitFromDate(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null>;
   toggleSubtask(subtaskId: number, date: string, isCompleted: boolean): Promise<void>;
@@ -869,6 +870,29 @@ class SqliteDb implements Db {
     }
   }
 
+  async deleteBeforeDate(taskId: number, date: string): Promise<void> {
+    const task = await this.getTaskById(taskId);
+    if (!task || !task.recurrenceType) return;
+    // 所选日期已覆盖序列末尾：整条任务移入回收站
+    if (task.recurrenceEnd && date >= task.recurrenceEnd) {
+      await this.deleteTask(taskId);
+      return;
+    }
+    if (date < task.dueDate) return;
+    // 循环规则以 dueDate 为锚点（weekly/monthly 依赖锚日），不能前移序列起点；
+    // 改为把该日期（含）之前的循环日批量标记跳过，展开与统计时不再生成
+    const start = parseISO(task.dueDate);
+    const until = parseISO(date);
+    for (let day = start; !isAfter(day, until); day = addDays(day, 1)) {
+      if (!matchesRecurrence(day, start, task.recurrenceType)) continue;
+      await this.db.execute(
+        `INSERT INTO task_occurrences (taskId, date, isCompleted, isFailed, isSkipped) VALUES (?, ?, 0, 0, 1)
+         ON CONFLICT(taskId, date) DO UPDATE SET isSkipped = 1`,
+        [taskId, format(day, "yyyy-MM-dd")],
+      );
+    }
+  }
+
   /** 按序号把弹窗里的勾选状态落到新任务的子任务上（detach/split 拆出的新子任务，序号与提交项一一对应） */
   private async applySubtaskCompletion(newSubtasks: Subtask[], items: SubtaskPatchItem[], date: string): Promise<void> {
     for (let i = 0; i < items.length && i < newSubtasks.length; i++) {
@@ -1414,6 +1438,27 @@ class MemoryDb implements Db {
       task.recurrenceEnd = prevDay;
       task.updatedAt = nowIso();
       this.taskOccurrences = this.taskOccurrences.filter((o) => !(o.taskId === taskId && o.date >= date));
+    }
+  }
+
+  async deleteBeforeDate(taskId: number, date: string): Promise<void> {
+    const task = this.tasks.find((t) => t.id === taskId);
+    if (!task || !task.recurrenceType) return;
+    // 所选日期已覆盖序列末尾：整条任务移入回收站
+    if (task.recurrenceEnd && date >= task.recurrenceEnd) {
+      await this.deleteTask(taskId);
+      return;
+    }
+    if (date < task.dueDate) return;
+    // 与 SQLite 版一致：循环规则锚点不能前移，把该日期（含）之前的循环日批量标记跳过
+    const start = parseISO(task.dueDate);
+    const until = parseISO(date);
+    for (let day = start; !isAfter(day, until); day = addDays(day, 1)) {
+      if (!matchesRecurrence(day, start, task.recurrenceType)) continue;
+      const d = format(day, "yyyy-MM-dd");
+      const occ = this.taskOccurrences.find((o) => o.taskId === taskId && o.date === d);
+      if (occ) occ.isSkipped = true;
+      else this.taskOccurrences.push({ id: this.nid(), taskId, date: d, isCompleted: false, isFailed: false, isSkipped: true });
     }
   }
 

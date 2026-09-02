@@ -26,6 +26,8 @@ export const tasksApi = {
     invoke<void>(IPC.TASKS_SKIP_OCCURRENCE, taskId, date),
   deleteFromDate: (taskId: number, date: string) =>
     invoke<void>(IPC.TASKS_DELETE_FROM_DATE, taskId, date),
+  deleteBeforeDate: (taskId: number, date: string) =>
+    invoke<void>(IPC.TASKS_DELETE_BEFORE_DATE, taskId, date),
   detachOccurrence: (taskId: number, date: string, patch: { title?: string; priority?: string; notes?: string; subtasks?: SubtaskPatchItem[] }) =>
     invoke<Task>(IPC.TASKS_DETACH_OCCURRENCE, taskId, date, patch),
   splitFromDate: (taskId: number, date: string, patch: { title?: string; priority?: string; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }) =>

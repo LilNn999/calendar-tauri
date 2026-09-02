@@ -12,6 +12,7 @@ export const IPC = {
   TASKS_EMPTY_TRASH: 'tasks:emptyTrash',     // 清空回收箱
   TASKS_SKIP_OCCURRENCE: 'tasks:skipOccurrence',       // 仅跳过某一天（删除单日）
   TASKS_DELETE_FROM_DATE: 'tasks:deleteFromDate',      // 删除当天及之后所有
+  TASKS_DELETE_BEFORE_DATE: 'tasks:deleteBeforeDate',  // 删除当天及之前所有（循环任务）
   TASKS_DETACH_OCCURRENCE: 'tasks:detachOccurrence',   // 仅修改单日（解绑+创建独立任务）
   TASKS_SPLIT_FROM_DATE: 'tasks:splitFromDate',        // 修改当天及之后（截断+创建新循环任务）
   SUBTASKS_TOGGLE: 'subtasks:toggle',                  // 切换子任务当天完成状态

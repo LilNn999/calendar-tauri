@@ -161,6 +161,10 @@ async function invoke(channel: IpcChannel, ...args: unknown[]): Promise<unknown>
       await db.deleteFromDate(args[0] as number, args[1] as string);
       notifyDataChanged();
       return;
+    case IPC.TASKS_DELETE_BEFORE_DATE:
+      await db.deleteBeforeDate(args[0] as number, args[1] as string);
+      notifyDataChanged();
+      return;
     case IPC.TASKS_DETACH_OCCURRENCE:
       return db.detachOccurrence(args[0] as number, args[1] as string, args[2] as never);
     case IPC.TASKS_SPLIT_FROM_DATE:

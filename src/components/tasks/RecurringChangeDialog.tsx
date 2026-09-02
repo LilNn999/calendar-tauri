@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import { format, parseISO } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 
-export type RecurringChangeScope = 'this' | 'future'
+export type RecurringChangeScope = 'this' | 'before' | 'future'
 export type RecurringChangeMode = 'edit' | 'delete'
 
 interface RecurringChangeDialogProps {
@@ -89,7 +89,28 @@ export function RecurringChangeDialog({
             </div>
           </label>
 
-          {/* 选项 B */}
+          {/* 选项 B（仅删除模式）：此日程及此前所有 */}
+          {mode === 'delete' && (
+            <label
+              className={cn(
+                'flex items-start gap-3 p-3 rounded-2xl border-[1.5px] cursor-pointer transition-colors',
+                scope === 'before'
+                  ? 'border-destructive bg-destructive/5'
+                  : 'border-border hover:border-muted-foreground/40'
+              )}
+              onClick={() => setScope('before')}
+            >
+              <RadioDot checked={scope === 'before'} danger />
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-medium">此日程及此前所有</span>
+                <span className="text-[11px] text-muted-foreground">
+                  删除该日期及之前的所有循环，之后的循环任务保持不变
+                </span>
+              </div>
+            </label>
+          )}
+
+          {/* 选项 C */}
           <label
             className={cn(
               'flex items-start gap-3 p-3 rounded-2xl border-[1.5px] cursor-pointer transition-colors',
@@ -132,13 +153,15 @@ export function RecurringChangeDialog({
           <Button variant="outline" size="sm" onClick={handleCancel}>取消</Button>
           <Button
             size="sm"
-            variant={scope === 'future' ? 'destructive' : 'default'}
+            variant={scope === 'this' ? 'default' : 'destructive'}
             onClick={handleConfirm}
             disabled={endDateInvalid}
           >
             {scope === 'this'
               ? `${verb}此日程`
-              : `${verb}此日程及未来`}
+              : scope === 'before'
+                ? '删除此日程及此前所有'
+                : `${verb}此日程及未来`}
           </Button>
         </DialogFooter>
       </DialogContent>
