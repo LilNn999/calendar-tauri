@@ -2,6 +2,18 @@
 
 本项目变更记录。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循语义化版本。
 
+## [0.3.10] — 2026-09-02
+
+### 新增
+- 子任务支持拖拽排序：子任务列表每行新增拖拽手柄（竖向握把图标），按住上下拖动即可调整顺序，拖拽中被拖行跟手移动、其余子任务平滑让位；松开后立即生效并随保存写入 `sortOrder`，日历详情、悬浮窗等展示处同步生效。任务编辑弹窗、任务创建侧栏、侧边栏任务面板、任务总览的新建/编辑、日历详情弹窗与悬浮窗共 7 处入口全部生效。基于指针事件自实现（拖拽开始缓存行矩形，期间不读 DOM），无新增依赖。涉及文件：`src/components/tasks/SubtaskInputList.tsx`。
+
+### 修复
+- 编辑循环任务时不显示子任务：`TaskEditDialog` 此前在循环任务模式下隐藏了子任务区块，且循环保存路径（仅此次/此后全部）不处理子任务。现循环任务编辑弹窗同样展示子任务列表（可勾选、可拖拽排序），保存时随所选范围应用：「仅此次」拆出的单次任务带上编辑后的子任务及当天勾选状态；「此后全部」新序列带上子任务，并按原子任务 id 把起始日期之后的完成记录迁移到新序列（保留历史进度，当天以弹窗状态为准）；起始日当天选「此后全部」时为同序列原地更新（按 id 保留完成记录）。涉及文件：`src/components/tasks/TaskEditDialog.tsx`、`src/store/useTaskStore.ts`、`src/api/index.ts`、`src/lib/db.ts`、`src/shared/types.ts`（新增 `SubtaskPatchItem`）。
+
+### 构建
+- 版本号由 0.3.9 升级至 0.3.10（`package.json` / `package-lock.json` / `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` / `src-tauri/Cargo.lock` 同步）。
+- 同步发布用户端更新公告（`src/data/whatsNew.ts`），首次启动 0.3.10 自动弹出。
+
 ## [0.3.9] — 2026-09-01
 
 ### 修复
