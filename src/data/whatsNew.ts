@@ -8,6 +8,13 @@ export interface VersionNote {
 /** 更新历史（最新版本在最前） */
 export const VERSION_NOTES: VersionNote[] = [
   {
+    version: '0.4.1',
+    date: '2026-09-02',
+    fixes: [
+      '任务总览点击编辑按钮改为弹出居中编辑窗口，展示完整信息，不再挤在侧边栏里编辑',
+    ],
+  },
+  {
     version: '0.4.0',
     date: '2026-09-02',
     features: [

@@ -2,10 +2,14 @@
 
 本项目变更记录。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循语义化版本。
 
-## [未发布]
+## [0.4.1] — 2026-09-02
 
 ### 修复
 - 任务总览编辑按钮改为弹出居中编辑弹窗：此前非循环任务点击铅笔按钮在侧边栏内展开行内编辑表单，宽度受限、信息展示不全。现与循环任务一致，统一弹出居中「编辑任务」弹窗（含标题、截止日期、优先级、重复规则、子任务拖拽排序与备注），并移除行内编辑表单相关代码。涉及文件：`src/components/sidebar/TaskOverviewPanel.tsx`。
+
+### 构建
+- 版本号由 0.4.0 升级至 0.4.1（`package.json` / `package-lock.json` / `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` / `src-tauri/Cargo.lock` 同步）。
+- 同步发布用户端更新公告（`src/data/whatsNew.ts`），首次启动 0.4.1 自动弹出。
 
 ## [0.4.0] — 2026-09-02
 
