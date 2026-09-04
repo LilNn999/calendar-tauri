@@ -8,6 +8,16 @@ export interface VersionNote {
 /** 更新历史（最新版本在最前） */
 export const VERSION_NOTES: VersionNote[] = [
   {
+    version: '0.5.0',
+    date: '2026-09-04',
+    features: [
+      '打卡支持按范围删除：删除打卡时可选「仅限此日程」「此日程及此前所有」「此日程及未来所有」，与循环任务删除一致',
+    ],
+    fixes: [
+      '任务总览点击「新增」按钮改为弹出居中新建窗口，展示完整信息，不再挤在侧边栏里添加',
+    ],
+  },
+  {
     version: '0.4.1',
     date: '2026-09-02',
     fixes: [

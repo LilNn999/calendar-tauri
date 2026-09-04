@@ -2,10 +2,17 @@
 
 本项目变更记录。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循语义化版本。
 
-## [未发布]
+## [0.5.0] — 2026-09-04
 
 ### 新增
-- 打卡项支持删除：此前打卡项没有任何可用的删除入口（带归档按钮的打卡组件管理器从未接入界面）。现打卡值编辑弹窗（日历格子点击打卡项弹出，四种类型共用）底部新增「删除打卡」按钮；日历详情弹窗内各打卡行悬停显示垃圾桶按钮可直接删除。开关/数值/文字/时间四种类型全部覆盖，删除采用既有归档机制（列表与当日弹窗立即移除，历史打卡记录保留在库中）。涉及文件：`src/components/checkins/CheckinValueDialog.tsx`、`BooleanCheckin.tsx`、`NumericCheckin.tsx`、`TimeCheckin.tsx`、`TextCheckin.tsx`、`src/components/calendar/DayDetailPopup.tsx`。
+- 循环打卡支持按范围删除：打卡本质是循环任务，删除时与循环任务一样弹出范围选择（仅限此日程 / 此日程及此前所有 / 此日程及未来所有），不再直接整条删除。入口两处：打卡值编辑弹窗（日历格子点击打卡项弹出，四种类型共用）的「删除打卡」按钮；日历详情弹窗内打卡行悬停垃圾桶。数据层：`checkin_definitions` 新增 `skipDates` 列（迁移 v2）实现「仅此日程」单日跳过；「此前/未来所有」复用 `startDate`/`endDate` 前移，覆盖为空则整条归档；各界面按天过滤打卡统一收敛到 `checkinActiveOn`（含 skipDates 判定）。涉及文件：`src/components/checkins/CheckinValueDialog.tsx`、`BooleanCheckin.tsx`、`NumericCheckin.tsx`、`TimeCheckin.tsx`、`TextCheckin.tsx`、`src/components/calendar/DayDetailPopup.tsx`、`WeekView.tsx`、`DayCell.tsx`、`src/components/sidebar/TaskOverviewPanel.tsx`、`src/widget/WidgetShell.tsx`、`src/lib/utils.ts`、`src/lib/db.ts`、`src/store/useCheckinStore.ts`、`src/api/index.ts`、`src/lib/ipc-bridge.ts`、`src/shared/ipc-channels.ts`、`src/shared/types.ts`、`docs/schema.md`。
+
+### 修复
+- 任务总览「新增」改为弹出居中新建弹窗：此前点击侧栏「+ 新增」在任务总览面板内内联展开新建表单，宽度受限、信息展示不全。现与编辑弹窗一致，统一弹出居中「新建任务」弹窗（含标题、截止日期、优先级、重复规则、子任务与备注），每次打开重置表单并预填侧栏当前选中日期，并移除侧栏内联新建表单相关代码。涉及文件：`src/components/tasks/TaskCreateDialog.tsx`（新增）、`src/components/sidebar/TaskOverviewPanel.tsx`。
+
+### 构建
+- 版本号由 0.4.1 升级至 0.5.0（`package.json` / `package-lock.json` / `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` / `src-tauri/Cargo.lock` 同步）。
+- 同步发布用户端更新公告（`src/data/whatsNew.ts`），首次启动 0.5.0 自动弹出。
 
 ## [0.4.1] — 2026-09-02
 
