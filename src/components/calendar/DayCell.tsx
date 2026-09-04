@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { toDateString, matchesCheckinFrequency } from '@/lib/utils'
+import { toDateString, checkinActiveOn } from '@/lib/utils'
 import { getDayCellState } from '@/lib/dayCellState'
 import { CELL_MAX_ITEMS } from '@shared/constants'
 import { useTaskStore } from '@/store/useTaskStore'
@@ -86,12 +86,7 @@ export function DayCell({
   const noteContent = getNoteForDate(dateStr)
 
   // 过滤掉有效期之外 / 不匹配周期的打卡定义
-  const activeDefs = definitions.filter((d) => {
-    if (d.startDate && dateStr < d.startDate) return false
-    if (d.endDate && dateStr > d.endDate) return false
-    if (!matchesCheckinFrequency(dateStr, d.frequency, d.startDate)) return false
-    return true
-  })
+  const activeDefs = definitions.filter((d) => checkinActiveOn(d, dateStr))
 
   type Item = { kind: 'task'; id: number } | { kind: 'checkin'; defId: number }
   const allItems: Item[] = [

@@ -10,6 +10,7 @@ interface CheckinState {
   createDefinition: (payload: CreateCheckinDefPayload) => Promise<void>
   updateDefinition: (id: number, patch: Partial<CreateCheckinDefPayload>) => Promise<void>
   archiveDefinition: (id: number) => Promise<void>
+  deleteCheckinDef: (id: number, date: string, scope: 'this' | 'before' | 'future') => Promise<void>
   upsertEntry: (defId: number, date: string, value: string) => Promise<void>
   getEntriesForDate: (date: string) => CheckinEntry[]
   getEntryValue: (defId: number, date: string) => string | undefined
@@ -44,6 +45,12 @@ export const useCheckinStore = create<CheckinState>((set, get) => ({
   archiveDefinition: async (id) => {
     await checkinsApi.archiveDef(id)
     set((s) => ({ definitions: s.definitions.filter((d) => d.id !== id) }))
+  },
+
+  // 循环打卡按范围删除（this/before/future），完成后重新拉取定义
+  deleteCheckinDef: async (id, date, scope) => {
+    await checkinsApi.deleteCheckinDef(id, date, scope)
+    await get().fetchDefinitions()
   },
 
   upsertEntry: async (defId, date, value) => {

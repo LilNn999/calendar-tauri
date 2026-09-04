@@ -71,7 +71,10 @@
 | archivedAt | TEXT | 归档时间，可空 |
 | startDate / endDate | TEXT | 生效区间，可空 |
 | frequency | TEXT DEFAULT 'daily' | daily/weekday/weekend/weekly/monthly |
+| skipDates | TEXT | 单日跳过日期的 JSON 数组（`["YYYY-MM-DD", …]`，v2 新增；循环打卡范围删除「仅此日程」写入） |
 | createdAt | TEXT NOT NULL | 时间戳 |
+
+> 迁移版本：v2（`PRAGMA user_version`）。删除循环打卡的三种范围映射：仅此日程 → 追加 `skipDates`；此日程及此前所有 → `startDate` 前移到次日；此日程及未来所有 → `endDate` 前移到前一日。前移后若无剩余日期，整条定义归档。
 
 ## checkin_entries — 打卡记录
 

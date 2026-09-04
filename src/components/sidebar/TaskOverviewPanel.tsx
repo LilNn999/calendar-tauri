@@ -17,7 +17,7 @@ import { TimeCheckin } from '@/components/checkins/TimeCheckin'
 import { useTaskStore } from '@/store/useTaskStore'
 import { useCheckinStore } from '@/store/useCheckinStore'
 import { useCalendarStore } from '@/store/useCalendarStore'
-import { toDateString, matchesCheckinFrequency } from '@/lib/utils'
+import { toDateString, checkinActiveOn } from '@/lib/utils'
 import { PRIORITY_CONFIG, RECURRENCE_LABELS } from '@shared/constants'
 import { cn } from '@/lib/utils'
 import { format, parseISO } from 'date-fns'
@@ -62,12 +62,7 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
 
   // 今日有效的打卡定义
   const activeTodayDefs = useMemo(() => {
-    return definitions.filter((d) => {
-      if (d.archivedAt) return false
-      if (d.startDate && today < d.startDate) return false
-      if (d.endDate && today > d.endDate) return false
-      return matchesCheckinFrequency(today, d.frequency, d.startDate)
-    })
+    return definitions.filter((d) => checkinActiveOn(d, today))
   }, [definitions, today])
 
   const todayEntries = getEntriesForDate(today)

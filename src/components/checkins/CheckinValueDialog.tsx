@@ -1,7 +1,10 @@
+import { useState } from 'react'
 import { useCheckinStore } from '@/store/useCheckinStore'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Trash2 } from 'lucide-react'
+import { RecurringChangeDialog } from '@/components/tasks/RecurringChangeDialog'
+import { toDateString } from '@/lib/utils'
 import { NumericCheckin } from './NumericCheckin'
 import { BooleanCheckin } from './BooleanCheckin'
 import { TextCheckin } from './TextCheckin'
@@ -15,7 +18,8 @@ interface CheckinValueDialogProps {
 }
 
 export function CheckinValueDialog({ definition, date, onClose }: CheckinValueDialogProps) {
-  const { getEntriesForDate, upsertEntry, archiveDefinition } = useCheckinStore()
+  const { getEntriesForDate, upsertEntry, deleteCheckinDef } = useCheckinStore()
+  const [showDeleteScope, setShowDeleteScope] = useState(false)
 
   const open = !!definition && !!date
   const entries = open ? getEntriesForDate(date!) : []
@@ -23,12 +27,6 @@ export function CheckinValueDialog({ definition, date, onClose }: CheckinValueDi
   const value = entry?.value ?? ''
   const onChange = (v: string) => {
     if (definition && date) upsertEntry(definition.id, date, v)
-  }
-  // 删除打卡（归档）：列表立即移除，历史记录保留在库中
-  const handleDelete = () => {
-    if (!definition) return
-    archiveDefinition(definition.id)
-    onClose()
   }
 
   return (
@@ -66,15 +64,30 @@ export function CheckinValueDialog({ definition, date, onClose }: CheckinValueDi
           <Button
             variant="ghost"
             size="sm"
-            onClick={handleDelete}
+            onClick={() => setShowDeleteScope(true)}
             disabled={!definition}
             className="text-destructive hover:text-destructive mr-auto"
-            title="删除该打卡（之后的日期不再显示，历史记录保留）"
+            title="删除该循环打卡（可选择影响范围）"
           >
             <Trash2 className="h-4 w-4 mr-1" />
             删除打卡
           </Button>
         </DialogFooter>
+
+        {/* 打卡也是循环任务：删除时选择影响范围 */}
+        <RecurringChangeDialog
+          open={showDeleteScope}
+          mode="delete"
+          taskTitle={definition?.name ?? ''}
+          occurrenceDate={date ?? toDateString(new Date())}
+          onConfirm={async (scope) => {
+            if (!definition || !date) return
+            await deleteCheckinDef(definition.id, date, scope)
+            setShowDeleteScope(false)
+            onClose()
+          }}
+          onCancel={() => setShowDeleteScope(false)}
+        />
       </DialogContent>
     </Dialog>
   )

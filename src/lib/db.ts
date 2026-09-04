@@ -189,6 +189,8 @@ export interface Db {
   createCheckinDef(payload: CreateCheckinDefPayload): Promise<CheckinDefinition>;
   updateCheckinDef(id: number, patch: Partial<CreateCheckinDefPayload>): Promise<CheckinDefinition>;
   archiveCheckinDef(id: number): Promise<void>;
+  /** 循环打卡按范围删除：this=仅跳过该日，before=该日及此前（startDate 前移，覆盖为空则归档），future=该日及之后（endDate 前移，覆盖为空则归档） */
+  deleteCheckinDef(id: number, date: string, scope: "this" | "before" | "future"): Promise<void>;
   reorderCheckinDefs(orderedIds: number[]): Promise<void>;
   getCheckinEntries(start: string, end: string): Promise<CheckinEntry[]>;
   upsertCheckinEntry(payload: UpsertCheckinEntryPayload): Promise<CheckinEntry>;
@@ -226,6 +228,13 @@ function mapTask(r: SqlRow): Task {
 }
 
 function mapDef(r: SqlRow): CheckinDefinition {
+  let skipDates: string[] | undefined;
+  try {
+    const parsed = r.skipDates ? JSON.parse(r.skipDates as string) : null;
+    if (Array.isArray(parsed)) skipDates = parsed;
+  } catch {
+    skipDates = undefined;
+  }
   return {
     id: r.id as number,
     name: r.name as string,
@@ -236,6 +245,7 @@ function mapDef(r: SqlRow): CheckinDefinition {
     startDate: (r.startDate as string) ?? null,
     endDate: (r.endDate as string) ?? null,
     frequency: (r.frequency as CheckinDefinition["frequency"]) ?? null,
+    skipDates,
     createdAt: r.createdAt as string,
   };
 }
@@ -308,7 +318,8 @@ class SqliteDb implements Db {
   private async migrate() {
     const rows = await this.db.select<{ user_version: number }[]>("PRAGMA user_version");
     const version = rows[0]?.user_version ?? 0;
-    if (version >= 1) return;
+    if (version >= 2) return;
+    if (version < 1) {
     const sql = `
       CREATE TABLE IF NOT EXISTS tasks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -397,6 +408,12 @@ class SqliteDb implements Db {
     await this.db.execute(sql);
     await this.db.execute("PRAGMA user_version = 1");
     await this.seedAchievements();
+    }
+    if (version < 2) {
+      // v2：打卡定义新增 skipDates（循环打卡范围删除「仅此日程」）
+      await this.db.execute("ALTER TABLE checkin_definitions ADD COLUMN skipDates TEXT");
+      await this.db.execute("PRAGMA user_version = 2");
+    }
   }
 
   private async seedAchievements() {
@@ -1082,6 +1099,35 @@ class SqliteDb implements Db {
     await this.db.execute(`UPDATE checkin_definitions SET archivedAt = ? WHERE id = ?`, [nowIso(), id]);
   }
 
+  async deleteCheckinDef(id: number, date: string, scope: "this" | "before" | "future"): Promise<void> {
+    const rows = await this.db.select<SqlRow[]>(`SELECT * FROM checkin_definitions WHERE id = ?`, [id]);
+    if (!rows[0]) return;
+    const def = mapDef(rows[0]);
+    if (scope === "this") {
+      // 仅此日程：把该日加入单日跳过列表
+      const skip = Array.from(new Set([...(def.skipDates ?? []), date])).sort();
+      await this.db.execute(`UPDATE checkin_definitions SET skipDates = ? WHERE id = ?`, [JSON.stringify(skip), id]);
+      return;
+    }
+    if (scope === "before") {
+      // 该日及此前：序列起点前移到次日；已无剩余日期则整条归档
+      const nextDay = format(addDays(parseISO(date), 1), "yyyy-MM-dd");
+      if (def.endDate && nextDay > def.endDate) {
+        await this.archiveCheckinDef(id);
+        return;
+      }
+      await this.db.execute(`UPDATE checkin_definitions SET startDate = ? WHERE id = ?`, [nextDay, id]);
+      return;
+    }
+    // 该日及之后：序列终点前移到前一日；已无剩余日期则整条归档
+    const prevDay = format(subDays(parseISO(date), 1), "yyyy-MM-dd");
+    if (def.startDate && prevDay < def.startDate) {
+      await this.archiveCheckinDef(id);
+      return;
+    }
+    await this.db.execute(`UPDATE checkin_definitions SET endDate = ? WHERE id = ?`, [prevDay, id]);
+  }
+
   async reorderCheckinDefs(orderedIds: number[]): Promise<void> {
     for (let i = 0; i < orderedIds.length; i++) {
       await this.db.execute(`UPDATE checkin_definitions SET sortOrder = ? WHERE id = ?`, [i, orderedIds[i]]);
@@ -1614,6 +1660,30 @@ class MemoryDb implements Db {
   async archiveCheckinDef(id: number): Promise<void> {
     const def = this.defs.find((d) => d.id === id);
     if (def) def.archivedAt = nowIso();
+  }
+
+  async deleteCheckinDef(id: number, date: string, scope: "this" | "before" | "future"): Promise<void> {
+    const def = this.defs.find((d) => d.id === id);
+    if (!def) return;
+    if (scope === "this") {
+      def.skipDates = Array.from(new Set([...(def.skipDates ?? []), date])).sort();
+      return;
+    }
+    if (scope === "before") {
+      const nextDay = format(addDays(parseISO(date), 1), "yyyy-MM-dd");
+      if (def.endDate && nextDay > def.endDate) {
+        def.archivedAt = nowIso();
+        return;
+      }
+      def.startDate = nextDay;
+      return;
+    }
+    const prevDay = format(subDays(parseISO(date), 1), "yyyy-MM-dd");
+    if (def.startDate && prevDay < def.startDate) {
+      def.archivedAt = nowIso();
+      return;
+    }
+    def.endDate = prevDay;
   }
 
   async reorderCheckinDefs(orderedIds: number[]): Promise<void> {

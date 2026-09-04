@@ -52,6 +52,8 @@ export const checkinsApi = {
     invoke<CheckinDefinition>(IPC.CHECKINS_UPDATE_DEF, id, patch),
   archiveDef: (id: number) =>
     invoke<void>(IPC.CHECKINS_ARCHIVE_DEF, id),
+  deleteCheckinDef: (id: number, date: string, scope: 'this' | 'before' | 'future') =>
+    invoke<void>(IPC.CHECKINS_DELETE_DEF, id, date, scope),
   reorderDefs: (orderedIds: number[]) =>
     invoke<void>(IPC.CHECKINS_REORDER_DEFS, orderedIds),
   getEntries: (start: string, end: string) =>

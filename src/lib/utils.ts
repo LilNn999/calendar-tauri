@@ -1,8 +1,18 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import type { CheckinDefinition } from '@shared/types'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
+}
+
+/** 打卡定义在指定日期是否生效（归档 + 单日跳过 + 有效期 + 周期） */
+export function checkinActiveOn(def: CheckinDefinition, date: string): boolean {
+  if (def.archivedAt) return false
+  if (def.skipDates?.includes(date)) return false
+  if (def.startDate && date < def.startDate) return false
+  if (def.endDate && date > def.endDate) return false
+  return matchesCheckinFrequency(date, def.frequency, def.startDate)
 }
 
 export function formatDate(date: Date | string): string {

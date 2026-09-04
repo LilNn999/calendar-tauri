@@ -198,6 +198,10 @@ async function invoke(channel: IpcChannel, ...args: unknown[]): Promise<unknown>
       await db.archiveCheckinDef(args[0] as number);
       notifyDataChanged();
       return;
+    case IPC.CHECKINS_DELETE_DEF:
+      await db.deleteCheckinDef(args[0] as number, args[1] as string, args[2] as never);
+      notifyDataChanged();
+      return;
     case IPC.CHECKINS_REORDER_DEFS:
       await db.reorderCheckinDefs(args[0] as number[]);
       return;

@@ -23,6 +23,7 @@ export const IPC = {
   CHECKINS_CREATE_DEF: 'checkins:createDef',
   CHECKINS_UPDATE_DEF: 'checkins:updateDef',
   CHECKINS_ARCHIVE_DEF: 'checkins:archiveDef',
+  CHECKINS_DELETE_DEF: 'checkins:deleteDef', // 循环打卡按范围删除（this/before/future）
   CHECKINS_REORDER_DEFS: 'checkins:reorderDefs',
 
   // 打卡记录

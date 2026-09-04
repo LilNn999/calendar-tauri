@@ -7,7 +7,7 @@ import { useCheckinStore } from '@/store/useCheckinStore'
 import { useUIStore } from '@/store/useUIStore'
 import { useNotesStore } from '@/store/useNotesStore'
 import { TaskItemRow, CheckinPreviewRow } from './DayCellItem'
-import { toDateString, matchesCheckinFrequency } from '@/lib/utils'
+import { toDateString, checkinActiveOn } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { getDayCellState } from '@/lib/dayCellState'
 import { Plus, FileText } from 'lucide-react'
@@ -60,12 +60,7 @@ export function WeekView({ definitions, onDayClick, onTaskToggle, onTaskClick, o
           const noteContent = getNoteForDate(dateStr)
 
           // 过滤有效期内的打卡
-          const activeDefs = definitions.filter((d) => {
-            if (d.startDate && dateStr < d.startDate) return false
-            if (d.endDate && dateStr > d.endDate) return false
-            if (!matchesCheckinFrequency(dateStr, d.frequency, d.startDate)) return false
-            return true
-          })
+          const activeDefs = definitions.filter((d) => checkinActiveOn(d, dateStr))
 
           return (
             <div

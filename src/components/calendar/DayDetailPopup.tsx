@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from '@/lib/motion'
 import { X, Plus, FileText, RefreshCw } from 'lucide-react'
 import { format, parseISO } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import { matchesCheckinFrequency, toDateString } from '@/lib/utils'
+import { checkinActiveOn, toDateString } from '@/lib/utils'
 import { useTaskStore } from '@/store/useTaskStore'
 import { useCheckinStore } from '@/store/useCheckinStore'
 import { useNotesStore } from '@/store/useNotesStore'
@@ -31,12 +31,14 @@ interface DayDetailPopupProps {
 
 export function DayDetailPopup({ date, definitions, onClose, onTaskToggle, onAfterTaskChange }: DayDetailPopupProps) {
   const { tasks: allTasks, deleteTask, skipOccurrence, deleteFromDate, deleteBeforeDate, createTask, toggleSubtask } = useTaskStore()
-  const { getEntriesForDate, upsertEntry, archiveDefinition } = useCheckinStore()
+  const { getEntriesForDate, upsertEntry, deleteCheckinDef } = useCheckinStore()
   const { upsertNote } = useNotesStore()
   const [editTask, setEditTask] = useState<Task | null>(null)
   const [editOccurrenceDate, setEditOccurrenceDate] = useState<string | undefined>(undefined)
   // 循环任务删除范围选择（垃圾桶直达，不经过编辑弹窗）
   const [deleteScopeTask, setDeleteScopeTask] = useState<Task | null>(null)
+  // 循环打卡删除范围选择
+  const [deleteCheckinTarget, setDeleteCheckinTarget] = useState<CheckinDefinition | null>(null)
   const [showCreate, setShowCreate] = useState(false)
   const [newTitle, setNewTitle] = useState('')
   const [newPriority, setNewPriority] = useState<Priority>('none')
@@ -84,12 +86,7 @@ export function DayDetailPopup({ date, definitions, onClose, onTaskToggle, onAft
   }, [allTasks, date])
   const entries = date ? getEntriesForDate(date) : []
 
-  const activeDefs = date ? definitions.filter((d) => {
-    if (d.startDate && date < d.startDate) return false
-    if (d.endDate && date > d.endDate) return false
-    if (!matchesCheckinFrequency(date, d.frequency, d.startDate)) return false
-    return true
-  }) : []
+  const activeDefs = date ? definitions.filter((d) => checkinActiveOn(d, date)) : []
 
   const dateLabel = date
     ? format(parseISO(date), 'M月d日 EEEE', { locale: zhCN })
@@ -212,10 +209,10 @@ export function DayDetailPopup({ date, definitions, onClose, onTaskToggle, onAft
                         const value = entry?.value ?? ''
                         const onChange = (v: string) => date && upsertEntry(def.id, date, v)
 
-                        if (def.type === 'numeric') return <NumericCheckin key={def.id} definition={def} value={value} onChange={onChange} onDelete={() => archiveDefinition(def.id)} />
-                        if (def.type === 'boolean') return <BooleanCheckin key={def.id} definition={def} value={value} onChange={onChange} onDelete={() => archiveDefinition(def.id)} />
-                        if (def.type === 'time') return <TimeCheckin key={def.id} definition={def} value={value} onChange={onChange} onDelete={() => archiveDefinition(def.id)} />
-                        return <TextCheckin key={def.id} definition={def} value={value} onChange={onChange} onDelete={() => archiveDefinition(def.id)} />
+                        if (def.type === 'numeric') return <NumericCheckin key={def.id} definition={def} value={value} onChange={onChange} onDelete={() => setDeleteCheckinTarget(def)} />
+                        if (def.type === 'boolean') return <BooleanCheckin key={def.id} definition={def} value={value} onChange={onChange} onDelete={() => setDeleteCheckinTarget(def)} />
+                        if (def.type === 'time') return <TimeCheckin key={def.id} definition={def} value={value} onChange={onChange} onDelete={() => setDeleteCheckinTarget(def)} />
+                        return <TextCheckin key={def.id} definition={def} value={value} onChange={onChange} onDelete={() => setDeleteCheckinTarget(def)} />
                       })}
                     </div>
                   </section>
@@ -261,6 +258,20 @@ export function DayDetailPopup({ date, definitions, onClose, onTaskToggle, onAft
           onAfterTaskChange?.()
         }}
         onCancel={() => setDeleteScopeTask(null)}
+      />
+
+      {/* 循环打卡删除范围选择（打卡同样按循环任务语义处理） */}
+      <RecurringChangeDialog
+        open={!!deleteCheckinTarget}
+        mode="delete"
+        taskTitle={deleteCheckinTarget?.name ?? ''}
+        occurrenceDate={date ?? toDateString(new Date())}
+        onConfirm={async (scope) => {
+          if (!deleteCheckinTarget || !date) return
+          await deleteCheckinDef(deleteCheckinTarget.id, date, scope)
+          setDeleteCheckinTarget(null)
+        }}
+        onCancel={() => setDeleteCheckinTarget(null)}
       />
     </>
   )

@@ -79,6 +79,8 @@ export interface CheckinDefinition {
   startDate: string | null // 打卡有效期开始
   endDate: string | null   // 打卡有效期结束
   frequency: CheckinFrequency | null // 打卡周期（null 视同 daily）
+  /** 单日跳过的日期（循环打卡范围删除「仅此日程」） */
+  skipDates?: string[]
   createdAt: string
 }
 

@@ -4,7 +4,7 @@ import { Slider } from '@/components/ui/slider'
 import { systemApi } from '@/api'
 import { WidgetTaskList } from './WidgetTaskList'
 import { WidgetCheckinRow } from './WidgetCheckinRow'
-import { toDateString, matchesCheckinFrequency } from '@/lib/utils'
+import { toDateString, checkinActiveOn } from '@/lib/utils'
 import { isTauri } from '@/lib/db'
 import { tasksApi, checkinsApi } from '@/api'
 import { IPC } from '@shared/ipc-channels'
@@ -39,10 +39,7 @@ function formatWidgetDate(dateStr: string) {
 }
 
 function isActiveToday(def: CheckinDefinition, today: string): boolean {
-  if (def.archivedAt) return false
-  if (def.startDate && today < def.startDate) return false
-  if (def.endDate && today > def.endDate) return false
-  return matchesCheckinFrequency(today, def.frequency, def.startDate)
+  return checkinActiveOn(def, today)
 }
 
 export function WidgetShell() {
