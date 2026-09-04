@@ -12,6 +12,24 @@
 - 测试窗口规则：`启动测试窗口.bat` 使用 `scripts/check-test-build-stale.mjs` 自动判断源码/配置/dist 是否新于 release exe；如有更新，先执行 `npm run tauri build -- --no-bundle` 再启动最新测试版，禁止直接启动旧 exe。
 - Codex 内部验收必须主动执行 `npm run tauri build -- --no-bundle`，并确认 `node scripts/check-test-build-stale.mjs` 输出 `0`；此后用户直接打开 `启动测试窗口.bat` 应直接启动最新版，不得再次构建。
 
+## 2026-09-04 0.5.0 正式版
+
+- 时间：2026-09-04
+- 分支：`codex/release-0.3.4`
+- 提交：见下（`feat: 循环打卡支持按范围删除（仅限此日程/此前所有/未来所有，skipDates 迁移 v2）` + `fix: 任务总览新增按钮统一弹出居中新建弹窗，移除侧栏内联新建` + `release: 0.5.0 循环打卡范围删除与任务总览居中新建弹窗` + `docs: 记录 0.5.0 构建信息`）
+- 版本：`0.5.0`
+- 命令：`npm run tauri build`
+- 构建结果：成功（退出码 0）
+- 安装包源文件：`src-tauri/target/release/bundle/nsis/日历_0.5.0_x64-setup.exe`
+- 已交付：`安装包/日历_0.5.0_x64-setup.exe`
+- 大小：2,226,174 bytes（约 2.1 MB）
+- SHA256：`94cc59b8d3a92499d2406cf87e200075ac3d2462da6612302bf21615d60529a6`
+- 耗时：前端约 3.9 秒；Cargo release 约 2 分 07 秒；NSIS 打包成功。
+- 本次改动：循环打卡支持按范围删除（仅限此日程/此前所有/未来所有，`checkin_definitions` 新增 `skipDates` 列，迁移 v2，各界面按天过滤打卡收敛到 `checkinActiveOn`）；任务总览「新增」统一弹出居中新建弹窗（新增 `TaskCreateDialog`），移除侧栏内联新建表单。含新功能，按版本规则次版本进位 0.4.1 → 0.5.0，公告与 CHANGELOG 同步。
+- 模板校验：仓库未存官方基线文件，本次核验生成模板 `installer.nsi`：`installer-hooks.nsh` 引用与 `NSIS_HOOK_PREINSTALL` 在位，自定义升级页文案（第一行「覆盖旧版本并升级」默认勾选）在位，`VERSION`/`VERSIONWITHBUILD` 为 0.5.0 / 0.5.0.0。
+- 验证：`npm test` 通过（fail 0）；`npm run build` 通过；`npm run tauri build` 成功；`dist` 无 `*.db`；`bundle.resources` 未配置。
+- 注意事项：安装包已交付但未由代理启动，由用户自行安装；本次发布同步推送码云 `main`。
+
 ## 2026-09-02 0.4.1 正式版
 
 - 时间：2026-09-02
