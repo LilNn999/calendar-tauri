@@ -1,12 +1,8 @@
-import { useState, useMemo, useRef } from 'react'
-import { Plus, Pencil, Trash2, Check, X, RefreshCw, RotateCcw, Clock, Archive } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { Plus, Pencil, Trash2, Check, X, RotateCcw, Clock, Archive } from 'lucide-react'
 import { RecycleBinDialog } from '@/components/tasks/RecycleBinDialog'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { PrioritySelector } from '@/components/tasks/PrioritySelector'
-import { RecurrenceSelector } from '@/components/tasks/RecurrenceSelector'
-import { SubtaskInputList, type SubtaskInputItem } from '@/components/tasks/SubtaskInputList'
+import { TaskCreateDialog } from '@/components/tasks/TaskCreateDialog'
 import { TaskEditDialog } from '@/components/tasks/TaskEditDialog'
 import { RecurringChangeDialog } from '@/components/tasks/RecurringChangeDialog'
 import { applyRecurringDelete } from '@/components/tasks/recurringActions'
@@ -22,7 +18,7 @@ import { PRIORITY_CONFIG, RECURRENCE_LABELS } from '@shared/constants'
 import { cn } from '@/lib/utils'
 import { format, parseISO } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
-import type { Priority, RecurrenceType, Task, CheckinDefinition } from '@shared/types'
+import type { Task, CheckinDefinition } from '@shared/types'
 
 type FilterType = 'pending' | 'completed'
 
@@ -35,24 +31,15 @@ interface DateGroup {
 }
 
 export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | null }) {
-  const { tasks, createTask, updateTask, updateOccurrence, deleteTask, skipOccurrence, deleteFromDate, deleteBeforeDate, fetchTasks, loading, toggleSubtask } = useTaskStore()
+  const { tasks, updateTask, updateOccurrence, deleteTask, skipOccurrence, deleteFromDate, deleteBeforeDate, fetchTasks, loading, toggleSubtask } = useTaskStore()
   const { definitions, getEntriesForDate, upsertEntry } = useCheckinStore()
   const { getVisibleRange } = useCalendarStore()
   const [filter, setFilter] = useState<FilterType>('pending')
+  // 新增任务统一走居中弹窗（与编辑弹窗一致），不再在侧栏内联展开
   const [showCreate, setShowCreate] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
   // 循环任务删除范围选择（垃圾桶直接进入删除流程，不经过编辑弹窗）
   const [deleteDialogTask, setDeleteDialogTask] = useState<Task | null>(null)
 
-  const [newTitle, setNewTitle] = useState('')
-  const [newDate, setNewDate] = useState(selectedDate ?? toDateString(new Date()))
-  const [newPriority, setNewPriority] = useState<Priority>('none')
-  const [newNotes, setNewNotes] = useState('')
-  const [newSubtasks, setNewSubtasks] = useState<SubtaskInputItem[]>([])
-  const [newRecurrence, setNewRecurrence] = useState<RecurrenceType | ''>('')
-  const [newRecurrenceEnd, setNewRecurrenceEnd] = useState('')
-  const newTitleRef = useRef<HTMLTextAreaElement>(null)
-  const autoResize = (el: HTMLTextAreaElement) => { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px' }
   const [editingCheckinId, setEditingCheckinId] = useState<number | null>(null)
   // 重复任务编辑/删除使用 TaskEditDialog（含范围选择）
   const [editDialogTask, setEditDialogTask] = useState<Task | null>(null)
@@ -149,27 +136,6 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
     }
     return count
   }, [tasks])
-
-  const handleCreate = async () => {
-    if (!newTitle.trim()) return
-    setSubmitting(true)
-    try {
-      await createTask({
-        title: newTitle.trim(), priority: newPriority, dueDate: newDate,
-        notes: newNotes || undefined,
-        recurrenceType: (newRecurrence as RecurrenceType) || undefined,
-        recurrenceEnd: newRecurrenceEnd || undefined,
-        subtasks: newSubtasks.map((s) => s.title.trim()).filter(Boolean),
-      })
-      if (newRecurrence) {
-        const range = getVisibleRange()
-        await fetchTasks(range.start, range.end)
-      }
-      setNewTitle(''); setNewNotes(''); setNewPriority('none'); setNewSubtasks([])
-      setNewRecurrence(''); setNewRecurrenceEnd('')
-      setShowCreate(false)
-    } finally { setSubmitting(false) }
-  }
 
   const handleToggle = async (task: Task) => {
     const nextCompleted = !task.isCompleted
@@ -353,35 +319,11 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
           <Archive className="h-3.5 w-3.5" />
         </button>
         <Button size="sm" variant="outline" className="h-7 text-xs rounded-xl"
-          onClick={() => setShowCreate(!showCreate)}>
+          onClick={() => setShowCreate(true)}>
           <Plus className="h-3 w-3 mr-1" />新增
         </Button>
         </div>
       </div>
-
-      {/* 新增表单 */}
-      {showCreate && (
-        <div className="card-elevated rounded-2xl p-3 flex flex-col gap-2.5">
-          <span className="text-xs font-semibold text-muted-foreground">新建任务</span>
-          <textarea ref={newTitleRef} autoFocus placeholder="任务标题…" value={newTitle} rows={1}
-            onChange={(e) => { setNewTitle(e.target.value); autoResize(e.target) }}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCreate() } }}
-            className="text-sm rounded-lg w-full border border-input bg-background px-3 py-2 resize-none overflow-hidden focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground leading-snug" />
-          <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} className="text-xs rounded-xl" />
-          <PrioritySelector value={newPriority} onChange={setNewPriority} />
-          <RecurrenceSelector value={newRecurrence as RecurrenceType | ''} onChange={setNewRecurrence}
-            endDate={newRecurrenceEnd} onEndDateChange={setNewRecurrenceEnd} startDate={newDate} />
-          <SubtaskInputList value={newSubtasks} onChange={setNewSubtasks} />
-          <Textarea placeholder="备注（选填）…" value={newNotes} onChange={(e) => setNewNotes(e.target.value)}
-            rows={2} className="text-xs rounded-xl resize-none" />
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="flex-1 rounded-xl text-xs" onClick={() => setShowCreate(false)}>取消</Button>
-            <Button size="sm" className="flex-1 rounded-xl text-xs" onClick={handleCreate} disabled={!newTitle.trim() || submitting}>
-              {submitting ? <RefreshCw className="h-3 w-3 mr-1 animate-spin" /> : <Plus className="h-3 w-3 mr-1" />}添加
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* 状态切换 */}
       <div className="flex gap-1">
@@ -432,6 +374,13 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
           </div>
         ))}
       </div>
+
+      {/* 新建任务居中弹窗（预填侧栏选中日期） */}
+      <TaskCreateDialog
+        open={showCreate}
+        onOpenChange={setShowCreate}
+        defaultDate={selectedDate ?? today}
+      />
 
       {/* 重复任务编辑对话框（含范围选择） */}
       {editDialogTask && (
