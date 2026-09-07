@@ -828,6 +828,23 @@ class SqliteDb implements Db {
         await this.db.execute(`DELETE FROM task_occurrences WHERE taskId = ? AND date > ?`, [id, rest.recurrenceEnd]);
       }
     }
+    // 非循环任务改期：子任务完成记录按（子任务，日期）存储，需随任务迁移到新日期，否则完成状态会被重置
+    if (rest.dueDate !== undefined) {
+      const existing = await this.getTaskById(id);
+      if (existing && !existing.recurrenceType && rest.dueDate !== existing.dueDate) {
+        await this.db.execute(
+          `INSERT INTO subtask_occurrences (subtaskId, date, isCompleted)
+           SELECT subtaskId, ?, isCompleted FROM subtask_occurrences
+           WHERE subtaskId IN (SELECT id FROM subtasks WHERE taskId = ?) AND date = ?
+           ON CONFLICT(subtaskId, date) DO UPDATE SET isCompleted = excluded.isCompleted`,
+          [rest.dueDate, id, existing.dueDate],
+        );
+        await this.db.execute(
+          `DELETE FROM subtask_occurrences WHERE subtaskId IN (SELECT id FROM subtasks WHERE taskId = ?) AND date = ?`,
+          [id, existing.dueDate],
+        );
+      }
+    }
     const sets: string[] = [];
     const params: unknown[] = [];
     type TaskPatchKey = Exclude<keyof UpdateTaskPayload, "occurrenceDate">;
@@ -1441,6 +1458,17 @@ class MemoryDb implements Db {
     if (!task) throw new Error("任务不存在");
     if (rest.recurrenceEnd !== undefined && task.recurrenceType && rest.recurrenceEnd) {
       this.taskOccurrences = this.taskOccurrences.filter((o) => !(o.taskId === id && o.date > rest.recurrenceEnd!));
+    }
+    // 与 SQLite 版一致：非循环任务改期时迁移子任务完成记录
+    if (rest.dueDate !== undefined && rest.dueDate !== task.dueDate && !task.recurrenceType) {
+      const oldDate = task.dueDate;
+      const ids = new Set(this.subtasks.filter((s) => s.taskId === id).map((s) => s.id));
+      for (const o of this.subtaskOccurrences.filter((o) => ids.has(o.subtaskId) && o.date === oldDate)) {
+        const target = this.subtaskOccurrences.find((t) => t.subtaskId === o.subtaskId && t.date === rest.dueDate);
+        if (target) target.isCompleted = o.isCompleted;
+        else o.date = rest.dueDate;
+      }
+      this.subtaskOccurrences = this.subtaskOccurrences.filter((o) => !(ids.has(o.subtaskId) && o.date === oldDate));
     }
     Object.assign(task, rest, { updatedAt: nowIso() });
     if (rest.isCompleted) task.completedAt = nowIso();

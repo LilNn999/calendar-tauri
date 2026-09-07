@@ -103,12 +103,12 @@ export function TaskEditDialog({
           .map((s) => ({ id: s.id, title: s.title.trim() }))
           .filter((s) => s.title.length > 0)
       )
-      // 同步子任务完成状态变化（完成状态按日期记录，对应任务原截止日期）
+      // 同步子任务完成状态变化（完成状态按日期记录；任务改期时 updateTask 已把历史记录迁移到新日期，此处一并写入新日期）
       for (const s of subtasks) {
         if (!s.id || !initialCompletedRef.current.has(s.id)) continue
         const now = !!s.isCompleted
         if (initialCompletedRef.current.get(s.id) !== now) {
-          await toggleSubtask(s.id, task.dueDate, now)
+          await toggleSubtask(s.id, date, now)
         }
       }
       closeMain()

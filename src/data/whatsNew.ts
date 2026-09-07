@@ -8,6 +8,13 @@ export interface VersionNote {
 /** 更新历史（最新版本在最前） */
 export const VERSION_NOTES: VersionNote[] = [
   {
+    version: '0.5.1',
+    date: '2026-09-07',
+    fixes: [
+      '修复任务改期后子任务完成状态被清空的问题：把未完成任务挪到其他日期时，已完成子任务的勾选现在会跟着任务一起保留',
+    ],
+  },
+  {
     version: '0.5.0',
     date: '2026-09-04',
     features: [

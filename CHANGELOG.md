@@ -2,6 +2,15 @@
 
 本项目变更记录。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循语义化版本。
 
+## [0.5.1] — 2026-09-07
+
+### 修复
+- 任务改期后子任务完成状态被重置：子任务完成记录按（子任务，日期）存储，此前编辑弹窗把任务挪到其他日期（如昨天未完成任务挪到今天）时仅更新 `tasks.dueDate`，历史完成记录遗留在旧日期，新日期渲染查不到即显示为全部未完成。现 `updateTask` 在非循环任务改期时把该任务子任务的完成记录一并迁移到新日期（SQLite 与内存实现一致）；编辑弹窗内勾选状态变化也改写入新日期而非原截止日期，避免改期保存时勾选丢失。涉及文件：`src/lib/db.ts`、`src/components/tasks/TaskEditDialog.tsx`。
+
+### 构建
+- 版本号由 0.5.0 升级至 0.5.1（`package.json` / `package-lock.json` / `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` / `src-tauri/Cargo.lock` 同步）。
+- 同步发布用户端更新公告（`src/data/whatsNew.ts`），首次启动 0.5.1 自动弹出。
+
 ## [0.5.0] — 2026-09-04
 
 ### 新增
