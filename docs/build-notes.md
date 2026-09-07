@@ -12,6 +12,24 @@
 - 测试窗口规则：`启动测试窗口.bat` 使用 `scripts/check-test-build-stale.mjs` 自动判断源码/配置/dist 是否新于 release exe；如有更新，先执行 `npm run tauri build -- --no-bundle` 再启动最新测试版，禁止直接启动旧 exe。
 - Codex 内部验收必须主动执行 `npm run tauri build -- --no-bundle`，并确认 `node scripts/check-test-build-stale.mjs` 输出 `0`；此后用户直接打开 `启动测试窗口.bat` 应直接启动最新版，不得再次构建。
 
+## 2026-09-07 0.5.1 正式版
+
+- 时间：2026-09-07 10:13
+- 分支：`codex/release-0.3.4`
+- 提交：`d6275d7`（`release: 0.5.1 修复任务改期后子任务完成状态被重置`）
+- 版本：`0.5.1`
+- 命令：`npm run tauri build`
+- 构建结果：成功（退出码 0）
+- 安装包源文件：`src-tauri/target/release/bundle/nsis/日历_0.5.1_x64-setup.exe`
+- 已交付：`安装包/日历_0.5.1_x64-setup.exe`
+- 大小：2,226,600 bytes（约 2.1 MB）
+- SHA256：`4c05babb59b069910bc3c908a8e203a95c520c5dd1af6e322a37183403624004`
+- 耗时：前端约 3.8 秒；Cargo release 约 2 分 32 秒；NSIS 打包成功。
+- 本次改动：修复任务改期后子任务完成状态被重置——非循环任务改期时 `updateTask` 将子任务完成记录（`subtask_occurrences`，按子任务+日期存储）随任务迁移到新日期（SQLite 与内存实现一致），编辑弹窗勾选变化改写入新日期。纯修复，按版本规则修订号进位 0.5.0 → 0.5.1，公告与 CHANGELOG 同步。
+- 模板校验：生成模板 `installer.nsi`：`installer-hooks.nsh` 引用与 `NSIS_HOOK_PREINSTALL` 在位，`VERSION`/`VERSIONWITHBUILD` 为 0.5.1 / 0.5.1.0。
+- 验证：`npm test` 通过（8/8，fail 0）；`npm run build` 通过；`npm run tauri build` 成功；`dist` 与 bundle 目录无 `*.db`；`bundle.resources` 未配置。
+- 注意事项：安装包已交付但未由代理启动；用户自行双击安装并测试，测试窗口也由用户自行打开。
+
 ## 2026-09-04 0.5.0 正式版
 
 - 时间：2026-09-04
