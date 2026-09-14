@@ -12,6 +12,24 @@
 - 测试窗口规则：`启动测试窗口.bat` 使用 `scripts/check-test-build-stale.mjs` 自动判断源码/配置/dist 是否新于 release exe；如有更新，先执行 `npm run tauri build -- --no-bundle` 再启动最新测试版，禁止直接启动旧 exe。
 - Codex 内部验收必须主动执行 `npm run tauri build -- --no-bundle`，并确认 `node scripts/check-test-build-stale.mjs` 输出 `0`；此后用户直接打开 `启动测试窗口.bat` 应直接启动最新版，不得再次构建。
 
+## 2026-09-14 0.6.0 正式版
+
+- 时间：2026-09-14 16:32
+- 分支：`codex/release-0.3.4`（与本地 main 同点，推送 origin main）
+- 提交：`cbf3027`（`release: 0.6.0 任务与子任务完成反馈动画`）
+- 版本：`0.6.0`
+- 命令：`npm run tauri build`
+- 构建结果：成功（退出码 0）
+- 安装包源文件：`src-tauri/target/release/bundle/nsis/日历_0.6.0_x64-setup.exe`
+- 已交付：`安装包/日历_0.6.0_x64-setup.exe`
+- 大小：2,227,533 bytes（约 2.1 MB）
+- SHA256：`811F416D4650B55FA98D7B52D6BBA0B34E915B962C66A713833E1BC2759FA594`
+- 耗时：前端约 3.3 秒；Cargo release 约 1 分 39 秒；NSIS 打包成功。
+- 本次改动：任务与子任务完成反馈动画——主界面与悬浮窗勾选完成时对勾弹跳放大、任务行绿色脉冲光晕；任务总览待完成列表与悬浮窗中刚完成任务宽限期（1.2 秒）原地展示后再移除/沉底；悬浮窗当日全部完成时小撒花庆祝；编辑弹窗已保存子任务勾选有对勾弹跳（初始已勾选不重放）。新增 `src/lib/use-completion-feedback.ts`（`useJustCompleted` / `useJustCompletedMap`）。按版本规则次版本进位 0.5.1 → 0.6.0，公告与 CHANGELOG 同步。
+- 模板校验：`installer.nsi` 与 0.5.1 基线 diff 仅 `VERSION`/`VERSIONWITHBUILD`（0.6.0 / 0.6.0.0）与 `ESTIMATEDSIZE`（5044）预期差异，无其他改动；`installer-hooks.nsh` 引用与 `NSIS_HOOK_PREINSTALL` 在位。
+- 验证：`npm test` 通过（8/8，fail 0）；`npm run build` 通过；`npm run tauri build` 成功；`dist` 无 `*.db`；`bundle.resources` 未配置。
+- 注意事项：打包前结束了占用 `target/release/calendar-tauri.exe` 的测试窗口进程（PID 3432），用户正在运行的正式版（`D:\日历`，PID 21292）未受影响；安装包已交付但未由代理启动，用户自行双击安装，测试窗口由用户自行打开。
+
 ## 2026-09-07 0.5.1 正式版
 
 - 时间：2026-09-07 10:13
