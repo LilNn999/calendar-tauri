@@ -8,6 +8,14 @@ export interface VersionNote {
 /** 更新历史（最新版本在最前） */
 export const VERSION_NOTES: VersionNote[] = [
   {
+    version: '0.6.2',
+    date: '2026-09-14',
+    features: [
+      '完成任务时子任务自动一起划掉：主界面（周视图、月视图、日期详情、任务总览）与桌面悬浮窗的完成逻辑全面对齐',
+      '取消完成任务后，子任务会恢复各自原本的勾选状态',
+    ],
+  },
+  {
     version: '0.6.1',
     date: '2026-09-14',
     fixes: [

@@ -207,6 +207,11 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
         isCompleted: nextCompleted,
         isFailed: nextCompleted ? false : undefined,
       })
+      if (!nextCompleted) {
+        // 取消完成循环任务：重新拉取，子任务恢复各自真实状态（与悬浮窗取消完成逻辑一致）
+        const range = getVisibleRange()
+        await fetchTasks(range.start, range.end)
+      }
     } else {
       await updateTask(task.id, {
         isCompleted: nextCompleted,

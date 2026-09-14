@@ -52,6 +52,10 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
   updateTask: async (id, patch) => {
     const updated = await tasksApi.update(id, patch)
+    // 完成母任务：子任务一并划掉显示完成（仅展示层联动，不改动数据库子任务状态，与悬浮窗一致）
+    if (patch.isCompleted === true) {
+      updated.subtasks = updated.subtasks?.map((st) => ({ ...st, isCompleted: true }))
+    }
     if (updated.recurrenceType) {
       // 重复任务：移除所有旧实例（含多个展开日期的副本），由后续 loadData 重新展开
       set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) }))
@@ -65,11 +69,15 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
   updateOccurrence: async (taskId, date, patch) => {
     await tasksApi.updateOccurrence(taskId, date, patch)
-    // 更新本地对应虚拟实例
+    // 更新本地对应虚拟实例；完成母任务时子任务一并划掉显示完成（仅展示层联动，与悬浮窗一致）
     set((s) => ({
-      tasks: s.tasks.map((t) =>
-        t.id === taskId && t.dueDate === date ? { ...t, ...patch } : t
-      ),
+      tasks: s.tasks.map((t) => {
+        if (!(t.id === taskId && t.dueDate === date)) return t
+        if (patch.isCompleted === true) {
+          return { ...t, ...patch, subtasks: t.subtasks?.map((st) => ({ ...st, isCompleted: true })) }
+        }
+        return { ...t, ...patch }
+      }),
     }))
     notifyWidget()
   },

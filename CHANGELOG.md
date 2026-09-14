@@ -2,6 +2,16 @@
 
 本项目变更记录。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循语义化版本。
 
+## [0.6.2] — 2026-09-14
+
+### 新增
+- 主界面完成任务与悬浮窗逻辑对齐：勾选完成任务（含循环任务与编辑弹窗等所有走 store 的入口）时，子任务一并划掉显示完成，与桌面悬浮窗行为一致。实现为 store 展示层联动（`useTaskStore` 的 `updateTask`/`updateOccurrence` 在完成时把本地子任务置为完成，不改动数据库子任务状态）；取消完成时非循环任务由 `updateTask` 返回数据库真实子任务状态自动恢复，循环任务由调用方（日历页 `loadData` / 任务总览 `fetchTasks`）重新拉取恢复。涉及文件：`src/store/useTaskStore.ts`、`src/pages/CalendarPage.tsx`、`src/components/sidebar/TaskOverviewPanel.tsx`。
+- 沉淀仓库规范：`AGENTS.md` 通用开发规范新增第 11 条「待办完成逻辑全端一致」，后续涉及完成行为的改动必须逐界面核对全部入口并在 store/数据层收敛实现。
+
+### 构建
+- 版本号由 0.6.1 升级至 0.6.2（`package.json` / `package-lock.json` / `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` / `src-tauri/Cargo.lock` 同步）。
+- 同步发布用户端更新公告（`src/data/whatsNew.ts`），首次启动 0.6.2 自动弹出。
+
 ## [0.6.1] — 2026-09-14
 
 ### 修复

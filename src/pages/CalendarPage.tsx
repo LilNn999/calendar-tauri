@@ -79,6 +79,10 @@ export function CalendarPage() {
         // 补打卡时同步清除失败标记
         isFailed: completed ? false : undefined,
       })
+      if (!completed) {
+        // 取消完成循环任务：重新拉取，子任务恢复各自真实状态（与悬浮窗取消完成逻辑一致）
+        await loadData()
+      }
     } else {
       await updateTask(id, {
         isCompleted: completed,
@@ -94,7 +98,7 @@ export function CalendarPage() {
       )
       if (allDone && dayTasks.length > 0) fireConfetti()
     }
-  }, [updateTask, updateOccurrence, tasks, getTasksForDate])
+  }, [updateTask, updateOccurrence, tasks, getTasksForDate, loadData])
 
   const handleCheckinClick = useCallback((defId: number, date: string) => {
     const def = definitions.find((d) => d.id === defId)
