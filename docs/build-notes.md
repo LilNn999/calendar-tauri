@@ -12,6 +12,24 @@
 - 测试窗口规则：`启动测试窗口.bat` 使用 `scripts/check-test-build-stale.mjs` 自动判断源码/配置/dist 是否新于 release exe；如有更新，先执行 `npm run tauri build -- --no-bundle` 再启动最新测试版，禁止直接启动旧 exe。
 - Codex 内部验收必须主动执行 `npm run tauri build -- --no-bundle`，并确认 `node scripts/check-test-build-stale.mjs` 输出 `0`；此后用户直接打开 `启动测试窗口.bat` 应直接启动最新版，不得再次构建。
 
+## 2026-09-14 0.6.2 正式版
+
+- 时间：2026-09-14 16:59
+- 分支：`codex/release-0.3.4`（推送 origin main）
+- 提交：`ab22554`（`release: 0.6.2 完成任务联动子任务，主界面与悬浮窗逻辑对齐`）
+- 版本：`0.6.2`
+- 命令：`npm run tauri build`
+- 构建结果：成功（退出码 0）
+- 安装包源文件：`src-tauri/target/release/bundle/nsis/日历_0.6.2_x64-setup.exe`
+- 已交付：`安装包/日历_0.6.2_x64-setup.exe`
+- 大小：2,228,299 bytes（约 2.1 MB）
+- SHA256：`B225E90318D6A276A823ACFDCF8888BD600354D12E146EB5A83972D57474FFD0`
+- 耗时：前端约 3.3 秒；Cargo release 增量编译；NSIS 打包成功。
+- 本次改动：完成任务与悬浮窗逻辑全面对齐——store 层（`updateTask`/`updateOccurrence`）在完成母任务时把本地子任务联动置为完成（仅展示层，不改数据库），取消完成时非循环任务由 `updateTask` 返回值、循环任务由调用方重新拉取恢复真实状态；周视图/月视图/日期详情/任务总览全入口生效。同时沉淀 `AGENTS.md` 规范第 11 条「待办完成逻辑全端一致」。
+- 模板校验：`installer.nsi` 与 0.6.1 基线 diff 仅 `VERSION`/`VERSIONWITHBUILD`（0.6.2 / 0.6.2.0）预期差异，无其他改动；`installer-hooks.nsh` 引用与 `NSIS_HOOK_PREINSTALL` 在位。
+- 验证：`npm test` 通过（8/8，fail 0）；`npm run build` 通过；`npm run tauri build` 成功；`dist` 无 `*.db`；`bundle.resources` 未配置。
+- 注意事项：安装包已交付但未由代理启动；用户自行双击安装并测试，测试窗口也由用户自行打开。
+
 ## 2026-09-14 0.6.1 正式版
 
 - 时间：2026-09-14 16:46
