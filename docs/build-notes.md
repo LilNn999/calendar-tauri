@@ -12,6 +12,24 @@
 - 测试窗口规则：`启动测试窗口.bat` 使用 `scripts/check-test-build-stale.mjs` 自动判断源码/配置/dist 是否新于 release exe；如有更新，先执行 `npm run tauri build -- --no-bundle` 再启动最新测试版，禁止直接启动旧 exe。
 - Codex 内部验收必须主动执行 `npm run tauri build -- --no-bundle`，并确认 `node scripts/check-test-build-stale.mjs` 输出 `0`；此后用户直接打开 `启动测试窗口.bat` 应直接启动最新版，不得再次构建。
 
+## 2026-09-14 0.6.1 正式版
+
+- 时间：2026-09-14 16:46
+- 分支：`codex/release-0.3.4`（推送 origin main）
+- 提交：`1aef541`（`release: 0.6.1 修复完成任务后子任务消失`）
+- 版本：`0.6.1`
+- 命令：`npm run tauri build`
+- 构建结果：成功（退出码 0）
+- 安装包源文件：`src-tauri/target/release/bundle/nsis/日历_0.6.1_x64-setup.exe`
+- 已交付：`安装包/日历_0.6.1_x64-setup.exe`
+- 大小：2,227,964 bytes（约 2.1 MB）
+- SHA256：`DF9B689696D4E1B51CAE3CB2681B5099253DC8A215278BF74476E73183CCD519`
+- 耗时：前端约 3.5 秒；Cargo release 增量编译；NSIS 打包成功。
+- 本次改动：修复完成带子任务的非循环任务后子任务消失——`updateTask` 返回值经 `getTaskById`/`mapTask` 组装不含子任务，store 直接用其整体替换本地任务，而 Tauri 下数据变更通知只发给另一窗口、主窗口不重新拉取，导致周视图/日期详情/任务总览中子任务消失且不恢复。现 `updateTask` 返回值附带子任务并按（子任务，截止日期）注入完成状态（SQLite 新增 `loadSubtasksWithState`，内存实现对等刷新）。0.5.0 引入的类似问题曾只修了 `createTask`（0.3.5），本次补齐 `updateTask` 路径。
+- 模板校验：`installer.nsi` 与 0.6.0 基线 diff 仅 `VERSION`/`VERSIONWITHBUILD`（0.6.1 / 0.6.1.0）预期差异，无其他改动；`installer-hooks.nsh` 引用与 `NSIS_HOOK_PREINSTALL` 在位。
+- 验证：`npm test` 通过（8/8，fail 0）；`npm run build` 通过；`npm run tauri build` 成功；`dist` 无 `*.db`；`bundle.resources` 未配置。
+- 注意事项：安装包已交付但未由代理启动；用户自行双击安装并测试，测试窗口也由用户自行打开。
+
 ## 2026-09-14 0.6.0 正式版
 
 - 时间：2026-09-14 16:32
