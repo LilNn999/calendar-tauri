@@ -8,6 +8,13 @@ export interface VersionNote {
 /** 更新历史（最新版本在最前） */
 export const VERSION_NOTES: VersionNote[] = [
   {
+    version: '0.6.1',
+    date: '2026-09-14',
+    fixes: [
+      '修复完成带子任务的任务后子任务消失的问题：周视图、日期详情、任务总览中勾选完成任务，其子任务现在会正常保留显示',
+    ],
+  },
+  {
     version: '0.6.0',
     date: '2026-09-14',
     features: [

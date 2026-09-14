@@ -2,6 +2,15 @@
 
 本项目变更记录。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循语义化版本。
 
+## [0.6.1] — 2026-09-14
+
+### 修复
+- 完成带子任务的任务后子任务消失：`updateTask` 返回值经 `getTaskById`/`mapTask` 组装、不含子任务，任务总览（store）会直接用该对象整体替换本地任务；而 Tauri 下数据变更通知只发给另一个窗口（避免当前窗口自身重复加载），主窗口不会重新拉取，导致周视图、日期详情弹窗、任务总览中勾选完成**非循环任务**后子任务整体消失且不恢复（月视图格子为紧凑模式本就不展示子任务；循环任务走 `updateOccurrence` 本地合并不受影响；悬浮窗本地合并子任务也不受影响）。现 `updateTask` 返回值附带子任务并按（子任务，截止日期）注入完成状态（SQLite 新增 `loadSubtasksWithState`，与 list 组装口径一致；内存实现同步刷新，改期迁移后状态不再过期）。涉及文件：`src/lib/db.ts`。
+
+### 构建
+- 版本号由 0.6.0 升级至 0.6.1（`package.json` / `package-lock.json` / `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` / `src-tauri/Cargo.lock` 同步）。
+- 同步发布用户端更新公告（`src/data/whatsNew.ts`），首次启动 0.6.1 自动弹出。
+
 ## [0.6.0] — 2026-09-14
 
 ### 新增

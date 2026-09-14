@@ -863,7 +863,25 @@ class SqliteDb implements Db {
     params.push(nowIso());
     params.push(id);
     await this.db.execute(`UPDATE tasks SET ${sets.join(", ")} WHERE id = ?`, params);
-    return (await this.getTaskById(id))!;
+    const task = (await this.getTaskById(id))!;
+    // 返回值必须带上子任务（含当日完成状态）：store 会直接使用该对象渲染，
+    // 否则完成任务/编辑保存后子任务会整体消失（主窗口不会因自身操作触发整体刷新）
+    task.subtasks = await this.loadSubtasksWithState(id, task.dueDate);
+    return task;
+  }
+
+  /** 读取某任务子任务并按指定日期注入完成状态（与 list 组装口径一致） */
+  private async loadSubtasksWithState(taskId: number, date: string): Promise<Subtask[]> {
+    const rows = await this.db.select<SqlRow[]>(`SELECT * FROM subtasks WHERE taskId = ? ORDER BY sortOrder ASC`, [taskId]);
+    const subs = rows.map(mapSubtaskRow);
+    if (!subs.length) return subs;
+    const ph = subs.map(() => "?").join(",");
+    const occ = await this.db.select<{ subtaskId: number; isCompleted: number }[]>(
+      `SELECT subtaskId, isCompleted FROM subtask_occurrences WHERE subtaskId IN (${ph}) AND date = ?`,
+      [...subs.map((s) => s.id), date],
+    );
+    const occMap = new Map(occ.map((o) => [o.subtaskId, Boolean(o.isCompleted)]));
+    return subs.map((s) => ({ ...s, isCompleted: occMap.get(s.id) ?? false }));
   }
 
   async updateOccurrence(taskId: number, date: string, patch: { isCompleted?: boolean; isFailed?: boolean }): Promise<void> {
@@ -1472,6 +1490,12 @@ class MemoryDb implements Db {
     }
     Object.assign(task, rest, { updatedAt: nowIso() });
     if (rest.isCompleted) task.completedAt = nowIso();
+    // 与 SQLite 版一致：返回值带上子任务（含当日完成状态），调用方会直接用该对象渲染
+    const subs = this.subtasks.filter((s) => s.taskId === id).sort((a, b) => a.sortOrder - b.sortOrder);
+    task.subtasks = subs.map((s) => ({
+      ...s,
+      isCompleted: this.subtaskOccurrences.some((o) => o.subtaskId === s.id && o.date === task.dueDate && o.isCompleted),
+    }));
     return task;
   }
 
