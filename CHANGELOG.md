@@ -2,6 +2,16 @@
 
 本项目变更记录。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循语义化版本。
 
+## [0.6.0] — 2026-09-14
+
+### 新增
+- 任务完成反馈动画：主界面与桌面悬浮窗勾选完成任务时，复选框对勾弹跳放大、任务行播放一圈绿色脉冲光晕，明确确认完成动作，不再是瞬间无反馈地消失/沉底。具体表现：月视图/周视图/日期详情弹窗的任务行完成瞬间播放动画后沉底；任务总览（待完成列表）中刚完成的任务原地保留 1.2 秒播完动画后再从列表移除；悬浮窗中刚完成的任务原地停留 1.2 秒后再沉底，且当日任务全部完成时在悬浮窗内撒花庆祝（与主窗口一致）。涉及文件：`src/lib/use-completion-feedback.ts`（新增）、`src/lib/confetti.ts`、`src/styles/globals.css`、`src/components/calendar/DayCellItem.tsx`、`src/components/sidebar/TaskOverviewPanel.tsx`、`src/widget/WidgetShell.tsx`、`src/widget/WidgetTaskList.tsx`。
+- 子任务完成反馈动画：与母任务一致，各界面勾选子任务完成时对勾弹跳放大、子任务行播放绿色脉冲，宽限期内（1.2 秒）保持原位后再沉底到已完成分组；编辑弹窗内已保存子任务的勾选框同样有对勾弹跳反馈（初始已勾选的不重放）。涉及文件：`src/lib/use-completion-feedback.ts`（新增 `useJustCompletedMap`）、`src/components/calendar/DayCellItem.tsx`、`src/components/sidebar/TaskOverviewPanel.tsx`（抽出 `TaskSubtaskList` 组件）、`src/widget/WidgetTaskList.tsx`、`src/components/tasks/SubtaskInputList.tsx`。
+
+### 构建
+- 版本号由 0.5.1 升级至 0.6.0（`package.json` / `package-lock.json` / `src-tauri/tauri.conf.json` / `src-tauri/Cargo.toml` / `src-tauri/Cargo.lock` 同步）。
+- 同步发布用户端更新公告（`src/data/whatsNew.ts`），首次启动 0.6.0 自动弹出。
+
 ## [0.5.1] — 2026-09-07
 
 ### 修复

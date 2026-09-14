@@ -14,6 +14,7 @@ import { useTaskStore } from '@/store/useTaskStore'
 import { useCheckinStore } from '@/store/useCheckinStore'
 import { useCalendarStore } from '@/store/useCalendarStore'
 import { toDateString, checkinActiveOn } from '@/lib/utils'
+import { TASK_FEEDBACK_MS, useJustCompletedMap } from '@/lib/use-completion-feedback'
 import { PRIORITY_CONFIG, RECURRENCE_LABELS } from '@shared/constants'
 import { cn } from '@/lib/utils'
 import { format, parseISO } from 'date-fns'
@@ -30,6 +31,54 @@ interface DateGroup {
   checkins: CheckinDefinition[]
 }
 
+// 完成反馈宽限期的任务标识（同一任务在不同日期的发生互不影响）
+const taskFeedbackKey = (t: Task) => `${t.id}-${t.dueDate}`
+
+// 子任务列表：勾选完成瞬间播放反馈动画（弹跳 + 脉冲），宽限期内保持原位再沉底
+function TaskSubtaskList({ subtasks, date, onToggle }: {
+  subtasks: NonNullable<Task['subtasks']>
+  date: string
+  onToggle: (subtaskId: number, date: string, isCompleted: boolean) => void
+}) {
+  const celebrating = useJustCompletedMap(subtasks)
+  // 未完成子任务置顶，已完成沉底；宽限期内保持原位
+  const sorted = [...subtasks].sort((a, b) => {
+    const aDone = a.isCompleted && !celebrating.has(a.id) ? 1 : 0
+    const bDone = b.isCompleted && !celebrating.has(b.id) ? 1 : 0
+    if (aDone !== bDone) return aDone - bDone
+    return a.sortOrder - b.sortOrder
+  })
+  return (
+    <div className="flex flex-col gap-0.5 pl-5 pr-1 pb-0.5">
+      {sorted.map((st) => (
+        <button
+          key={st.id}
+          onClick={() => onToggle(st.id, date, !st.isCompleted)}
+          className={cn(
+            'group/sub flex items-center gap-1.5 rounded-lg px-1.5 py-0.5 text-left hover:bg-muted/50 transition-colors',
+            celebrating.has(st.id) && 'task-complete-pulse'
+          )}
+          title={st.isCompleted ? '标记未完成' : '标记完成'}
+        >
+          <span
+            className={cn(
+              'shrink-0 h-3 w-3 rounded-[3px] border flex items-center justify-center transition-colors',
+              st.isCompleted
+                ? 'bg-success border-success'
+                : 'border-current bg-current/10 group-hover/sub:border-current'
+            )}
+          >
+            {st.isCompleted && <Check className={cn('h-2 w-2 text-white', celebrating.has(st.id) && 'task-check-pop')} strokeWidth={3} />}
+          </span>
+          <span className={cn('text-[11px] leading-snug break-words whitespace-pre-wrap', st.isCompleted && 'line-through text-muted-foreground')}>
+            {st.title}
+          </span>
+        </button>
+      ))}
+    </div>
+  )
+}
+
 export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | null }) {
   const { tasks, updateTask, updateOccurrence, deleteTask, skipOccurrence, deleteFromDate, deleteBeforeDate, fetchTasks, loading, toggleSubtask } = useTaskStore()
   const { definitions, getEntriesForDate, upsertEntry } = useCheckinStore()
@@ -39,6 +88,8 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
   const [showCreate, setShowCreate] = useState(false)
   // 循环任务删除范围选择（垃圾桶直接进入删除流程，不经过编辑弹窗）
   const [deleteDialogTask, setDeleteDialogTask] = useState<Task | null>(null)
+  // 完成反馈宽限期：刚勾选完成的任务短暂保留在待完成列表播放动画，再正常消失
+  const [justCompleted, setJustCompleted] = useState<Set<string>>(new Set())
 
   const [editingCheckinId, setEditingCheckinId] = useState<number | null>(null)
   // 重复任务编辑/删除使用 TaskEditDialog（含范围选择）
@@ -74,14 +125,26 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
         const cur = nextOcc.get(t.id)
         if (!cur || t.dueDate < cur.dueDate) nextOcc.set(t.id, t)
       }
-      tasksForFilter = [
+      const pendingList = [
         ...tasks.filter((t) => !t.isRecurring),
         ...nextOcc.values(),
       ]
+      // 完成反馈宽限期：刚勾选完成的任务短暂保留在待完成列表，播完动画再移除
+      const seen = new Set(pendingList.map(taskFeedbackKey))
+      for (const t of tasks) {
+        const key = taskFeedbackKey(t)
+        if (justCompleted.has(key) && !seen.has(key)) {
+          pendingList.push(t)
+          seen.add(key)
+        }
+      }
+      tasksForFilter = pendingList
     }
 
     const filteredTasks = tasksForFilter.filter((t) => {
-      if (filter === 'pending') return !t.isCompleted && !t.isFailed
+      if (filter === 'pending') {
+        return (!t.isCompleted && !t.isFailed) || justCompleted.has(taskFeedbackKey(t))
+      }
       // completed
       return t.isCompleted
     })
@@ -116,7 +179,7 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
     }
 
     return groups
-  }, [tasks, filter, today, activeTodayDefs, todayEntries])
+  }, [tasks, filter, today, activeTodayDefs, todayEntries, justCompleted])
 
   const pendingCount = useMemo(() => {
     // 重复任务：每个任务只计一次（有今天或未来的未完成发生即算待完成）
@@ -150,10 +213,30 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
         isFailed: nextCompleted ? false : undefined,
       })
     }
+    const key = taskFeedbackKey(task)
+    if (nextCompleted) {
+      // 宽限期内保留该行播放完成动画，到期后从待完成列表自然消失
+      setJustCompleted((prev) => new Set(prev).add(key))
+      window.setTimeout(() => {
+        setJustCompleted((prev) => {
+          const next = new Set(prev)
+          next.delete(key)
+          return next
+        })
+      }, TASK_FEEDBACK_MS)
+    } else {
+      // 取消完成：立即结束反馈状态
+      setJustCompleted((prev) => {
+        const next = new Set(prev)
+        next.delete(key)
+        return next
+      })
+    }
   }
 
   const renderTaskItem = (task: Task) => {
     const priorityCfg = PRIORITY_CONFIG[task.priority]
+    const celebrate = justCompleted.has(taskFeedbackKey(task))
 
 
     return (
@@ -163,7 +246,8 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
             'flex items-center gap-2 rounded-xl px-2 py-1.5 transition-colors',
             task.isCompleted ? 'bg-task-done-bg'
               : task.isFailed ? 'bg-task-failed-bg'
-              : 'bg-task-none-bg'
+              : 'bg-task-none-bg',
+            celebrate && 'task-complete-pulse'
           )}
         >
           <div className={cn('shrink-0 w-1 h-4 rounded-full', priorityCfg.dot)} />
@@ -176,7 +260,7 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
             )}
             onClick={() => handleToggle(task)}
           >
-            {task.isCompleted && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
+            {task.isCompleted && <Check className={cn('h-2.5 w-2.5 text-white', celebrate && 'task-check-pop')} strokeWidth={3} />}
             {task.isFailed && !task.isCompleted && <X className="h-2.5 w-2.5 text-task-failed-fg" strokeWidth={3} />}
           </button>
           <div className="flex flex-col min-w-0 flex-1">
@@ -209,41 +293,9 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
             </button>
           </div>
         </div>
-        {task.subtasks && task.subtasks.length > 0 && (() => {
-          // 未完成子任务置顶，已完成沉底
-          const sorted = [...task.subtasks].sort((a, b) => {
-            const aDone = a.isCompleted ? 1 : 0
-            const bDone = b.isCompleted ? 1 : 0
-            if (aDone !== bDone) return aDone - bDone
-            return a.sortOrder - b.sortOrder
-          })
-          return (
-          <div className="flex flex-col gap-0.5 pl-5 pr-1 pb-0.5">
-            {sorted.map((st) => (
-              <button
-                key={st.id}
-                onClick={() => toggleSubtask(st.id, task.dueDate, !st.isCompleted)}
-                className="group/sub flex items-center gap-1.5 rounded-lg px-1.5 py-0.5 text-left hover:bg-muted/50 transition-colors"
-                title={st.isCompleted ? '标记未完成' : '标记完成'}
-              >
-                <span
-                  className={cn(
-                    'shrink-0 h-3 w-3 rounded-[3px] border flex items-center justify-center transition-colors',
-                    st.isCompleted
-                      ? 'bg-success border-success'
-                      : 'border-current bg-current/10 group-hover/sub:border-current'
-                  )}
-                >
-                  {st.isCompleted && <Check className="h-2 w-2 text-white" strokeWidth={3} />}
-                </span>
-                <span className={cn('text-[11px] leading-snug break-words whitespace-pre-wrap', st.isCompleted && 'line-through text-muted-foreground')}>
-                  {st.title}
-                </span>
-              </button>
-            ))}
-          </div>
-          )
-        })()}
+        {task.subtasks && task.subtasks.length > 0 && (
+          <TaskSubtaskList subtasks={task.subtasks} date={task.dueDate} onToggle={toggleSubtask} />
+        )}
       </div>
     )
   }

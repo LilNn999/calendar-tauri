@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, X, RotateCcw, Pencil, Trash2, CheckCheck, CalendarCheck } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useJustCompleted, useJustCompletedMap } from '@/lib/use-completion-feedback'
 import { PRIORITY_CONFIG, RECURRENCE_LABELS } from '@shared/constants'
 import type { Task, CheckinDefinition, CheckinEntry } from '@shared/types'
 
@@ -63,6 +64,10 @@ export function TaskItemRow({ task, onToggle, onClick, compact, onMarkComplete, 
   const rowRef = useRef<HTMLDivElement>(null)
   const titleRef = useRef<HTMLSpanElement>(null)
   const [tooltipStyle, setTooltipStyle] = useState<React.CSSProperties | null>(null)
+  // 勾选完成瞬间播放反馈动画（弹跳 + 绿色脉冲）
+  const justCompleted = useJustCompleted(task.isCompleted)
+  // 子任务同样有完成反馈，宽限期内保持原位再沉底
+  const subCelebrating = useJustCompletedMap(task.subtasks)
 
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties | null>(null)
 
@@ -160,7 +165,8 @@ export function TaskItemRow({ task, onToggle, onClick, compact, onMarkComplete, 
         'hover:brightness-[0.96] dark:hover:brightness-110',
         getTaskBg(task),
         getTaskFg(task),
-        compact ? 'text-xs items-center' : 'text-sm items-start'
+        compact ? 'text-xs items-center' : 'text-sm items-start',
+        justCompleted && 'task-complete-pulse'
       )}
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
@@ -185,7 +191,7 @@ export function TaskItemRow({ task, onToggle, onClick, compact, onMarkComplete, 
         )}
         onClick={handleCheckboxClick}
       >
-        {task.isCompleted && <Check className="h-2 w-2 text-white" strokeWidth={3.5} />}
+        {task.isCompleted && <Check className={cn('h-2 w-2 text-white', justCompleted && 'task-check-pop')} strokeWidth={3.5} />}
         {isFailed && <X className="h-2 w-2 text-task-failed-fg" strokeWidth={3.5} />}
       </button>
 
@@ -294,10 +300,10 @@ export function TaskItemRow({ task, onToggle, onClick, compact, onMarkComplete, 
       <div className="flex flex-col">
         {row}
         {!compact && task.subtasks && task.subtasks.length > 0 && (() => {
-          // 未完成子任务置顶，已完成沉底，组内按 sortOrder 保持稳定
+          // 未完成子任务置顶，已完成沉底；完成反馈宽限期内保持原位，播完动画再沉底
           const sorted = [...task.subtasks].sort((a, b) => {
-            const aDone = a.isCompleted ? 1 : 0
-            const bDone = b.isCompleted ? 1 : 0
+            const aDone = a.isCompleted && !subCelebrating.has(a.id) ? 1 : 0
+            const bDone = b.isCompleted && !subCelebrating.has(b.id) ? 1 : 0
             if (aDone !== bDone) return aDone - bDone
             return a.sortOrder - b.sortOrder
           })
@@ -307,7 +313,10 @@ export function TaskItemRow({ task, onToggle, onClick, compact, onMarkComplete, 
               <button
                 key={st.id}
                 onClick={(e) => { e.stopPropagation(); onSubtaskToggle?.(st.id, !st.isCompleted) }}
-                className="group/sub flex items-center gap-1.5 rounded px-1 py-0.5 text-left hover:bg-muted/50 transition-colors"
+                className={cn(
+                  'group/sub flex items-center gap-1.5 rounded px-1 py-0.5 text-left hover:bg-muted/50 transition-colors',
+                  subCelebrating.has(st.id) && 'task-complete-pulse'
+                )}
                 title={st.isCompleted ? '标记未完成' : '标记完成'}
               >
                 <span
@@ -318,7 +327,7 @@ export function TaskItemRow({ task, onToggle, onClick, compact, onMarkComplete, 
                       : 'border-current bg-current/10 group-hover/sub:border-current'
                   )}
                 >
-                  {st.isCompleted && <Check className="h-2 w-2 text-white" strokeWidth={3.5} />}
+                  {st.isCompleted && <Check className={cn('h-2 w-2 text-white', subCelebrating.has(st.id) && 'task-check-pop')} strokeWidth={3.5} />}
                 </span>
                 <span
                   className={cn(

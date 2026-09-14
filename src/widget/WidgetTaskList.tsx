@@ -2,6 +2,7 @@ import { useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, X, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useJustCompleted, useJustCompletedMap } from '@/lib/use-completion-feedback'
 import { PRIORITY_CONFIG, RECURRENCE_LABELS } from '@shared/constants'
 import type { Task } from '@shared/types'
 
@@ -35,6 +36,117 @@ interface WidgetTaskListProps {
   onSubtaskToggle: (subtaskId: number, date: string, completed: boolean) => void
 }
 
+interface WidgetTaskRowProps {
+  task: Task
+  onToggle: WidgetTaskListProps['onToggle']
+  onSubtaskToggle: WidgetTaskListProps['onSubtaskToggle']
+  titleRefs: React.MutableRefObject<Map<number, HTMLSpanElement>>
+  onShowTooltip: (id: number, style: React.CSSProperties) => void
+  onHideTooltip: () => void
+}
+
+// 单条任务行：勾选完成瞬间播放反馈动画（勾选弹跳 + 绿色脉冲）
+function WidgetTaskRow({ task, onToggle, onSubtaskToggle, titleRefs, onShowTooltip, onHideTooltip }: WidgetTaskRowProps) {
+  const justCompleted = useJustCompleted(task.isCompleted)
+  // 子任务同样有完成反馈，宽限期内保持原位再沉底
+  const subCelebrating = useJustCompletedMap(task.subtasks)
+  const dot = PRIORITY_CONFIG[task.priority].dot
+
+  return (
+    <div
+      className="flex flex-col"
+    >
+      <div
+        className={cn(
+          'card-elevated relative flex items-center gap-2 rounded-xl px-2 py-1.5 group',
+          getTaskBg(task),
+          justCompleted && 'task-complete-pulse'
+        )}
+        onMouseEnter={(e) => {
+          const span = titleRefs.current.get(task.id)
+          if (!span || span.scrollWidth <= span.clientWidth) return
+          const rect = e.currentTarget.getBoundingClientRect()
+          const TOOLTIP_EST_H = 120
+          const above = rect.bottom + TOOLTIP_EST_H > window.innerHeight
+          const style: React.CSSProperties = {
+            position: 'fixed', zIndex: 9999,
+            left: rect.left, right: window.innerWidth - rect.right,
+            ...(above ? { bottom: window.innerHeight - rect.top + 6 } : { top: rect.bottom + 6 }),
+          }
+          onShowTooltip(task.id, style)
+        }}
+        onMouseLeave={onHideTooltip}
+      >
+        <div className={cn('shrink-0 w-1 h-3.5 rounded-full', dot)} />
+        <button
+          className={cn(
+            'shrink-0 h-4 w-4 rounded-md border flex items-center justify-center transition-all',
+            getTaskFg(task),
+            task.isCompleted
+              ? 'bg-success border-success'
+              : task.isFailed
+              ? 'bg-task-failed-bg border-task-failed-bar text-task-failed-fg'
+              : 'border-current bg-current/10 hover:border-current group-hover:border-current'
+          )}
+          onClick={() => !task.isFailed && onToggle(task.id, !task.isCompleted, task.dueDate, task.isRecurring)}
+        >
+          {task.isCompleted && <Check className={cn('h-2.5 w-2.5 text-white', justCompleted && 'task-check-pop')} strokeWidth={3} />}
+          {task.isFailed && !task.isCompleted && <X className="h-2.5 w-2.5 text-task-failed-fg" strokeWidth={3} />}
+        </button>
+        <span
+          ref={(el) => { if (el) titleRefs.current.set(task.id, el); else titleRefs.current.delete(task.id) }}
+          className={cn(
+            'text-xs flex-1 truncate',
+            getTaskFg(task),
+            (task.isCompleted || task.isFailed) && 'line-through opacity-75',
+          )}
+        >
+          {task.title}
+        </span>
+      </div>
+
+      {task.subtasks && task.subtasks.length > 0 && (() => {
+        // 未完成子任务置顶，已完成沉底；完成反馈宽限期内保持原位，播完动画再沉底
+        const sorted = [...task.subtasks].sort((a, b) => {
+          const aDone = a.isCompleted && !subCelebrating.has(a.id) ? 1 : 0
+          const bDone = b.isCompleted && !subCelebrating.has(b.id) ? 1 : 0
+          if (aDone !== bDone) return aDone - bDone
+          return a.sortOrder - b.sortOrder
+        })
+        return (
+        <div className="flex flex-col gap-0.5 pl-6 pr-1 pb-0.5">
+          {sorted.map((st) => (
+            <button
+              key={st.id}
+              onClick={() => onSubtaskToggle(st.id, task.dueDate, !st.isCompleted)}
+              className={cn(
+                'group/sub flex items-center gap-1.5 rounded px-1 py-0.5 text-left hover:bg-surface-hover transition-colors',
+                subCelebrating.has(st.id) && 'task-complete-pulse'
+              )}
+              title={st.isCompleted ? '标记未完成' : '标记完成'}
+            >
+              <span
+                className={cn(
+                  'shrink-0 h-3 w-3 rounded-[3px] border flex items-center justify-center transition-colors',
+                  st.isCompleted
+                    ? 'bg-success border-success'
+                    : 'border-current bg-current/10 group-hover/sub:border-current'
+                )}
+              >
+                {st.isCompleted && <Check className={cn('h-2 w-2 text-white', subCelebrating.has(st.id) && 'task-check-pop')} strokeWidth={3} />}
+              </span>
+              <span className={cn('text-[11px] flex-1 truncate', st.isCompleted && 'line-through text-muted-foreground')}>
+                {st.title}
+              </span>
+            </button>
+          ))}
+        </div>
+        )
+      })()}
+    </div>
+  )
+}
+
 export function WidgetTaskList({ tasks, onToggle, onSubtaskToggle }: WidgetTaskListProps) {
   const [tooltip, setTooltip] = useState<{ id: number; style: React.CSSProperties } | null>(null)
   const titleRefs = useRef<Map<number, HTMLSpanElement>>(new Map())
@@ -52,99 +164,17 @@ export function WidgetTaskList({ tasks, onToggle, onSubtaskToggle }: WidgetTaskL
   return (
     <>
     <div className="flex flex-col gap-1.5">
-      {tasks.map((task) => {
-        const dot = PRIORITY_CONFIG[task.priority].dot
-        return (
-          <div
-            key={task.id}
-            className="flex flex-col"
-          >
-            <div
-              className={cn(
-                'card-elevated relative flex items-center gap-2 rounded-xl px-2 py-1.5 group',
-                getTaskBg(task)
-              )}
-              onMouseEnter={(e) => {
-                const span = titleRefs.current.get(task.id)
-                if (!span || span.scrollWidth <= span.clientWidth) return
-                const rect = e.currentTarget.getBoundingClientRect()
-                const TOOLTIP_EST_H = 120
-                const above = rect.bottom + TOOLTIP_EST_H > window.innerHeight
-                const style: React.CSSProperties = {
-                  position: 'fixed', zIndex: 9999,
-                  left: rect.left, right: window.innerWidth - rect.right,
-                  ...(above ? { bottom: window.innerHeight - rect.top + 6 } : { top: rect.bottom + 6 }),
-                }
-                setTooltip({ id: task.id, style })
-              }}
-              onMouseLeave={() => setTooltip(null)}
-            >
-              <div className={cn('shrink-0 w-1 h-3.5 rounded-full', dot)} />
-              <button
-                className={cn(
-                  'shrink-0 h-4 w-4 rounded-md border flex items-center justify-center transition-all',
-                  getTaskFg(task),
-                  task.isCompleted
-                    ? 'bg-success border-success'
-                    : task.isFailed
-                    ? 'bg-task-failed-bg border-task-failed-bar text-task-failed-fg'
-                    : 'border-current bg-current/10 hover:border-current group-hover:border-current'
-                )}
-                onClick={() => !task.isFailed && onToggle(task.id, !task.isCompleted, task.dueDate, task.isRecurring)}
-              >
-                {task.isCompleted && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3} />}
-                {task.isFailed && !task.isCompleted && <X className="h-2.5 w-2.5 text-task-failed-fg" strokeWidth={3} />}
-              </button>
-              <span
-                ref={(el) => { if (el) titleRefs.current.set(task.id, el); else titleRefs.current.delete(task.id) }}
-                className={cn(
-                  'text-xs flex-1 truncate',
-                  getTaskFg(task),
-                  (task.isCompleted || task.isFailed) && 'line-through opacity-75',
-                )}
-              >
-                {task.title}
-              </span>
-            </div>
-
-            {task.subtasks && task.subtasks.length > 0 && (() => {
-              // 未完成子任务置顶，已完成沉底
-              const sorted = [...task.subtasks].sort((a, b) => {
-                const aDone = a.isCompleted ? 1 : 0
-                const bDone = b.isCompleted ? 1 : 0
-                if (aDone !== bDone) return aDone - bDone
-                return a.sortOrder - b.sortOrder
-              })
-              return (
-              <div className="flex flex-col gap-0.5 pl-6 pr-1 pb-0.5">
-                {sorted.map((st) => (
-                  <button
-                    key={st.id}
-                    onClick={() => onSubtaskToggle(st.id, task.dueDate, !st.isCompleted)}
-                    className="group/sub flex items-center gap-1.5 rounded px-1 py-0.5 text-left hover:bg-surface-hover transition-colors"
-                    title={st.isCompleted ? '标记未完成' : '标记完成'}
-                  >
-                    <span
-                      className={cn(
-                        'shrink-0 h-3 w-3 rounded-[3px] border flex items-center justify-center transition-colors',
-                        st.isCompleted
-                          ? 'bg-success border-success'
-                          : 'border-current bg-current/10 group-hover/sub:border-current'
-                      )}
-                    >
-                      {st.isCompleted && <Check className="h-2 w-2 text-white" strokeWidth={3} />}
-                    </span>
-                    <span className={cn('text-[11px] flex-1 truncate', st.isCompleted && 'line-through text-muted-foreground')}>
-                      {st.title}
-                    </span>
-                  </button>
-                ))}
-              </div>
-              )
-            })()}
-          </div>
-        )
-      })}
+      {tasks.map((task) => (
+        <WidgetTaskRow
+          key={task.id}
+          task={task}
+          onToggle={onToggle}
+          onSubtaskToggle={onSubtaskToggle}
+          titleRefs={titleRefs}
+          onShowTooltip={(id, style) => setTooltip({ id, style })}
+          onHideTooltip={() => setTooltip(null)}
+        />
+      ))}
     </div>
     {hoveredTask && tooltip && createPortal(
       <div

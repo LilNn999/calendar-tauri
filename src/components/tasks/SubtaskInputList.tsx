@@ -29,6 +29,8 @@ export function SubtaskInputList({ value, onChange, placeholder = '子任务…'
   // pointermove 里高频更新，落点同时存 ref，pointerup 时读 ref 提交，避免闭包读到过期 state
   const targetRef = useRef(0)
   const [drag, setDrag] = useState<{ from: number; to: number; delta: number } | null>(null)
+  // 勾选完成时记录行号 → 递增计数：作为 key 触发对勾重挂载，重放弹跳动画（初始已勾选的不播）
+  const [popKeys, setPopKeys] = useState<Map<number, number>>(new Map())
 
   const updateAt = (i: number, title: string) => {
     const next = [...value]
@@ -38,6 +40,9 @@ export function SubtaskInputList({ value, onChange, placeholder = '子任务…'
   const toggleAt = (i: number) => {
     const next = [...value]
     next[i] = { ...next[i], isCompleted: !next[i].isCompleted }
+    if (next[i].isCompleted) {
+      setPopKeys((prev) => new Map(prev).set(i, (prev.get(i) ?? 0) + 1))
+    }
     onChange(next)
   }
   const removeAt = (i: number) => {
@@ -159,7 +164,13 @@ export function SubtaskInputList({ value, onChange, placeholder = '子任务…'
                     : 'border-current bg-current/10 hover:border-primary'
                 )}
               >
-                {item.isCompleted && <Check className="h-2.5 w-2.5 text-white" strokeWidth={3.5} />}
+                {item.isCompleted && (
+                  <Check
+                    key={popKeys.get(i) ?? 0}
+                    className={cn('h-2.5 w-2.5 text-white', popKeys.has(i) && 'task-check-pop')}
+                    strokeWidth={3.5}
+                  />
+                )}
               </button>
             )}
             <input

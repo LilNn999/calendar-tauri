@@ -9,6 +9,8 @@ import { isTauri } from '@/lib/db'
 import { tasksApi, checkinsApi } from '@/api'
 import { IPC } from '@shared/ipc-channels'
 import { PRIORITY_CONFIG } from '@shared/constants'
+import { fireSmallConfetti } from '@/lib/confetti'
+import { TASK_FEEDBACK_MS } from '@/lib/use-completion-feedback'
 import { SubtaskInputList, type SubtaskInputItem } from '@/components/tasks/SubtaskInputList'
 import type { Task, CheckinDefinition, CheckinEntry, Priority } from '@shared/types'
 
@@ -56,6 +58,8 @@ export function WidgetShell() {
   const [newPriority, setNewPriority] = useState<Priority>('none')
   const [newSubtasks, setNewSubtasks] = useState<SubtaskInputItem[]>([])
   const [saving, setSaving] = useState(false)
+  // 完成反馈宽限期：刚勾选完成的任务先原地停留播放动画，再沉底
+  const [justCompleted, setJustCompleted] = useState<Set<string>>(new Set())
 
   const loadData = async () => {
     const [taskList, defs, entryList] = await Promise.all([
@@ -147,6 +151,7 @@ export function WidgetShell() {
     } else {
       await tasksApi.update(id, { isCompleted: completed, isFailed })
     }
+    const feedbackKey = `${id}-${dueDate}`
     if (completed) {
       // 完成母任务：子任务一并划掉显示完成（仅展示层联动，不改动数据库子任务状态）
       setTasks((prev) =>
@@ -160,8 +165,27 @@ export function WidgetShell() {
             : t
         )
       )
+      // 宽限期内原地停留播放完成反馈动画，到期后再沉底
+      setJustCompleted((prev) => new Set(prev).add(feedbackKey))
+      window.setTimeout(() => {
+        setJustCompleted((prev) => {
+          const next = new Set(prev)
+          next.delete(feedbackKey)
+          return next
+        })
+      }, TASK_FEEDBACK_MS)
+      // 当日任务全部完成时撒花庆祝（与主窗口行为一致）
+      const allDone = tasks.length > 0 && tasks.every(
+        (t) => (t.id === id && t.dueDate === dueDate) || t.isCompleted
+      )
+      if (allDone) fireSmallConfetti()
     } else {
       // 取消完成：重新拉取数据库，子任务恢复各自真实状态
+      setJustCompleted((prev) => {
+        const next = new Set(prev)
+        next.delete(feedbackKey)
+        return next
+      })
       await loadData()
     }
   }
@@ -224,8 +248,9 @@ export function WidgetShell() {
 
   const PRIORITY_WEIGHT: Record<string, number> = { high: 3, medium: 2, low: 1, none: 0 }
   const sortedTasks = [...tasks].sort((a, b) => {
-    const aGroup = (a.isCompleted || a.isFailed) ? 1 : 0
-    const bGroup = (b.isCompleted || b.isFailed) ? 1 : 0
+    // 完成反馈宽限期内保持原位，动画播完后再沉底
+    const aGroup = (a.isCompleted || a.isFailed) && !justCompleted.has(`${a.id}-${a.dueDate}`) ? 1 : 0
+    const bGroup = (b.isCompleted || b.isFailed) && !justCompleted.has(`${b.id}-${b.dueDate}`) ? 1 : 0
     if (aGroup !== bGroup) return aGroup - bGroup
     if (aGroup === 0) {
       const pw = (PRIORITY_WEIGHT[b.priority] ?? 0) - (PRIORITY_WEIGHT[a.priority] ?? 0)
