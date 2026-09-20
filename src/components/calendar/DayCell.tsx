@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toDateString, checkinActiveOn } from '@/lib/utils'
 import { getDayCellState } from '@/lib/dayCellState'
+import { getHolidayDay } from '@/lib/holidays'
 import { CELL_MAX_ITEMS } from '@shared/constants'
 import { useTaskStore } from '@/store/useTaskStore'
 import { useCheckinStore } from '@/store/useCheckinStore'
@@ -10,6 +11,7 @@ import { useUIStore } from '@/store/useUIStore'
 import { useCalendarStore } from '@/store/useCalendarStore'
 import { useNotesStore } from '@/store/useNotesStore'
 import { TaskItemRow, CheckinPreviewRow } from './DayCellItem'
+import { HolidayBadge } from './HolidayBadge'
 import type { CheckinDefinition } from '@shared/types'
 
 // 供 DayCell 调用：onMarkComplete 透传给 CalendarPage 的 handleTaskToggle(id, true, ...)
@@ -98,9 +100,9 @@ export function DayCell({
   const overflow = allItems.length - rowLimit
   const isSelected = selectedDate === dateStr
   const dayState = getDayCellState({ isSelected, isToday, isCurrentMonth })
+  const holiday = getHolidayDay(dateStr)
   // 选中/当天由日期徽章表达；非本月使用低对比底
   const cellBg = dayState === 'outside' ? 'bg-cell-dim-bg' : 'bg-cell-bg'
-
 
   return (
     <div
@@ -113,9 +115,9 @@ export function DayCell({
       onClick={() => { setSelectedDate(dateStr); onDayClick(dateStr) }}
     >
 
-      {/* 日期数字 + 备注指示器 */}
+      {/* 日期数字 + 节假日角标 + 备注指示器 */}
       <div className="flex items-center justify-between mb-1">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 min-w-0">
           <span
             className={cn(
               'text-xs font-medium h-5 w-5 flex items-center justify-center rounded-full transition-all duration-200',
@@ -130,6 +132,23 @@ export function DayCell({
           >
             {date.getDate()}
           </span>
+
+          {/* 节假日（休）/ 调休补班（班）角标；说明气泡由 HolidayBadge 经 portal 渲染 */}
+          {holiday && (
+            <HolidayBadge holiday={holiday} dimmed={dayState === 'outside'} />
+          )}
+
+          {/* 节日名：仅假期代表日展示（如除夕/春节、国庆节/中秋节） */}
+          {holiday?.label && (
+            <span
+              className={cn(
+                'text-[10px] font-semibold text-holiday-fg truncate min-w-0',
+                dayState === 'outside' && 'opacity-60'
+              )}
+            >
+              {holiday.label}
+            </span>
+          )}
 
           {/* 备注指示点 + hover tooltip（智能定位，防超出边界） */}
           {noteContent && (

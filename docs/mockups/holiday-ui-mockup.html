@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>节假日 &amp; 调休展示 · UI 效果图</title>
+<style>
+  :root {
+    --page-bg:#eceef1;
+    --card:#ffffff;
+    --fg:#141414; --muted:#7a7a7a;
+    --border:#eef0f3; --border-strong:#e6e9ed;
+    --shell:#fbfcfd; --grid:#eef0f3;
+    --cell:#ffffff; --cell-dim:#fbfcfd;
+    --primary:#14161a;
+    --success:#22b573; --success-bg:#eaf8f0; --success-fg:#137a4f;
+    --high-bg:#fdecec; --high-fg:#d64545; --high-bar:#e05252;
+    --med-bg:#fff3e0; --med-fg:#c27000; --med-bar:#f59e0b;
+    --none-bg:#f4f5f7; --none-fg:#4b5563; --none-bar:#9ca3af;
+    --ck-bg:#f4f6fa; --ck-border:#dfe5ed; --ck-fg:#475569;
+    --warn:#f59e0b;
+    --holiday:#e04f4f;
+    --work:#2f6fd6;
+    --shadow:0 8px 20px -8px rgba(0,0,0,.10);
+  }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    background:var(--page-bg);
+    font-family:"Inter","Noto Sans SC","Microsoft YaHei UI","PingFang SC",sans-serif;
+    color:var(--fg); padding:28px 20px 60px;
+    display:flex; flex-direction:column; align-items:center; gap:24px;
+  }
+  .page-title { text-align:center; }
+  .page-title h1 { font-size:20px; font-weight:700; }
+  .page-title p { font-size:12px; color:var(--muted); margin-top:6px; }
+  .legend {
+    display:flex; gap:16px; align-items:center; justify-content:center;
+    font-size:12px; color:#4b5563;
+  }
+  .legend .item { display:flex; align-items:center; gap:6px; }
+
+  .card {
+    background:var(--card); border:1px solid var(--border); border-radius:16px;
+    padding:20px; box-shadow:var(--shadow); width:1020px;
+  }
+  .card h2 { font-size:14px; font-weight:700; margin-bottom:4px; }
+  .card .sub { font-size:11px; color:var(--muted); margin-bottom:14px; }
+
+  /* ── 月历（复刻 MonthView / calendar-shell） ── */
+  .mheader { display:flex; align-items:center; justify-content:space-between; padding:2px 4px 10px; }
+  .mheader .title { font-size:16px; font-weight:700; display:flex; align-items:center; gap:10px; }
+  .mheader .nav { color:#9ca3af; font-size:14px; letter-spacing:6px; }
+  .mheader .today-btn {
+    font-size:12px; font-weight:600; border:1px solid var(--border-strong);
+    border-radius:999px; padding:4px 14px; color:#3d434b; background:#fff;
+  }
+  .weekrow { display:grid; grid-template-columns:repeat(7,1fr); padding:2px 4px 6px; }
+  .weekrow div { text-align:center; font-size:12px; font-weight:600; color:var(--muted); letter-spacing:2px; }
+  .shell { background:var(--shell); border:1px solid var(--border); border-radius:16px; padding:4px; box-shadow:inset 0 1px 3px rgba(0,0,0,.03); }
+  .mgrid { display:grid; grid-template-columns:repeat(7,1fr); gap:1px; background:var(--grid); border-radius:12px; overflow:hidden; }
+
+  .cell { background:var(--cell); min-height:104px; padding:6px; position:relative; display:flex; flex-direction:column; }
+  .cell.dim { background:var(--cell-dim); }
+  .cell-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+  .head-l { display:flex; align-items:center; gap:4px; min-width:0; }
+  .dnum {
+    width:20px; height:20px; border-radius:999px; font-size:12px; font-weight:500;
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+  }
+  .dnum.today { background:var(--primary); color:#fff; font-weight:700; }
+  .cell.dim .dnum { color:#b6bcc4; }
+
+  /* ── 新增：休 / 班 角标 + 节日名 ── */
+  .hbadge {
+    width:14px; height:14px; border-radius:4px; flex-shrink:0;
+    display:inline-flex; align-items:center; justify-content:center;
+    font-size:9px; font-weight:700; line-height:1;
+  }
+  .hbadge.rest { background:rgba(224,79,79,.11); color:var(--holiday); }
+  .hbadge.work { background:rgba(47,111,214,.11); color:var(--work); }
+  .cell.dim .hbadge { opacity:.55; }
+  .hname { font-size:10px; font-weight:600; color:var(--holiday); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .cell.dim .hname { opacity:.55; }
+
+  .notedot { width:6px; height:6px; border-radius:999px; background:var(--warn); box-shadow:0 0 0 2px rgba(245,158,11,.25); flex-shrink:0; }
+  .addbtn { color:#b6bcc4; font-size:13px; width:16px; height:16px; display:flex; align-items:center; justify-content:center; border-radius:999px; }
+
+  /* ── 任务 / 打卡行（复刻 TaskItemRow compact） ── */
+  .rows { display:flex; flex-direction:column; gap:2px; min-height:0; }
+  .task {
+    display:flex; gap:4px; align-items:center; border-radius:8px;
+    padding:2px 4px; font-size:12px; line-height:1.3;
+  }
+  .task .bar { width:3px; align-self:stretch; border-radius:999px; flex-shrink:0; }
+  .task .t { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500; }
+  .cb { width:14px; height:14px; border-radius:5px; border:1.5px solid #9ca3af80; flex-shrink:0; }
+  .cb.done { background:var(--success); border-color:var(--success); position:relative; }
+  .cb.done::after { content:"✓"; color:#fff; font-size:9px; font-weight:700; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+  .task.high { background:var(--high-bg); color:var(--high-fg); } .task.high .bar { background:var(--high-bar); }
+  .task.med  { background:var(--med-bg);  color:var(--med-fg);  } .task.med  .bar { background:var(--med-bar); }
+  .task.none { background:var(--none-bg); color:var(--none-fg); } .task.none .bar { background:var(--none-bar); }
+  .task.done { background:var(--success-bg); color:var(--success-fg); } .task.done .bar { background:var(--success); }
+  .task.done .t { text-decoration:line-through; opacity:.75; font-weight:400; }
+  .ck {
+    display:flex; gap:4px; align-items:center; border-radius:6px;
+    background:var(--ck-bg); border:1px solid var(--ck-border);
+    padding:1px 4px; font-size:12px; color:var(--ck-fg);
+  }
+  .ck .ico { width:10px; height:10px; border-radius:3px; border:1.2px solid #94a3b8; flex-shrink:0; position:relative; }
+  .ck .ico.on { background:var(--success); border-color:var(--success); }
+  .ck .ico.on::after { content:"✓"; color:#fff; font-size:7px; font-weight:700; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; }
+  .ck .n { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500; }
+  .more {
+    align-self:flex-start; margin-top:2px; font-size:10px; font-weight:500;
+    background:rgba(20,22,26,.07); color:#14161a; border-radius:999px; padding:2px 7px;
+  }
+
+  /* ── hover 详情气泡（静态展示） ── */
+  .htip {
+    position:absolute; z-index:30; width:216px; background:#fff; color:#141414;
+    border:1px solid var(--border); border-radius:14px; padding:10px 12px;
+    box-shadow:0 10px 26px -8px rgba(0,0,0,.16); font-size:12px; text-align:left;
+  }
+  .htip .row1 { display:flex; align-items:center; gap:6px; font-weight:700; font-size:12px; }
+  .htip .row2 { margin-top:5px; color:#57606b; line-height:1.55; }
+  .htip .row3 { margin-top:3px; color:#8a919a; line-height:1.55; font-size:11px; }
+  .htip .tag { margin-left:auto; font-size:9px; font-weight:700; border-radius:4px; padding:2px 4px; }
+  .htip .tag.rest { background:rgba(224,79,79,.11); color:var(--holiday); }
+  .htip .tag.work { background:rgba(47,111,214,.11); color:var(--work); }
+
+  /* ── 暗色条 ── */
+  .dark { background:#000; color:var(--fg); --fg:#f0f0f0; --muted:#9e9e9e;
+    --shell:#050506; --grid:#1d1d20; --cell:#050506; --cell-dim:#000;
+    --primary:#0a84ff; --border:#1d1d20; --border-strong:#2a2a2d;
+    --holiday:#ff8a80; --work:#7fb0ff;
+  }
+  .dark .shell { box-shadow:inset 0 1px 3px rgba(0,0,0,.45); }
+  .dark .hbadge.rest { background:rgba(255,105,97,.16); }
+  .dark .hbadge.work { background:rgba(127,176,255,.16); }
+  .dark .cell.dim .dnum { color:#4a4a4e; }
+  .dark .task.high { background:rgba(255,69,58,.18); color:#ff6b60; } .dark .task.high .bar { background:#ff6b60; }
+  .dark .task.done { background:rgba(48,209,88,.16); color:#5ce087; } .dark .task.done .bar { background:#30d158; }
+  .dark .task.none { background:rgba(255,255,255,.08); color:#c7c7cc; } .dark .task.none .bar { background:#8e8e93; }
+  .dark .task.med { background:rgba(255,159,10,.18); color:#ffb340; } .dark .task.med .bar { background:#ffb340; }
+  .dark .ck { background:rgba(10,132,255,.08); border-color:rgba(10,132,255,.28); color:#8ab8ff; }
+  .dark .more { background:rgba(255,255,255,.1); color:#e5e5ea; }
+  .dark .dnum.today { background:#0a84ff; }
+  .dark .cb { border-color:#8e8e93cc; }
+  .dark .mheader .today-btn { background:#1c1c1e; border-color:#2a2a2d; color:#e5e5ea; }
+  .dark .mheader .nav { color:#5a5a5e; }
+  .dark .weekrow div { color:#9e9e9e; }
+
+  /* ── 放大细节 ── */
+  .zoomwrap { display:flex; gap:28px; flex-wrap:wrap; align-items:flex-start; }
+  .zoom-item { display:flex; flex-direction:column; gap:8px; }
+  .zoom-item .cap { font-size:11px; color:var(--muted); text-align:center; }
+  .zoom {
+    width:230px; height:92px; border-radius:12px; overflow:hidden;
+    border:1px solid var(--border); background:#fff; position:relative;
+  }
+  .zoom .sc { transform:scale(2); transform-origin:14px 10px; width:115px; }
+  .zoom .sc .cell { width:115px; min-height:0; }
+  .zoom.b { height:118px; }
+  .spec { margin-top:16px; font-size:12px; color:#4b5563; line-height:2; }
+  .spec b { color:var(--fg); }
+  .spec li { margin-left:18px; }
+</style>
+</head>
+<body>
+
+<div class="page-title">
+  <h1>日历格子 · 法定节假日 &amp; 调休展示 — UI 效果图</h1>
+  <p>数据为国务院办公厅 2026 年真实放假安排（示意位置）；视觉遵循现有「极简留白」主题令牌，深浅主题均适配</p>
+</div>
+
+<div class="legend">
+  <span class="item"><span class="hbadge rest">休</span> 法定节假日（放假日）</span>
+  <span class="item"><span class="hbadge work">班</span> 调休上班日（周末补班）</span>
+  <span class="item"><span style="color:var(--holiday);font-size:10px;font-weight:600;">节日名</span> 假期首日显示红色节日名</span>
+  <span class="item">🖱️ 悬浮格子任意相关日期 → 完整放假/调休说明气泡</span>
+</div>
+
+<!-- ═══ 2026年9月 ═══ -->
+<div class="card">
+  <h2>方案 A（推荐）：角标 + 假期首日节日名 —— 2026年9月</h2>
+  <div class="sub">今天 9月20日（周日）恰是国庆调休上班日 →「班」；9月25–27日中秋节 3 天 →「休」，首日带「中秋节」红字</div>
+  <div class="mheader">
+    <div class="title"><span class="nav">‹ ›</span> 2026年9月</div>
+    <button class="today-btn">今天</button>
+  </div>
+  <div class="shell">
+    <div class="weekrow"><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div></div>
+    <div class="mgrid" id="grid-sep"></div>
+  </div>
+</div>
+
+<!-- ═══ 2026年10月 ═══ -->
+<div class="card">
+  <h2>2026年10月 —— 国庆长假 + 补班日 + 悬浮气泡</h2>
+  <div class="sub">10月1–7日国庆节放 7 天（首日「国庆节」红字）；10月10日（周六）补班 →「班」；悬浮 10月1日 展示完整安排气泡</div>
+  <div class="mheader">
+    <div class="title"><span class="nav">‹ ›</span> 2026年10月</div>
+    <button class="today-btn">今天</button>
+  </div>
+  <div class="shell">
+    <div class="weekrow"><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div></div>
+    <div class="mgrid" id="grid-oct"></div>
+  </div>
+</div>
+
+<!-- ═══ 暗色主题 ═══ -->
+<div class="card dark">
+  <h2 style="color:#f0f0f0;">暗色主题（纯黑 OLED 皮肤）—— 以 9月28日–10月11日 两周为例</h2>
+  <div class="sub" style="color:#9e9e9e;">休/班角标与节日名使用独立主题令牌，所有皮肤（新拟态、奶油、暗夜等 6 套）统一适配</div>
+  <div class="shell">
+    <div class="weekrow"><div>一</div><div>二</div><div>三</div><div>四</div><div>五</div><div>六</div><div>日</div></div>
+    <div class="mgrid" id="grid-dark"></div>
+  </div>
+</div>
+
+<!-- ═══ 放大细节 & 备选 ═══ -->
+<div class="card">
+  <h2>细节放大 &amp; 备选方案</h2>
+  <div class="sub">角标规格：14×14px · 圆角 4px · 字号 9px 加粗，位于日期数字右侧；实现时颜色走主题令牌（--holiday-fg / --work-fg 等）</div>
+  <div class="zoomwrap">
+    <div class="zoom-item">
+      <div class="zoom"><div class="sc"><div class="cell" id="z1"></div></div></div>
+      <div class="cap">假期首日：日期 + [休] + 红色「节日名」</div>
+    </div>
+    <div class="zoom-item">
+      <div class="zoom"><div class="sc"><div class="cell" id="z2"></div></div></div>
+      <div class="cap">调休上班日（含今天）：日期 + [班]，悬浮显示补哪天假</div>
+    </div>
+    <div class="zoom-item">
+      <div class="zoom b"><div class="sc"><div class="cell" id="z3" style="background:linear-gradient(180deg,#fdf1f0,#ffffff 70%);"></div></div></div>
+      <div class="cap">备选方案 B：整格浅红底纹（更醒目，但与任务彩色底/多皮肤易冲突，不推荐默认）</div>
+    </div>
+  </div>
+  <ul class="spec">
+    <li><b>数据来源</b>：内置国办安排静态表（src/lib/holidays.ts，覆盖 2025–2027，可随版本更新），离线可用、不引外部依赖。</li>
+    <li><b>展示规则</b>：每个放假日显示「休」角标；每个补班日显示「班」角标；红色节日名只在假期第一天出现，避免格子过挤。</li>
+    <li><b>悬浮气泡</b>：显示「节日名 + 放假区间/天数 + 哪几天补班」，鼠标移出消失，不占用格子空间。</li>
+    <li><b>联动范围</b>：月视图格子；日期详情弹窗标题、悬浮窗后续可复用同一数据源（本次先做月视图）。</li>
+  </ul>
+</div>
+
+<script>
+// ── 2026 年真实放假安排（国办发明电〔2025〕7号） ──
+const H = {
+  '2026-09-20': { t:'work', tip:'9月20日（周日）上班，补国庆节假期' },
+  '2026-09-25': { t:'rest', name:'中秋节', tip:'9月25日至27日放假，共3天' },
+  '2026-09-26': { t:'rest', tip:'中秋节 · 9月25日至27日放假，共3天' },
+  '2026-09-27': { t:'rest', tip:'中秋节 · 9月25日至27日放假，共3天' },
+  '2026-10-01': { t:'rest', name:'国庆节', tip:'10月1日至7日放假调休，共7天', extra:'9月20日（周日）、10月10日（周六）上班' },
+  '2026-10-02': { t:'rest', tip:'国庆节 · 10月1日至7日放假调休，共7天' },
+  '2026-10-03': { t:'rest', tip:'国庆节 · 10月1日至7日放假调休，共7天' },
+  '2026-10-04': { t:'rest', tip:'国庆节 · 10月1日至7日放假调休，共7天' },
+  '2026-10-05': { t:'rest', tip:'国庆节 · 10月1日至7日放假调休，共7天' },
+  '2026-10-06': { t:'rest', tip:'国庆节 · 10月1日至7日放假调休，共7天' },
+  '2026-10-07': { t:'rest', tip:'国庆节 · 10月1日至7日放假调休，共7天' },
+  '2026-10-10': { t:'work', tip:'10月10日（周六）上班，补国庆节假期' },
+};
+
+// ── 示例日程（模拟现有任务/打卡行样式） ──
+const ITEMS = {
+  '2026-09-16': [
+    { k:'task', c:'high', t:'提交季度经营报表' },
+    { k:'ck', n:'晨间跑步', v:'3.2km', on:true },
+  ],
+  '2026-09-17': [ { k:'task', c:'done', t:'回复客户邮件', done:true } ],
+  '2026-09-18': [ { k:'task', c:'med', t:'整理国庆值班表' }, { k:'ck', n:'每日饮水', v:'2000ml', on:true } ],
+  '2026-09-20': [
+    { k:'task', c:'high', t:'值日：机房巡检' },
+    { k:'ck', n:'每日饮水', v:'待打卡' },
+  ],
+  '2026-09-22': [ { k:'task', c:'med', t:'预约秋季体检' } ],
+  '2026-09-25': [ { k:'task', c:'none', t:'给爸妈寄月饼' }, { k:'task', c:'done', t:'家庭聚餐订位', done:true } ],
+  '2026-09-26': [ { k:'task', c:'none', t:'周边短途出行' } ],
+  '2026-09-30': [ { k:'task', c:'med', t:'确认假期行程与车票' }, { k:'ck', n:'睡前阅读', v:'30min', on:true } ],
+  '2026-10-01': [ { k:'task', c:'none', t:'上午出发去高铁站' }, { k:'task', c:'done', t:'行李清单核对', done:true } ],
+  '2026-10-09': [ { k:'task', c:'high', t:'季度汇报材料准备' } ],
+  '2026-10-10': [ { k:'task', c:'med', t:'处理节后积压邮件' }, { k:'ck', n:'晨间跑步', v:'待打卡' } ],
+  '2026-10-13': [ { k:'task', c:'none', t:'团队周会纪要' } ],
+};
+const TODAY = '2026-09-20';
+const pad = n => String(n).padStart(2,'0');
+const key = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+
+function buildCell(d, inMonth, tipPos) {
+  const k = key(d), h = H[k], items = ITEMS[k] || [];
+  const cell = document.createElement('div');
+  cell.className = 'cell' + (inMonth ? '' : ' dim');
+  cell.title = h ? h.tip : '';
+
+  const head = document.createElement('div'); head.className = 'cell-head';
+  const left = document.createElement('div'); left.className = 'head-l';
+  const num = document.createElement('span');
+  num.className = 'dnum' + (k === TODAY ? ' today' : '');
+  num.textContent = d.getDate();
+  left.appendChild(num);
+  if (h) {
+    const b = document.createElement('span');
+    b.className = 'hbadge ' + (h.t === 'rest' ? 'rest' : 'work');
+    b.textContent = h.t === 'rest' ? '休' : '班';
+    left.appendChild(b);
+    if (h.name) {
+      const n = document.createElement('span');
+      n.className = 'hname'; n.textContent = h.name;
+      left.appendChild(n);
+    }
+  }
+  if (k === '2026-09-22') { const nd = document.createElement('span'); nd.className='notedot'; left.appendChild(nd); }
+  head.appendChild(left);
+  if (k === '2026-09-22' || k === '2026-10-09') {
+    const add = document.createElement('span'); add.className='addbtn'; add.textContent='＋'; head.appendChild(add);
+  }
+  cell.appendChild(head);
+
+  const rows = document.createElement('div'); rows.className = 'rows';
+  items.forEach(it => {
+    if (it.k === 'task') {
+      const el = document.createElement('div');
+      el.className = 'task ' + (it.done ? 'done' : it.c);
+      el.innerHTML = `<span class="bar"></span><span class="cb${it.done?' done':''}"></span><span class="t">${it.t}</span>`;
+      rows.appendChild(el);
+    } else {
+      const el = document.createElement('div');
+      el.className = 'ck';
+      el.innerHTML = `<span class="ico${it.on?' on':''}"></span><span class="n">${it.n}</span><span style="font-size:10px;font-weight:${it.on?'700':'400'};color:${it.on?'var(--success)':'#9aa3ad'}">${it.v}</span>`;
+      rows.appendChild(el);
+    }
+  });
+  cell.appendChild(rows);
+  if (k === '2026-10-01') {
+    const m = document.createElement('span'); m.className='more'; m.textContent='1 更多'; cell.appendChild(m);
+  }
+
+  if (h && tipPos) {
+    const tip = document.createElement('div'); tip.className='htip';
+    tip.innerHTML = `
+      <div class="row1">${h.name || (h.t==='work' ? '调休上班' : '法定节假日')}
+        <span class="tag ${h.t==='rest'?'rest':'work'}">${h.t==='rest'?'休':'班'}</span></div>
+      <div class="row2">${h.tip}</div>
+      ${h.extra ? `<div class="row3">${h.extra}</div>` : ''}`;
+    Object.assign(tip.style, tipPos);
+    cell.appendChild(tip);
+  }
+  return cell;
+}
+
+function renderMonth(elId, year, month, tips = {}) {
+  const grid = document.getElementById(elId);
+  grid.innerHTML = '';
+  const first = new Date(year, month - 1, 1);
+  let start = new Date(first);
+  const dow = (first.getDay() + 6) % 7; // 周一=0
+  start.setDate(first.getDate() - dow);
+  for (let i = 0; i < 35; i++) {
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const inMonth = d.getMonth() === month - 1;
+    grid.appendChild(buildCell(d, inMonth, tips[key(d)]));
+  }
+}
+
+renderMonth('grid-sep', 2026, 9, { '2026-09-20': { bottom:'100%', right:'2px', marginBottom:'8px' } });
+renderMonth('grid-oct', 2026, 10, { '2026-10-01': { top:'calc(100% + 6px)', left:'40px' } });
+
+// 暗色条：9/28–10/11 两周（含跨月置灰 + 国庆休 + 10/10 班）
+(function renderDarkWeek(){
+  const grid = document.getElementById('grid-dark');
+  const start = new Date(2026, 8, 28);
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(start); d.setDate(start.getDate() + i);
+    const cell = buildCell(d, d.getMonth() === 9, i === 5 ? { top:'12px', left:'24px' } : null);
+    cell.style.minHeight = '118px';
+    grid.appendChild(cell);
+  }
+})();
+
+// 放大细节
+document.getElementById('z1').appendChild(buildCell(new Date(2026,9,1), true));
+document.getElementById('z2').appendChild(buildCell(new Date(2026,8,20), true));
+document.getElementById('z3').appendChild(buildCell(new Date(2026,9,2), true));
+</script>
+</body>
+</html>

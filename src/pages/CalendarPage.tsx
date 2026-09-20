@@ -20,7 +20,7 @@ export function CalendarPage() {
   const { viewMode, getVisibleRange, setSelectedDate } = useCalendarStore()
   const { fetchTasks, updateTask, updateOccurrence, getTasksForDate, tasks } = useTaskStore()
   const { fetchDefinitions, fetchEntries, definitions } = useCheckinStore()
-  const { detailPopupDate, setDetailPopupDate } = useUIStore()
+  const { detailPopupDate, setDetailPopupDate, calendarMode } = useUIStore()
   const { fetchNotesForRange } = useNotesStore()
   const [editTask, setEditTask] = useState<Task | null>(null)
   const [editOccurrenceDate, setEditOccurrenceDate] = useState<string | undefined>(undefined)
@@ -123,13 +123,14 @@ export function CalendarPage() {
       <div className="flex flex-col flex-1 overflow-hidden">
         <CalendarHeader />
 
-        {viewMode === 'month' ? (
+        {viewMode === 'month' || calendarMode ? (
           <MonthView
             definitions={definitions}
             onDayClick={(date) => { setSelectedDate(date); setDetailPopupDate(date) }}
             onTaskToggle={handleTaskToggle}
             onTaskClick={handleTaskClick}
             onCheckinClick={handleCheckinClick}
+            pure={calendarMode}
           />
         ) : (
           <WeekView
@@ -142,11 +143,13 @@ export function CalendarPage() {
         )}
       </div>
 
-      {/* 右侧持久侧边栏 */}
-      <RightSidebar
-        definitions={definitions}
-        onDefinitionsChange={() => { fetchDefinitions(); loadData() }}
-      />
+      {/* 右侧持久侧边栏：日历模式下隐藏，保持纯日历视野 */}
+      {!calendarMode && (
+        <RightSidebar
+          definitions={definitions}
+          onDefinitionsChange={() => { fetchDefinitions(); loadData() }}
+        />
+      )}
 
       {/* 日期详情弹窗 */}
       <DayDetailPopup

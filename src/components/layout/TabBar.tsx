@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { CalendarDays, BarChart3, Settings } from 'lucide-react'
+import { CalendarDays, BarChart3, Settings, CalendarRange } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { isTauri } from '@/lib/db'
+import { useUIStore } from '@/store/useUIStore'
 import { SettingsDialog } from './SettingsDialog'
 import { SkinSwitcher } from './SkinSwitcher'
 import { WindowControls } from './WindowControls'
@@ -15,6 +16,7 @@ interface TabBarProps {
 
 export function TabBar({ activeTab, onTabChange }: TabBarProps) {
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const { calendarMode, setCalendarMode } = useUIStore()
 
   // 无边框窗口：点击标题栏区域拖动窗口（排除按钮/输入框等交互元素）
   const handleTitlebarMouseDown = (e: React.MouseEvent) => {
@@ -64,8 +66,20 @@ export function TabBar({ activeTab, onTabChange }: TabBarProps) {
           />
         </div>
 
-        {/* 右侧：换肤 + 设置按钮 */}
+        {/* 右侧：日历模式 + 换肤 + 设置按钮 */}
         <div className="flex-1 flex items-center justify-end gap-1">
+          <button
+            onClick={() => setCalendarMode(!calendarMode)}
+            className={cn(
+              'h-8 w-8 flex items-center justify-center rounded-full transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0',
+              calendarMode
+                ? 'bg-primary/10 text-primary'
+                : 'text-muted-foreground hover:text-foreground hover:bg-accent'
+            )}
+            title={calendarMode ? '退出日历模式' : '日历模式（纯日历：农历/节气/节假日）'}
+          >
+            <CalendarRange className="h-4 w-4" />
+          </button>
           <SkinSwitcher />
           <button
             onClick={() => setSettingsOpen(true)}

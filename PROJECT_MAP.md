@@ -18,11 +18,13 @@
 | 主题 | `src/lib/theme.tsx` | next-themes 轻量替代（`ThemeProvider` + `.dark` class + 皮肤 class + 设置表持久化） |
 | 皮肤 | `src/lib/skin.ts` | Skin 类型、3 套参考稿皮肤选项、归一化与根 class |
 | 日历状态 | `src/lib/dayCellState.ts` | 选中/今天/非本月状态优先级 |
+| 节假日 | `src/lib/holidays.ts` | 法定节假日与调休静态数据（国办通知 2025–2026），供月视图格子「休/班」角标、节日名与悬浮说明 |
+| 农历历法 | `src/lib/lunar.ts` + `lunar-data.ts` | 公历→农历换算、二十四节气、农历/公历节日（1900–2100 内置表，提取自 solarlunar 并固化）；供日历模式纯日历格子展示 |
 | 动画替代 | `src/lib/motion.tsx` | framer-motion 轻量子集（CSS keyframes） |
 | 彩带 | `src/lib/confetti.ts` | canvas-confetti 原版多波彩带（与源项目一致） |
 | 工具函数 | `src/lib/utils.ts` | `cn()`、日期格式化、打卡频率判断 |
 | UI 组件 | `src/components/ui/` | shadcn 风格组件（badge/button/dialog/input/popover/select/slider/switch/textarea/toast） |
-| 日历组件 | `src/components/calendar/` | CalendarHeader / MonthView / WeekView / DayCell / DayDetailPopup |
+| 日历组件 | `src/components/calendar/` | CalendarHeader / MonthView / WeekView / DayCell / PureDayCell（日历模式纯日历格子）/ HolidayBadge / DayDetailPopup |
 | 侧栏组件 | `src/components/sidebar/` | RightSidebar / TaskOverviewPanel / CheckinPanel / TaskPanel |
 | 任务组件 | `src/components/tasks/` | TaskCreationSidebar / TaskEditDialog / RecycleBinDialog / 子任务/优先级/重复 |
 | 打卡组件 | `src/components/checkins/` | 定义管理 / 布尔 / 数值 / 文本 / 时间 / 打卡值弹窗 |

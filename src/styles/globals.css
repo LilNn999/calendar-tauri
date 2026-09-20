@@ -54,6 +54,12 @@
   --cell-bg: #ffffff;
   --cell-dim-bg: #fbfcfd;
   --cell-today-bg: #ffffff;
+  /* 节假日（休）/ 调休补班（班）角标：红=放假日，蓝=补班日 */
+  --holiday-bg: rgb(214 69 69 / 0.10);
+  --holiday-fg: #d64545;
+  --makeup-bg: rgb(47 111 214 / 0.10);
+  --makeup-fg: #2f6fd6;
+  --term-fg: #0d9488;
   --task-high-bg: #fdecec;
   --task-high-fg: #d64545;
   --task-high-bar: #e05252;
@@ -143,6 +149,11 @@
   --cell-bg: #050506;
   --cell-dim-bg: #000000;
   --cell-today-bg: #0b0f14;
+  --holiday-bg: rgb(255 105 97 / 0.16);
+  --holiday-fg: #ff8a80;
+  --makeup-bg: rgb(127 176 255 / 0.16);
+  --makeup-fg: #8ab8ff;
+  --term-fg: #2dd4bf;
   --task-high-bg: rgb(255 69 58 / 0.18);
   --task-high-fg: #ff6b60;
   --task-high-bar: #ff6b60;
@@ -231,6 +242,12 @@
   --cell-bg: transparent;
   --cell-dim-bg: transparent;
   --cell-today-bg: transparent;
+  /* 新拟态：低饱和砖红 / 钢蓝，贴合雾蓝底 */
+  --holiday-bg: rgb(192 91 91 / 0.12);
+  --holiday-fg: #c0565b;
+  --makeup-bg: rgb(74 125 189 / 0.13);
+  --makeup-fg: #4a7dbd;
+  --term-fg: #2f9d8a;
   --task-high-bg: rgb(208 85 127 / 0.10);
   --task-high-fg: #c8557d;
   --task-high-bar: #c8557d;
@@ -314,6 +331,11 @@
   --cell-bg: transparent;
   --cell-dim-bg: transparent;
   --cell-today-bg: transparent;
+  --holiday-bg: rgb(255 138 128 / 0.15);
+  --holiday-fg: #ff9a8c;
+  --makeup-bg: rgb(142 162 232 / 0.16);
+  --makeup-fg: #9ab8ff;
+  --term-fg: #6fd0be;
   --task-high-bg: rgb(255 105 145 / 0.12);
   --task-high-fg: #ff9ab5;
   --task-high-bar: #ff9ab5;
@@ -413,6 +435,12 @@
   --cell-bg: #f8f1e0;
   --cell-dim-bg: #f3ead5;
   --cell-today-bg: #f8f1e0;
+  /* 原木：赭红 / 灰蓝，随暖木色调降饱和 */
+  --holiday-bg: rgb(179 69 45 / 0.13);
+  --holiday-fg: #a63c22;
+  --makeup-bg: rgb(74 107 138 / 0.14);
+  --makeup-fg: #4f6d88;
+  --term-fg: #557534;
   --task-high-bg: #b3452d;
   --task-high-fg: #ffffff;
   --task-high-bar: #b3452d;
@@ -503,6 +531,11 @@
   --cell-bg: #2b1e12;
   --cell-dim-bg: #241a10;
   --cell-today-bg: #2b1e12;
+  --holiday-bg: rgb(255 122 89 / 0.16);
+  --holiday-fg: #ff9a7e;
+  --makeup-bg: rgb(143 168 196 / 0.15);
+  --makeup-fg: #a8c4e0;
+  --term-fg: #9cbb6f;
   --task-high-bg: rgb(179 69 45 / 0.82);
   --task-high-fg: #fff4e6;
   --task-high-bar: #d06446;
@@ -603,6 +636,12 @@
   --cell-bg: #fdf7e7;
   --cell-dim-bg: #f8eed6;
   --cell-today-bg: #fdf7e7;
+  /* 中国红：休=朱红主色，班=鎏金，贴合宣纸朱印气质 */
+  --holiday-bg: rgb(192 44 56 / 0.10);
+  --holiday-fg: #c02c38;
+  --makeup-bg: rgb(212 162 78 / 0.16);
+  --makeup-fg: #9a6b1f;
+  --term-fg: #1f7a4d;
   --task-high-bg: #f9e2de;
   --task-high-fg: #c02c38;
   --task-high-bar: #c02c38;
@@ -700,6 +739,11 @@
   --cell-bg: #1d100c;
   --cell-dim-bg: #241410;
   --cell-today-bg: #1d100c;
+  --holiday-bg: rgb(255 107 94 / 0.14);
+  --holiday-fg: #ff6b5e;
+  --makeup-bg: rgb(232 180 90 / 0.14);
+  --makeup-fg: #e8b45a;
+  --term-fg: #8fbf72;
   --task-high-bg: rgb(255 107 94 / 0.13);
   --task-high-fg: #ff6b5e;
   --task-high-bar: #ff6b5e;
@@ -801,6 +845,12 @@
   --cell-bg: #f9f7f1;
   --cell-dim-bg: #f1efe7;
   --cell-today-bg: #f9f7f1;
+  /* 报纸印刷：休=报头红点红，班=油墨蓝灰，克制用色 */
+  --holiday-bg: rgb(179 38 30 / 0.08);
+  --holiday-fg: #b3261e;
+  --makeup-bg: rgb(55 71 79 / 0.10);
+  --makeup-fg: #37474f;
+  --term-fg: #3f6b5c;
   --task-high-bg: #f3e0dc;
   --task-high-fg: #b3261e;
   --task-high-bar: #b3261e;
@@ -898,6 +948,11 @@
   --cell-bg: #1a1815;
   --cell-dim-bg: #1f1c18;
   --cell-today-bg: #1a1815;
+  --holiday-bg: rgb(224 90 78 / 0.14);
+  --holiday-fg: #e05a4e;
+  --makeup-bg: rgb(159 180 201 / 0.13);
+  --makeup-fg: #9fb4c9;
+  --term-fg: #a3c4b5;
   --task-high-bg: #331b17;
   --task-high-fg: #e05a4e;
   --task-high-bar: #e05a4e;
@@ -998,6 +1053,12 @@
   --cell-bg: #fffbfd;
   --cell-dim-bg: #fff0f8;
   --cell-today-bg: #fffbfd;
+  /* 蒸汽波：休=马卡龙桃红，班=青蓝，与粉彩盘一致 */
+  --holiday-bg: rgb(244 67 108 / 0.10);
+  --holiday-fg: #f4436c;
+  --makeup-bg: rgb(10 159 214 / 0.10);
+  --makeup-fg: #0a9fd6;
+  --term-fg: #0fb8a0;
   --task-high-bg: #fde1e8;
   --task-high-fg: #f4436c;
   --task-high-bar: #f4436c;
@@ -1097,6 +1158,11 @@
   --cell-bg: #241040;
   --cell-dim-bg: #2b1450;
   --cell-today-bg: #241040;
+  --holiday-bg: rgb(255 77 109 / 0.14);
+  --holiday-fg: #ff4d6d;
+  --makeup-bg: rgb(1 205 254 / 0.13);
+  --makeup-fg: #01cdfe;
+  --term-fg: #05f2d2;
   --task-high-bg: rgb(255 77 109 / 0.12);
   --task-high-fg: #ff4d6d;
   --task-high-bar: #ff4d6d;
@@ -1190,6 +1256,11 @@
   --color-cell-bg: var(--cell-bg);
   --color-cell-dim-bg: var(--cell-dim-bg);
   --color-cell-today-bg: var(--cell-today-bg);
+  --color-holiday-bg: var(--holiday-bg);
+  --color-holiday-fg: var(--holiday-fg);
+  --color-makeup-bg: var(--makeup-bg);
+  --color-makeup-fg: var(--makeup-fg);
+  --color-term-fg: var(--term-fg);
   --color-task-high-bg: var(--task-high-bg);
   --color-task-high-fg: var(--task-high-fg);
   --color-task-high-bar: var(--task-high-bar);

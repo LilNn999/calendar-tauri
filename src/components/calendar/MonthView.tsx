@@ -5,6 +5,7 @@ import {
 } from 'date-fns'
 import { useCalendarStore } from '@/store/useCalendarStore'
 import { DayCell } from './DayCell'
+import { PureDayCell } from './PureDayCell'
 import type { CheckinDefinition } from '@shared/types'
 
 const WEEK_DAYS = ['一', '二', '三', '四', '五', '六', '日']
@@ -15,9 +16,11 @@ interface MonthViewProps {
   onTaskToggle: (id: number, completed: boolean, occurrenceDate?: string) => void
   onTaskClick: (taskId: number, date: string) => void
   onCheckinClick: (defId: number, date: string) => void
+  /** 日历模式：格子为纯日历展示（农历/节气/节假日），不渲染日程 */
+  pure?: boolean
 }
 
-export function MonthView({ definitions, onDayClick, onTaskToggle, onTaskClick, onCheckinClick }: MonthViewProps) {
+export function MonthView({ definitions, onDayClick, onTaskToggle, onTaskClick, onCheckinClick, pure }: MonthViewProps) {
   const { currentDate } = useCalendarStore()
 
   const days = useMemo(() => {
@@ -44,7 +47,14 @@ export function MonthView({ definitions, onDayClick, onTaskToggle, onTaskClick, 
       <div className="calendar-shell flex-1 min-h-0 p-1">
         <div className="calendar-grid h-full overflow-y-auto overflow-x-hidden">
           <div className="grid grid-cols-7 auto-rows-fr gap-px h-full min-h-[420px]">
-            {days.map((date) => (
+            {days.map((date) => pure ? (
+              <PureDayCell
+                key={date.toISOString()}
+                date={date}
+                isCurrentMonth={isSameMonth(date, currentDate)}
+                onDayClick={onDayClick}
+              />
+            ) : (
               <DayCell
                 key={date.toISOString()}
                 date={date}
