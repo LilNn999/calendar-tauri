@@ -12,6 +12,24 @@
 - 测试窗口规则：`启动测试窗口.bat` 使用 `scripts/check-test-build-stale.mjs` 自动判断源码/配置/dist 是否新于 release exe；如有更新，先执行 `npm run tauri build -- --no-bundle` 再启动最新测试版，禁止直接启动旧 exe。
 - Codex 内部验收必须主动执行 `npm run tauri build -- --no-bundle`，并确认 `node scripts/check-test-build-stale.mjs` 输出 `0`；此后用户直接打开 `启动测试窗口.bat` 应直接启动最新版，不得再次构建。
 
+## 2026-09-20 0.7.0 正式版
+
+- 时间：2026-09-20 11:07
+- 分支：`codex/release-0.3.4`（推送 origin main）
+- 提交：`9b498c9`（`release: 0.7.0 法定节假日与调休展示、日历模式（农历/节气/节假日纯日历）`）
+- 版本：`0.7.0`
+- 命令：`npm run tauri build`
+- 构建结果：成功（退出码 0）
+- 安装包源文件：`src-tauri/target/release/bundle/nsis/日历_0.7.0_x64-setup.exe`
+- 已交付：`安装包/日历_0.7.0_x64-setup.exe`
+- 大小：2,232,205 bytes（约 2.13 MB）
+- SHA256：`264613B90CD3B50115199A191A4EF5B20764990A0852278398DA79E2C7EEC020`
+- 耗时：前端约 3.75 秒；Cargo release 增量编译 2 分 15 秒；NSIS 打包成功。
+- 本次改动：①月视图格子法定节假日与调休展示（「休/班」角标、假期代表日节日名、悬浮说明气泡，数据内置 `src/lib/holidays.ts`，国办 2025–2026 安排）；②日历模式（标题栏切换按钮，纯日历视图展示农历、二十四节气、农历/公历节日与休/班角标，隐藏任务日程与右侧栏）；③农历数据层 `src/lib/lunar.ts` + `lunar-data.ts`（1900–2100 内置表，提取自 solarlunar 权威数据，与其实现全量比对 1901–2099 每日 0 不一致、4,776 个节气全部正确）；④新增主题令牌 `--holiday-bg/fg`、`--makeup-bg/fg`、`--term-fg`，6 套皮肤深浅 12 个主题块逐一适配；⑤休/班角标与气泡抽取为共用组件 `HolidayBadge`（portal 防裁切）。
+- 模板校验：`installer.nsi` 与 0.6.2 基线 diff 仅 `VERSION`/`VERSIONWITHBUILD`（0.7.0 / 0.7.0.0）与 `ESTIMATEDSIZE`（5044→5048 KB）预期差异，无其他改动；`installer-hooks.nsh` 引用与 `NSIS_HOOK_PREINSTALL` 在位。
+- 验证：`npm test` 通过（8/8，fail 0）；`npm run build` 通过；农历换算与 solarlunar 全量比对通过；`npm run tauri build` 成功；`dist` 无 `*.db`；`bundle.resources` 未配置。
+- 注意事项：安装包已交付但未由代理启动；用户自行双击安装并测试，测试窗口也由用户自行打开。日历模式与节假日角标已另行通过浏览器实机核验（切换/退出/多皮肤）。
+
 ## 2026-09-14 0.6.2 正式版
 
 - 时间：2026-09-14 16:59
