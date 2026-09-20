@@ -16,6 +16,8 @@ interface CalendarState {
   goNext: () => void
   goPrev: () => void
   goToday: () => void
+  /** 直接跳转到某年某月（日历模式的年月选择面板用） */
+  goToMonth: (year: number, month: number) => void
   getVisibleRange: () => { start: string; end: string }
 }
 
@@ -45,6 +47,8 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
     })),
 
   goToday: () => set({ currentDate: new Date(), selectedDate: toDateString(new Date()) }),
+
+  goToMonth: (year, month) => set({ currentDate: new Date(year, month - 1, 1) }),
 
   getVisibleRange: () => {
     const { currentDate, viewMode } = get()

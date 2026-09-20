@@ -8,6 +8,14 @@ export interface VersionNote {
 /** 更新历史（最新版本在最前） */
 export const VERSION_NOTES: VersionNote[] = [
   {
+    version: '0.8.0',
+    date: '2026-09-20',
+    features: [
+      '日历模式新增年月快速跳转：点击左上角「2026年 2月」标题，直接弹出年月面板选年选月，不用再一格一格翻',
+      '面板内点年份可切换为年份宫格（12 年一页整页翻动），跨年跳转一步到位',
+    ],
+  },
+  {
     version: '0.7.0',
     date: '2026-09-20',
     features: [
