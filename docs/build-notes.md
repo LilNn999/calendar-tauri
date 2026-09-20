@@ -12,6 +12,25 @@
 - 测试窗口规则：`启动测试窗口.bat` 使用 `scripts/check-test-build-stale.mjs` 自动判断源码/配置/dist 是否新于 release exe；如有更新，先执行 `npm run tauri build -- --no-bundle` 再启动最新测试版，禁止直接启动旧 exe。
 - Codex 内部验收必须主动执行 `npm run tauri build -- --no-bundle`，并确认 `node scripts/check-test-build-stale.mjs` 输出 `0`；此后用户直接打开 `启动测试窗口.bat` 应直接启动最新版，不得再次构建。
 
+## 2026-09-20 0.8.0 正式版
+
+- 时间：2026-09-20 15:13
+- 分支：`codex/release-0.3.4`（推送 origin main）
+- 提交：`92e16a7`（`release: 0.8.0 日历模式年月选择面板（选年选月快速跳转）`）
+- 版本：`0.8.0`
+- 命令：`npm run tauri build`
+- 构建结果：成功（退出码 0；首次尝试因测试窗口进程占用 `calendar-tauri.exe` 报 os error 5，停止运行中的两个日历进程后重试成功）
+- 安装包源文件：`src-tauri/target/release/bundle/nsis/日历_0.8.0_x64-setup.exe`
+- 已交付：`安装包/日历_0.8.0_x64-setup.exe`
+- 大小：2,232,949 bytes（约 2.13 MB）
+- SHA256：`FDB2174162E9867A567D4F69531947AB8330FBDA3D7AC1C28C1C18F6F585D8E4`
+- 耗时：前端约 3.9 秒；Cargo release 增量编译；NSIS 打包成功。
+- 本次改动：日历模式年月选择面板——点击标题「2026年 2月」弹出年月面板，12 宫格选月（当前月高亮、今天所在月带圆点）；面板内点击年份切换为年份宫格（12 年一页整页翻动、选中年高亮、今天所在年带圆点、范围 1900–2100 与农历表一致），完成「选年 → 选月」两级跳转；store 新增 `goToMonth`。面板 portal 到 body 修复了 `.surface-header` 前景色变量覆盖导致新年中国红浅色皮肤下面板文字不可读的问题；6 套皮肤深浅实测核验。
+- 模板校验：`installer.nsi` 与 0.7.0 基线 diff 仅 `VERSION`/`VERSIONWITHBUILD`（0.8.0 / 0.8.0.0）与 `ESTIMATEDSIZE`（5048→5049 KB）预期差异，无其他改动。
+- 验证：`npm test` 通过（8/8，fail 0）；`npm run build` 通过；`npm run tauri build` 成功；`dist` 无 `*.db`；`bundle.resources` 未配置。年月面板交互（选年/翻页/跳转春节与 2020 年 1 月）已通过浏览器实机核验。
+- 其他：构建期 cargo 重新锁定，`Cargo.lock` 中 3 个传递依赖（keyboard-types、pem-rfc7468、radium）由 0.8.0 版本线降级至 0.7.0 版本线，`calendar-tauri` 本身保持 0.8.0，已随 docs 提交入库。
+- 注意事项：安装包已交付但未由代理启动；打包前已停止用户开启的测试窗口进程，升级安装或重开 `启动测试窗口.bat` 即可看到 0.8.0。
+
 ## 2026-09-20 0.7.0 正式版
 
 - 时间：2026-09-20 11:07
