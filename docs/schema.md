@@ -9,6 +9,7 @@
 | 列 | 类型 | 说明 |
 | --- | --- | --- |
 | id | INTEGER PK AUTOINCREMENT | 主键 |
+| projectId | INTEGER NOT NULL DEFAULT 1 | 所属待办项目，关联 projects(id)，旧任务升级时自动归入默认项目（v3 新增） |
 | title | TEXT NOT NULL | 标题 |
 | priority | TEXT NOT NULL DEFAULT 'none' | none / low / medium / high |
 | dueDate | TEXT NOT NULL | 日期 `YYYY-MM-DD`（重复任务为每次发生日期） |
@@ -22,6 +23,24 @@
 | createdAt / updatedAt | TEXT | 时间戳 |
 
 索引：`idx_tasks_dueDate (dueDate)`。
+
+项目日期索引：`idx_tasks_project_dueDate (projectId, dueDate)`。
+
+`tasks_project_insert` / `tasks_project_update` 触发器校验项目存在；使用触发器而不在新增列声明 REFERENCES，兼容启用外键且已有数据的 SQLite 旧库，避免重建任务表。
+
+## projects — 待办项目（v3 新增）
+
+| 列 | 类型 | 说明 |
+| --- | --- | --- |
+| id | INTEGER PK AUTOINCREMENT | 主键，默认项目固定为 1 |
+| name | TEXT NOT NULL COLLATE NOCASE UNIQUE | 项目名称，界面限制 1–40 个字，去除首尾空白、不允许同名 |
+| createdAt | TEXT NOT NULL | 创建时间 |
+
+普通任务、循环任务与回收箱按 `tasks.projectId` 隔离；子任务及每日完成记录通过所属任务归入同一项目。循环任务单日拆分与后续拆分默认继承原项目，也可在编辑时指定目标项目。打卡定义、打卡记录和每日备注继续共享。
+
+项目重命名只更新 `projects.name`，保留 `id`、`createdAt`、任务归属及所有完成记录；默认项目也允许改名。名称沿用创建时的非空、最多 40 字与不允许同名规则，改名后通过 `push:projectsChanged` 同步主窗口及悬浮窗。此次仅增加改名操作，表结构与 `user_version = 3` 保持不变。
+
+查看全部项目时查询不限制 `projectId`；新建任务必须归属于一个具体项目，全部视图中默认预选默认项目，可在表单修改。项目创建与任务归属使用同一 SQLite 数据库，不新增数据库文件。
 
 ## task_occurrences — 重复任务每日状态
 
@@ -124,8 +143,10 @@
 
 常用键：`theme`（light/dark/system）、`widgetPrefs`（悬浮窗位置/尺寸/置顶/透明度，JSON）、`lastFailedCheckDate`（过期失败标记日期）。
 
+`selectedProjectId`：当前项目主键，JSON `null` 表示全部项目；默认值为 `1`。主窗口与悬浮窗通过 `push:projectsChanged` 同步项目列表和选择。
+
 ## 迁移约定
 
-- 版本号存于 `PRAGMA user_version`，当前版本 `1`。
+- 版本号存于 `PRAGMA user_version`，当前版本 `3`（v2 新增打卡 `skipDates`；v3 新增项目及任务归属）。
 - 每次结构变更：在 `SqliteDb.migrate()` 中递增版本并追加建表/改表 SQL。
 - 已发布的迁移不可修改，只能追加。

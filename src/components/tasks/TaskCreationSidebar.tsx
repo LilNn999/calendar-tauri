@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { PrioritySelector } from './PrioritySelector'
 import { SubtaskInputList, type SubtaskInputItem } from './SubtaskInputList'
 import { useTaskStore } from '@/store/useTaskStore'
+import { TaskProjectField, useNewTaskProject, defaultTaskProjectId } from '@/components/projects/TaskProjectField'
 import { useUIStore } from '@/store/useUIStore'
 import { toDateString } from '@/lib/utils'
 import { cn } from '@/lib/utils'
@@ -14,6 +15,7 @@ import { PRIORITY_CONFIG } from '@shared/constants'
 import type { Priority } from '@shared/types'
 
 export function TaskCreationSidebar() {
+  const [projectId, setProjectId] = useNewTaskProject()
   const { sidebarOpen, sidebarDate, setSidebarOpen } = useUIStore()
   const { createTask, tasks, updateOccurrence, updateTask } = useTaskStore()
 
@@ -55,6 +57,7 @@ export function TaskCreationSidebar() {
     setLoading(true)
     try {
       await createTask({
+        projectId,
         title: title.trim(),
         priority,
         dueDate: date,
@@ -87,6 +90,7 @@ export function TaskCreationSidebar() {
   }
 
   const handleClose = () => {
+    setProjectId(defaultTaskProjectId())
     setSidebarOpen(false)
     setTitle('')
     setNotes('')
@@ -161,6 +165,7 @@ export function TaskCreationSidebar() {
                   />
                 </div>
 
+                <TaskProjectField value={projectId} onChange={setProjectId} />
                 <PrioritySelector value={priority} onChange={setPriority} />
 
                 <SubtaskInputList value={subtasks} onChange={setSubtasks} />

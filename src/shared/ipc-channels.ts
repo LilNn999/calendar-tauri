@@ -1,4 +1,10 @@
 export const IPC = {
+  // 待办项目
+  PROJECTS_LIST: 'projects:list',
+  PROJECTS_CREATE: 'projects:create',
+  PROJECTS_RENAME: 'projects:rename',
+  PROJECTS_GET_SELECTION: 'projects:getSelection',
+  PROJECTS_SELECT: 'projects:select',
   // 任务
   TASKS_LIST: 'tasks:list',
   TASKS_CREATE: 'tasks:create',
@@ -69,6 +75,7 @@ export const IPC = {
   PUSH_TASKS_FAILED: 'push:tasksFailed',
   PUSH_ACHIEVEMENT_UNLOCKED: 'push:achievementUnlocked',
   PUSH_WIDGET_DATA_REFRESH: 'push:widgetDataRefresh',
+  PUSH_PROJECTS_CHANGED: 'push:projectsChanged',
   PUSH_THEME_CHANGED: 'push:themeChanged',
   PUSH_SKIN_CHANGED: 'push:skinChanged',
   PUSH_FULLSCREEN_CHANGED: 'push:fullscreenChanged',

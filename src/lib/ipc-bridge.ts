@@ -5,7 +5,7 @@
 import { getDb, initDb, isTauri } from "@/lib/db";
 import { VERSION_NOTES } from "@/data/whatsNew";
 import { IPC, type IpcChannel } from "@shared/ipc-channels";
-import type { WidgetPrefs } from "@shared/types";
+import type { WidgetPrefs, ProjectScope } from "@shared/types";
 import { invoke as invokeCore } from "@tauri-apps/api/core";
 
 // ==================== 本地事件总线 ====================
@@ -88,6 +88,17 @@ function notifyDataChanged(): void {
   }
 }
 
+function notifyProjectsChanged(): void {
+  if (!isTauri) return;
+  import('@tauri-apps/api/event')
+    .then(async ({ emitTo }) => {
+      const { getCurrentWindow } = await import('@tauri-apps/api/window');
+      const target = getCurrentWindow().label === 'floating' ? 'main' : 'floating';
+      await emitTo(target, IPC.PUSH_PROJECTS_CHANGED);
+    })
+    .catch((error) => console.error('同步项目失败:', error));
+}
+
 // 完成任务后检测成就解锁并推送
 async function maybeUnlock(): Promise<void> {
   try {
@@ -118,10 +129,28 @@ async function applyZoom(): Promise<void> {
 async function invoke(channel: IpcChannel, ...args: unknown[]): Promise<unknown> {
   const db = await initDb();
   switch (channel) {
+    case IPC.PROJECTS_LIST:
+      return db.listProjects();
+    case IPC.PROJECTS_CREATE: {
+      const project = await db.createProject(args[0] as string);
+      notifyProjectsChanged();
+      return project;
+    }
+    case IPC.PROJECTS_GET_SELECTION:
+      return db.getSelectedProjectId();
+    case IPC.PROJECTS_RENAME: {
+      const project = await db.renameProject(args[0] as number, args[1] as string);
+      notifyProjectsChanged();
+      return project;
+    }
+    case IPC.PROJECTS_SELECT:
+      await db.selectProject(args[0] as ProjectScope);
+      notifyProjectsChanged();
+      return;
     // ---------- 任务 ----------
     case IPC.TASKS_LIST: {
-      const range = (args[0] ?? {}) as { start?: string; end?: string };
-      return db.listTasks(range.start ?? "", range.end ?? "");
+      const range = (args[0] ?? {}) as { start?: string; end?: string; projectId?: ProjectScope };
+      return db.listTasks(range.start ?? "", range.end ?? "", range.projectId);
     }
     case IPC.TASKS_CREATE: {
       const task = await db.createTask(args[0] as never);
@@ -166,9 +195,13 @@ async function invoke(channel: IpcChannel, ...args: unknown[]): Promise<unknown>
       notifyDataChanged();
       return;
     case IPC.TASKS_DETACH_OCCURRENCE:
-      return db.detachOccurrence(args[0] as number, args[1] as string, args[2] as never);
-    case IPC.TASKS_SPLIT_FROM_DATE:
-      return db.splitFromDate(args[0] as number, args[1] as string, args[2] as never);
+    case IPC.TASKS_SPLIT_FROM_DATE: {
+      const task = channel === IPC.TASKS_DETACH_OCCURRENCE
+        ? await db.detachOccurrence(args[0] as number, args[1] as string, args[2] as never)
+        : await db.splitFromDate(args[0] as number, args[1] as string, args[2] as never);
+      notifyDataChanged();
+      return task;
+    }
     case IPC.SUBTASKS_TOGGLE:
       await db.toggleSubtask(args[0] as number, args[1] as string, args[2] as boolean);
       notifyDataChanged();
@@ -178,14 +211,18 @@ async function invoke(channel: IpcChannel, ...args: unknown[]): Promise<unknown>
       notifyDataChanged();
       return;
     case IPC.TASKS_LIST_DELETED:
-      return db.listDeleted();
+      return db.listDeleted(args[0] as ProjectScope | undefined);
     case IPC.TASKS_RESTORE:
-      return db.restore(args[0] as number);
+      {
+        const task = await db.restore(args[0] as number);
+        notifyDataChanged();
+        return task;
+      }
     case IPC.TASKS_PURGE_TRASHED:
       await db.purgeTrashed(args[0] as number);
       return;
     case IPC.TASKS_EMPTY_TRASH:
-      await db.emptyTrash();
+      await db.emptyTrash(args[0] as ProjectScope | undefined);
       return;
     // ---------- 打卡 ----------
     case IPC.CHECKINS_LIST_DEFS:
@@ -226,13 +263,13 @@ async function invoke(channel: IpcChannel, ...args: unknown[]): Promise<unknown>
 
     // ---------- 统计分析 ----------
     case IPC.ANALYTICS_COMPLETION:
-      return db.completion(args[0] as never);
+      return db.completion(args[0] as never, args[1] as ProjectScope | undefined);
     case IPC.ANALYTICS_NUMERIC_TREND:
       return db.numericTrend(args[0] as number, args[1] as never);
     case IPC.ANALYTICS_STREAK_SUMMARY:
-      return db.streakSummary();
+      return db.streakSummary(args[0] as ProjectScope | undefined);
     case IPC.ANALYTICS_TASK_TREND:
-      return db.taskTrend(args[0] as never);
+      return db.taskTrend(args[0] as never, args[1] as ProjectScope | undefined);
 
     // ---------- 成就 ----------
     case IPC.ACHIEVEMENTS_LIST:
@@ -372,6 +409,7 @@ async function invoke(channel: IpcChannel, ...args: unknown[]): Promise<unknown>
     case IPC.PUSH_FULLSCREEN_CHANGED:
     case IPC.PUSH_THEME_CHANGED:
     case IPC.PUSH_SKIN_CHANGED:
+    case IPC.PUSH_PROJECTS_CHANGED:
       return;
 
     default: {
@@ -403,6 +441,7 @@ export async function initBridge(): Promise<void> {
     const selfLabel = getCurrentWindow().label;
     const channels: IpcChannel[] = [
       IPC.PUSH_WIDGET_DATA_REFRESH,
+      IPC.PUSH_PROJECTS_CHANGED,
       IPC.PUSH_ACHIEVEMENT_UNLOCKED,
       IPC.PUSH_TASKS_FAILED,
       IPC.PUSH_THEME_CHANGED,

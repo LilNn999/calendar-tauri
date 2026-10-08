@@ -13,6 +13,8 @@
 | 共享类型 | `src/shared/` | `types.ts` / `constants.ts` / `ipc-channels.ts`（源项目原样） |
 | API 层 | `src/api/index.ts` | 类型化 IPC 封装（走 `window.electronAPI`） |
 | 全局状态 | `src/store/` | Zustand store：calendar / task / checkin / notes / ui |
+| 待办项目 | `src/store/useProjectStore.ts` + `src/components/projects/` | 项目列表/选择持久化与跨窗口同步、A 版轻量切换菜单、新建及重命名、任务所属项目选择、全部视图项目标签 |
+| 项目模型与迁移 | `src/lib/types.ts` + `projects.ts` + `project-migration.ts` | Project 实体、默认项目与范围判断、SQLite v3 无损迁移；任务查询、统计及回收箱在 db.ts 按项目过滤 |
 | 数据库 | `src/lib/db.ts` | SQLite（Tauri）+ 内存（浏览器）双实现；正式 `calendar.db` / 测试 `test-calendar.db` 分离，源 Prisma 逻辑等价移植 |
 | 桥接层 | `src/lib/ipc-bridge.ts` | 安装 `window.electronAPI`：数据通道→db，系统通道→Tauri API |
 | 主题 | `src/lib/theme.tsx` | next-themes 轻量替代（`ThemeProvider` + `.dark` class + 皮肤 class + 设置表持久化） |
@@ -46,6 +48,7 @@
 详见 `docs/schema.md`。核心表：
 
 - `tasks` / `task_occurrences` — 任务与重复任务每日状态
+- `projects` — 待办项目（默认项目 id=1，tasks.projectId 关联）；打卡和每日备注共享
 - `subtasks` / `subtask_occurrences` — 子任务与每日完成状态
 - `checkin_definitions` / `checkin_entries` — 打卡定义与记录
 - `daily_notes` — 每日备注

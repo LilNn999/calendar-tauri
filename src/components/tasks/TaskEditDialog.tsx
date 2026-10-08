@@ -14,6 +14,8 @@ import { applyRecurringDelete } from './recurringActions'
 import type { RecurringChangeScope } from './RecurringChangeDialog'
 import { useTaskStore } from '@/store/useTaskStore'
 import type { Task, Priority, RecurrenceType } from '@shared/types'
+import { TaskProjectField } from '@/components/projects/TaskProjectField'
+import { DEFAULT_PROJECT_ID } from '@/lib/projects'
 
 interface TaskEditDialogProps {
   task: Task | null
@@ -37,6 +39,7 @@ export function TaskEditDialog({
   const { updateTask, deleteTask, skipOccurrence, deleteFromDate, deleteBeforeDate, detachOccurrence, splitFromDate, updateSubtasks, toggleSubtask } = useTaskStore()
 
   const [title, setTitle] = useState('')
+  const [projectId, setProjectId] = useState(DEFAULT_PROJECT_ID)
   const [date, setDate] = useState('')
   const [priority, setPriority] = useState<Priority>('none')
   const [notes, setNotes] = useState('')
@@ -56,6 +59,7 @@ export function TaskEditDialog({
 
   useEffect(() => {
     if (task) {
+      setProjectId(task.projectId)
       setTitle(task.title)
       setDate(task.dueDate)
       setPriority(task.priority as Priority)
@@ -88,6 +92,7 @@ export function TaskEditDialog({
     setLoading(true)
     try {
       await updateTask(task.id, {
+        projectId,
         title: title.trim(),
         dueDate: date,
         priority,
@@ -151,6 +156,7 @@ export function TaskEditDialog({
           .map((s) => ({ id: s.id, title: s.title.trim(), isCompleted: !!s.isCompleted }))
           .filter((s) => s.title.length > 0)
         const patch = {
+          projectId,
           title: title.trim(),
           priority,
           notes: notes || '',
@@ -202,6 +208,7 @@ export function TaskEditDialog({
                 <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
               </div>
             )}
+            <TaskProjectField value={projectId} onChange={setProjectId} />
             <PrioritySelector value={priority} onChange={setPriority} />
             {/* 非循环 occurrence 才允许修改重复规则 */}
             {!isRecurringOccurrence && (

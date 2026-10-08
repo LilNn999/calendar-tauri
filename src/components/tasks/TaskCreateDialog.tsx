@@ -13,6 +13,7 @@ import { useTaskStore } from '@/store/useTaskStore'
 import { useCalendarStore } from '@/store/useCalendarStore'
 import { toDateString } from '@/lib/utils'
 import type { Priority, RecurrenceType } from '@shared/types'
+import { TaskProjectField, useNewTaskProject, defaultTaskProjectId } from '@/components/projects/TaskProjectField'
 
 interface TaskCreateDialogProps {
   open: boolean
@@ -23,6 +24,7 @@ interface TaskCreateDialogProps {
 
 export function TaskCreateDialog({ open, onOpenChange, defaultDate }: TaskCreateDialogProps) {
   const { createTask, fetchTasks } = useTaskStore()
+  const [projectId, setProjectId] = useNewTaskProject()
   const { getVisibleRange } = useCalendarStore()
 
   const [title, setTitle] = useState('')
@@ -39,6 +41,7 @@ export function TaskCreateDialog({ open, onOpenChange, defaultDate }: TaskCreate
   // 每次打开时重置表单并预填默认日期
   useEffect(() => {
     if (open) {
+      setProjectId(defaultTaskProjectId())
       setTitle('')
       setDate(defaultDate ?? toDateString(new Date()))
       setPriority('none')
@@ -47,13 +50,14 @@ export function TaskCreateDialog({ open, onOpenChange, defaultDate }: TaskCreate
       setRecurrenceType('')
       setRecurrenceEnd('')
     }
-  }, [open, defaultDate])
+  }, [open, defaultDate, setProjectId])
 
   const handleCreate = async () => {
     if (!title.trim()) return
     setLoading(true)
     try {
       await createTask({
+        projectId,
         title: title.trim(),
         priority,
         dueDate: date,
@@ -94,6 +98,7 @@ export function TaskCreateDialog({ open, onOpenChange, defaultDate }: TaskCreate
             <label className="text-xs text-muted-foreground block mb-1">截止日期</label>
             <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
+          <TaskProjectField value={projectId} onChange={setProjectId} />
           <PrioritySelector value={priority} onChange={setPriority} />
           <RecurrenceSelector
             value={recurrenceType}

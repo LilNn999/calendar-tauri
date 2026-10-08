@@ -7,10 +7,17 @@ import { WhatsNewDialog } from '@/components/layout/WhatsNewDialog'
 import { Maximize, X } from 'lucide-react'
 import { IPC } from '@shared/ipc-channels'
 import { systemApi } from '@/api'
+import { useProjectStore } from '@/store/useProjectStore'
+import { useUIStore } from '@/store/useUIStore'
 
 type TabId = 'calendar' | 'analytics'
 
 export function App() {
+  const selectedProjectId = useProjectStore((state) => state.selectedProjectId)
+  useEffect(() => {
+    useUIStore.getState().setSidebarOpen(false)
+    useUIStore.getState().setDetailPopupDate(null)
+  }, [selectedProjectId])
   const [activeTab, setActiveTab] = useState<TabId>('calendar')
   const [isFullscreen, setIsFullscreen] = useState(false)
   const [showFullscreenBanner, setShowFullscreenBanner] = useState(false)
@@ -57,7 +64,7 @@ export function App() {
       )}
 
       <div className="flex-1 overflow-hidden flex flex-col">
-        {activeTab === 'calendar' ? <CalendarPage /> : <AnalyticsPage />}
+        {activeTab === 'calendar' ? <CalendarPage key={selectedProjectId ?? 'all'} /> : <AnalyticsPage key={selectedProjectId ?? 'all'} />}
       </div>
 
       <AchievementToastListener />

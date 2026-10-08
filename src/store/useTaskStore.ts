@@ -1,11 +1,15 @@
 import { create } from 'zustand'
 import { tasksApi } from '@/api'
 import { IPC } from '@shared/ipc-channels'
+import { useProjectStore } from './useProjectStore'
+import { DEFAULT_PROJECT_ID, matchesProject } from '@/lib/projects'
 import type { Task, CreateTaskPayload, UpdateTaskPayload, SubtaskPatchItem } from '@shared/types'
 
 function notifyWidget() {
   window.electronAPI.invoke(IPC.PUSH_WIDGET_DATA_REFRESH as never).catch(() => {/* ignore */})
 }
+
+let fetchRequest = 0
 
 interface TaskState {
   tasks: Task[]
@@ -20,8 +24,8 @@ interface TaskState {
   skipOccurrence: (taskId: number, date: string) => Promise<void>
   deleteFromDate: (taskId: number, date: string) => Promise<void>
   deleteBeforeDate: (taskId: number, date: string) => Promise<void>
-  detachOccurrence: (taskId: number, date: string, patch: { title?: string; priority?: string; notes?: string; subtasks?: SubtaskPatchItem[] }) => Promise<Task>
-  splitFromDate: (taskId: number, date: string, patch: { title?: string; priority?: string; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }) => Promise<Task>
+  detachOccurrence: (taskId: number, date: string, patch: { projectId?: number; title?: string; priority?: string; notes?: string; subtasks?: SubtaskPatchItem[] }) => Promise<Task>
+  splitFromDate: (taskId: number, date: string, patch: { projectId?: number; title?: string; priority?: string; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }) => Promise<Task>
   getTasksForDate: (date: string) => Task[]
   restoreTask: (id: number) => Promise<void>
 }
@@ -31,19 +35,24 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   loading: false,
 
   fetchTasks: async (start, end) => {
+    const request = ++fetchRequest
+    const projectId = useProjectStore.getState().selectedProjectId
     set({ loading: true })
     try {
-      const tasks = await tasksApi.list(start, end)
-      set({ tasks })
+      const tasks = await tasksApi.list(start, end, projectId)
+      if (request === fetchRequest && projectId === useProjectStore.getState().selectedProjectId) set({ tasks })
     } finally {
-      set({ loading: false })
+      if (request === fetchRequest) set({ loading: false })
     }
   },
 
   createTask: async (payload) => {
-    const task = await tasksApi.create(payload)
+    const task = await tasksApi.create({
+      ...payload,
+      projectId: payload.projectId ?? useProjectStore.getState().selectedProjectId ?? DEFAULT_PROJECT_ID,
+    })
     // 重复任务不直接加入 store（需要重新展开），重新 fetch 会在 CalendarPage 的 loadData 触发
-    if (!payload.recurrenceType) {
+    if (!payload.recurrenceType && matchesProject(task.projectId, useProjectStore.getState().selectedProjectId)) {
       set((s) => ({ tasks: [...s.tasks, task] }))
     }
     notifyWidget()
@@ -61,7 +70,8 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) }))
     } else {
       set((s) => ({
-        tasks: s.tasks.map((t) => (t.id === id ? updated : t)),
+        tasks: s.tasks.map((t) => (t.id === id ? updated : t))
+          .filter((task) => matchesProject(task.projectId, useProjectStore.getState().selectedProjectId)),
       }))
     }
     notifyWidget()
@@ -91,7 +101,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
           ? {
               ...t,
               subtasks: t.subtasks?.map((st) =>
-                st.id === subtaskId ? { ...st, isCompleted } : st
+                st.id === subtaskId ? { ...st, isCompleted: t.isCompleted || isCompleted } : st
               ),
             }
           : t
@@ -140,14 +150,14 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     set((s) => ({
       tasks: [
         ...s.tasks.filter((t) => !(t.id === taskId && t.dueDate === date)),
-        newTask,
+        ...(matchesProject(newTask.projectId, useProjectStore.getState().selectedProjectId) ? [newTask] : []),
       ],
     }))
     return newTask
   },
 
   // 修改当天及之后：本地移除该任务从 date 起的所有 occurrence（后续 onAfterChange 会重新 fetch）
-  splitFromDate: async (taskId: number, date: string, patch: { title?: string; priority?: string; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }) => {
+  splitFromDate: async (taskId: number, date: string, patch: { projectId?: number; title?: string; priority?: string; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }) => {
     const newTask = await tasksApi.splitFromDate(taskId, date, patch)
     set((s) => ({
       tasks: s.tasks.filter((t) => !(t.id === taskId && t.dueDate >= date)),
@@ -172,3 +182,11 @@ export const useTaskStore = create<TaskState>((set, get) => ({
       })
   },
 }))
+
+// 切换项目立即清空上一项目的任务，并使未完成的旧请求失效，避免快速切换时串列表。
+useProjectStore.subscribe((state, previous) => {
+  if (state.selectedProjectId !== previous.selectedProjectId) {
+    ++fetchRequest
+    useTaskStore.setState({ tasks: [], loading: false })
+  }
+})

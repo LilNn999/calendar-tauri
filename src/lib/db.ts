@@ -1,5 +1,7 @@
 import Database from "@tauri-apps/plugin-sql";
 import { invoke as invokeCore } from "@tauri-apps/api/core";
+import { DEFAULT_PROJECT_ID, DEFAULT_PROJECT_NAME, PROJECT_SELECTION_KEY, matchesProject, normalizeProjectName } from "@/lib/projects";
+import { migrateProjects } from "@/lib/project-migration";
 import {
   addDays, eachDayOfInterval, format, isAfter, isBefore,
   parseISO, subDays,
@@ -8,6 +10,7 @@ import type {
   CheckinDefinition, CheckinEntry, CreateCheckinDefPayload, CreateTaskPayload,
   DailyNote, Priority, RecurrenceType, StreakData, Subtask, SubtaskPatchItem, Task,
   TimeRange, TrendPoint, UpdateTaskPayload, UpsertCheckinEntryPayload,
+  Project, ProjectScope,
 } from "@/shared/types";
 
 export const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
@@ -107,7 +110,8 @@ function buildTaskList(raw: TaskListRaw, rangeStart: string, rangeEnd: string): 
   const subtaskOccMap = new Map(raw.subtaskOccurrences.map((o) => [`${o.subtaskId}:${o.date}`, o.isCompleted]));
   return expandRecurringTasks(raw.tasks, occurrenceMap, rangeStart, rangeEnd).map((t) => ({
     ...t,
-    subtasks: (subtasksByTask.get(t.id) ?? []).map((s) => ({ ...s, isCompleted: subtaskOccMap.get(`${s.id}:${t.dueDate}`) ?? false })),
+    // 完成母任务时只联动展示；刷新/切换项目也保持一致，取消完成后仍读取子任务真实记录。
+    subtasks: (subtasksByTask.get(t.id) ?? []).map((s) => ({ ...s, isCompleted: t.isCompleted || (subtaskOccMap.get(`${s.id}:${t.dueDate}`) ?? false) })),
   }));
 }
 
@@ -168,7 +172,12 @@ function expandRecurringStats(
 }
 
 export interface Db {
-  listTasks(start: string, end: string): Promise<TaskListItem[]>;
+  listProjects(): Promise<Project[]>;
+  createProject(name: string): Promise<Project>;
+  renameProject(id: number, name: string): Promise<Project>;
+  getSelectedProjectId(): Promise<ProjectScope>;
+  selectProject(projectId: ProjectScope): Promise<void>;
+  listTasks(start: string, end: string, projectId?: ProjectScope): Promise<TaskListItem[]>;
   createTask(payload: CreateTaskPayload): Promise<Task>;
   updateTask(id: number, patch: UpdateTaskPayload): Promise<Task>;
   updateOccurrence(taskId: number, date: string, patch: { isCompleted?: boolean; isFailed?: boolean }): Promise<void>;
@@ -177,14 +186,14 @@ export interface Db {
   skipOccurrence(taskId: number, date: string): Promise<void>;
   deleteFromDate(taskId: number, date: string): Promise<void>;
   deleteBeforeDate(taskId: number, date: string): Promise<void>;
-  detachOccurrence(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null>;
-  splitFromDate(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null>;
+  detachOccurrence(taskId: number, date: string, patch: { projectId?: number; title?: string; priority?: Priority; notes?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null>;
+  splitFromDate(taskId: number, date: string, patch: { projectId?: number; title?: string; priority?: Priority; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null>;
   toggleSubtask(subtaskId: number, date: string, isCompleted: boolean): Promise<void>;
   updateSubtasks(taskId: number, items: { id?: number; title: string }[]): Promise<void>;
-  listDeleted(): Promise<Task[]>;
+  listDeleted(projectId?: ProjectScope): Promise<Task[]>;
   restore(id: number): Promise<Task>;
   purgeTrashed(id: number): Promise<void>;
-  emptyTrash(): Promise<void>;
+  emptyTrash(projectId?: ProjectScope): Promise<void>;
   listCheckinDefs(): Promise<CheckinDefinition[]>;
   createCheckinDef(payload: CreateCheckinDefPayload): Promise<CheckinDefinition>;
   updateCheckinDef(id: number, patch: Partial<CreateCheckinDefPayload>): Promise<CheckinDefinition>;
@@ -196,10 +205,10 @@ export interface Db {
   upsertCheckinEntry(payload: UpsertCheckinEntryPayload): Promise<CheckinEntry>;
   getNote(date: string): Promise<DailyNote | null>;
   upsertNote(date: string, content: string): Promise<DailyNote>;
-  completion(range: TimeRange): Promise<import("@/shared/types").CompletionStats>;
+  completion(range: TimeRange, projectId?: ProjectScope): Promise<import("@/shared/types").CompletionStats>;
   numericTrend(defId: number, range: TimeRange): Promise<TrendPoint[]>;
-  streakSummary(): Promise<StreakData>;
-  taskTrend(range: TimeRange): Promise<import("@/shared/types").TaskTrendStats[]>;
+  streakSummary(projectId?: ProjectScope): Promise<StreakData>;
+  taskTrend(range: TimeRange, projectId?: ProjectScope): Promise<import("@/shared/types").TaskTrendStats[]>;
   listAchievements(): Promise<Array<{ id: number; key: string; title: string; description: string; icon: string; earned: boolean; earnedAt: string | null }>>;
   checkAndUnlockAchievements(): Promise<Array<{ id: number; key: string; title: string; description: string; icon: string; earned: boolean; earnedAt: string | null }>>;
   getSetting<T>(key: string, fallback: T): Promise<T>;
@@ -212,6 +221,7 @@ type SqlRow = Record<string, unknown>;
 function mapTask(r: SqlRow): Task {
   return {
     id: r.id as number,
+    projectId: r.projectId as number,
     title: r.title as string,
     priority: r.priority as Priority,
     dueDate: r.dueDate as string,
@@ -290,7 +300,7 @@ function computeStreakFrom(tasks: Pick<Task, "dueDate" | "isCompleted" | "isFail
   return { currentStreak, longestStreak, lastCheckDate: sortedDays[sortedDays.length - 1] ?? null };
 }
 
-class SqliteDb implements Db {
+export class SqliteDb implements Db {
   private db!: Database;
   private inited = false;
 
@@ -318,7 +328,7 @@ class SqliteDb implements Db {
   private async migrate() {
     const rows = await this.db.select<{ user_version: number }[]>("PRAGMA user_version");
     const version = rows[0]?.user_version ?? 0;
-    if (version >= 2) return;
+    if (version >= 3) return;
     if (version < 1) {
     const sql = `
       CREATE TABLE IF NOT EXISTS tasks (
@@ -413,6 +423,78 @@ class SqliteDb implements Db {
       // v2：打卡定义新增 skipDates（循环打卡范围删除「仅此日程」）
       await this.db.execute("ALTER TABLE checkin_definitions ADD COLUMN skipDates TEXT");
       await this.db.execute("PRAGMA user_version = 2");
+    }
+    if (version < 3) await migrateProjects(this.db);
+  }
+
+  async listProjects(): Promise<Project[]> {
+    try {
+      return await this.db.select<Project[]>('SELECT * FROM projects ORDER BY id ASC');
+    } catch (error) {
+      console.error('读取项目失败:', error);
+      throw new Error('无法读取项目，请稍后重试');
+    }
+  }
+
+  private async requireProject(projectId: number): Promise<void> {
+    if (!Number.isInteger(projectId) || projectId < 1) throw new Error('请选择有效的项目');
+    const projects = await this.listProjects();
+    if (!projects.some((project) => project.id === projectId)) throw new Error('项目不存在，请重新选择');
+  }
+
+  async createProject(name: string): Promise<Project> {
+    const normalized = normalizeProjectName(name);
+    const projects = await this.listProjects();
+    if (projects.some((project) => project.name.toLowerCase() === normalized.toLowerCase())) {
+      throw new Error('已存在同名项目，请换一个名称');
+    }
+    try {
+      const createdAt = nowIso();
+      const result = await this.db.execute('INSERT INTO projects (name, createdAt) VALUES (?, ?)', [normalized, createdAt]);
+      return { id: result.lastInsertId!, name: normalized, createdAt };
+    } catch (error) {
+      console.error('新建项目失败:', error);
+      throw new Error('新建项目失败，请检查名称是否重复后重试');
+    }
+  }
+
+  async renameProject(id: number, name: string): Promise<Project> {
+    const normalized = normalizeProjectName(name);
+    const projects = await this.listProjects();
+    const project = projects.find((item) => item.id === id);
+    if (!project) throw new Error('项目不存在，请重新选择');
+    if (projects.some((item) => item.id !== id && item.name.toLowerCase() === normalized.toLowerCase())) {
+      throw new Error('已存在同名项目，请换一个名称');
+    }
+    try {
+      // 只更新名称，保留项目主键、任务归属与完成记录。
+      await this.db.execute('UPDATE projects SET name = ? WHERE id = ?', [normalized, id]);
+      return { ...project, name: normalized };
+    } catch (error) {
+      console.error('重命名项目失败:', error);
+      throw new Error('重命名项目失败，请检查名称是否重复后重试');
+    }
+  }
+
+  async getSelectedProjectId(): Promise<ProjectScope> {
+    try {
+      const selected = await this.getSetting<ProjectScope>(PROJECT_SELECTION_KEY, DEFAULT_PROJECT_ID);
+      if (selected === null) return null;
+      const projects = await this.listProjects();
+      return projects.some((project) => project.id === selected) ? selected : DEFAULT_PROJECT_ID;
+    } catch (error) {
+      console.error('读取当前项目失败:', error);
+      throw new Error('无法读取当前项目，请稍后重试');
+    }
+  }
+
+  async selectProject(projectId: ProjectScope): Promise<void> {
+    if (projectId !== null) await this.requireProject(projectId);
+    try {
+      await this.setSetting(PROJECT_SELECTION_KEY, projectId);
+    } catch (error) {
+      console.error('保存当前项目失败:', error);
+      throw new Error('切换项目失败，请稍后重试');
     }
   }
 
@@ -740,15 +822,15 @@ class SqliteDb implements Db {
     await this.setSetting("testDataSeededAt", ts);
   }
 
-  private async listRaw(start: string, end: string): Promise<TaskListRaw> {
+  private async listRaw(start: string, end: string, projectId?: ProjectScope): Promise<TaskListRaw> {
     const taskRows = await this.db.select<SqlRow[]>(
       `SELECT * FROM tasks
        WHERE deletedAt IS NULL AND (
          (recurrenceType IS NULL AND dueDate >= ? AND dueDate <= ?)
          OR (recurrenceType IS NOT NULL AND dueDate <= ? AND (recurrenceEnd IS NULL OR recurrenceEnd >= ?))
-       )
+       ) AND (? IS NULL OR projectId = ?)
        ORDER BY CASE priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 WHEN 'low' THEN 2 ELSE 3 END, createdAt ASC`,
-      [start, end, end, start],
+      [start, end, end, start, projectId ?? null, projectId ?? null],
     );
     const tasks = taskRows.map(mapTask);
     const recurringIds = tasks.filter((t) => t.recurrenceType).map((t) => t.id);
@@ -785,20 +867,22 @@ class SqliteDb implements Db {
     await this.setSetting("lastFailedCheckDate", today);
   }
 
-  async listTasks(start: string, end: string): Promise<TaskListItem[]> {
+  async listTasks(start: string, end: string, projectId?: ProjectScope): Promise<TaskListItem[]> {
     await this.checkAndMarkFailed();
-    const raw = await this.listRaw(start, end);
+    const raw = await this.listRaw(start, end, projectId);
     return buildTaskList(raw, start, end);
   }
 
   async createTask(payload: CreateTaskPayload): Promise<Task> {
+    const projectId = payload.projectId ?? DEFAULT_PROJECT_ID;
+    await this.requireProject(projectId);
     const ts = nowIso();
     const today = todayStr();
     const isHistoricalFailed = !payload.recurrenceType && payload.dueDate < today;
     const result = await this.db.execute(
-      `INSERT INTO tasks (title, priority, dueDate, notes, recurrenceType, recurrenceEnd, isCompleted, isFailed, createdAt, updatedAt)
-       VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
-      [payload.title, payload.priority ?? "none", payload.dueDate, payload.notes ?? null, payload.recurrenceType ?? null, payload.recurrenceEnd ?? null, isHistoricalFailed ? 1 : 0, ts, ts],
+      `INSERT INTO tasks (title, projectId, priority, dueDate, notes, recurrenceType, recurrenceEnd, isCompleted, isFailed, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
+      [payload.title, projectId, payload.priority ?? "none", payload.dueDate, payload.notes ?? null, payload.recurrenceType ?? null, payload.recurrenceEnd ?? null, isHistoricalFailed ? 1 : 0, ts, ts],
     );
     const id = result.lastInsertId!;
     if (payload.subtasks?.length) {
@@ -821,6 +905,7 @@ class SqliteDb implements Db {
   }
 
   async updateTask(id: number, patch: UpdateTaskPayload): Promise<Task> {
+    if (patch.projectId !== undefined) await this.requireProject(patch.projectId);
     const { occurrenceDate: _occ, ...rest } = patch;
     if (rest.recurrenceEnd !== undefined) {
       const existing = await this.getTaskById(id);
@@ -848,7 +933,7 @@ class SqliteDb implements Db {
     const sets: string[] = [];
     const params: unknown[] = [];
     type TaskPatchKey = Exclude<keyof UpdateTaskPayload, "occurrenceDate">;
-    const allow: TaskPatchKey[] = ["title", "priority", "dueDate", "isCompleted", "isFailed", "notes", "recurrenceType", "recurrenceEnd"];
+    const allow: TaskPatchKey[] = ["title", "projectId", "priority", "dueDate", "isCompleted", "isFailed", "notes", "recurrenceType", "recurrenceEnd"];
     for (const key of allow) {
       if (rest[key] !== undefined) {
         sets.push(`${key} = ?`);
@@ -958,12 +1043,14 @@ class SqliteDb implements Db {
     }
   }
 
-  async detachOccurrence(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null> {
+  async detachOccurrence(taskId: number, date: string, patch: { projectId?: number; title?: string; priority?: Priority; notes?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null> {
     const task = await this.getTaskById(taskId);
     if (!task) return null;
+    if (patch.projectId !== undefined) await this.requireProject(patch.projectId);
     await this.skipOccurrence(taskId, date);
     const titles = patch.subtasks?.map((s) => s.title.trim()).filter(Boolean);
     const newTask = await this.createTask({
+      projectId: patch.projectId ?? task.projectId,
       title: patch.title ?? task.title,
       priority: patch.priority ?? task.priority,
       dueDate: date,
@@ -976,12 +1063,14 @@ class SqliteDb implements Db {
     return newTask;
   }
 
-  async splitFromDate(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null> {
+  async splitFromDate(taskId: number, date: string, patch: { projectId?: number; title?: string; priority?: Priority; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null> {
     const task = await this.getTaskById(taskId);
     if (!task) return null;
+    if (patch.projectId !== undefined) await this.requireProject(patch.projectId);
     const prevDay = format(subDays(parseISO(date), 1), "yyyy-MM-dd");
     if (date <= task.dueDate) {
       const updated = await this.updateTask(taskId, {
+        projectId: patch.projectId ?? task.projectId,
         title: patch.title ?? task.title,
         priority: patch.priority ?? task.priority,
         notes: patch.notes !== undefined ? patch.notes || undefined : task.notes ?? undefined,
@@ -1013,6 +1102,7 @@ class SqliteDb implements Db {
     const newRecurrenceEnd = patch.recurrenceEnd !== undefined ? patch.recurrenceEnd || null : task.recurrenceEnd;
     const titles = patch.subtasks?.map((s) => s.title.trim()).filter(Boolean);
     const newTask = await this.createTask({
+      projectId: patch.projectId ?? task.projectId,
       title: patch.title ?? task.title,
       priority: patch.priority ?? task.priority,
       dueDate: date,
@@ -1073,9 +1163,9 @@ class SqliteDb implements Db {
     }
   }
 
-  async listDeleted(): Promise<Task[]> {
+  async listDeleted(projectId?: ProjectScope): Promise<Task[]> {
     const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const rows = await this.db.select<SqlRow[]>(`SELECT * FROM tasks WHERE deletedAt IS NOT NULL AND deletedAt >= ? ORDER BY deletedAt DESC`, [cutoff]);
+    const rows = await this.db.select<SqlRow[]>(`SELECT * FROM tasks WHERE deletedAt IS NOT NULL AND deletedAt >= ? AND (? IS NULL OR projectId = ?) ORDER BY deletedAt DESC`, [cutoff, projectId ?? null, projectId ?? null]);
     return rows.map(mapTask);
   }
 
@@ -1094,8 +1184,8 @@ class SqliteDb implements Db {
     await this.db.execute(`DELETE FROM tasks WHERE id = ?`, [id]);
   }
 
-  async emptyTrash(): Promise<void> {
-    const rows = await this.db.select<SqlRow[]>(`SELECT id FROM tasks WHERE deletedAt IS NOT NULL`);
+  async emptyTrash(projectId?: ProjectScope): Promise<void> {
+    const rows = await this.db.select<SqlRow[]>(`SELECT id FROM tasks WHERE deletedAt IS NOT NULL AND (? IS NULL OR projectId = ?)`, [projectId ?? null, projectId ?? null]);
     for (const r of rows) await this.purgeTrashed(r.id as number);
   }
 
@@ -1201,13 +1291,13 @@ class SqliteDb implements Db {
     return mapNote(rows[0]);
   }
 
-  async completion(range: TimeRange): Promise<import("@/shared/types").CompletionStats> {
+  async completion(range: TimeRange, projectId?: ProjectScope): Promise<import("@/shared/types").CompletionStats> {
     const { start, end } = getDateRange(range);
     const today = todayStr();
     const nonRecurring = await this.db.select<SqlRow[]>(
-      `SELECT dueDate, isCompleted, isFailed FROM tasks WHERE deletedAt IS NULL AND dueDate >= ? AND dueDate <= ? AND recurrenceType IS NULL`, [start, end]);
+      `SELECT dueDate, isCompleted, isFailed FROM tasks WHERE deletedAt IS NULL AND dueDate >= ? AND dueDate <= ? AND recurrenceType IS NULL AND (? IS NULL OR projectId = ?)`, [start, end, projectId ?? null, projectId ?? null]);
     const recurringRows = await this.db.select<SqlRow[]>(
-      `SELECT * FROM tasks WHERE deletedAt IS NULL AND recurrenceType IS NOT NULL AND dueDate <= ? AND (recurrenceEnd IS NULL OR recurrenceEnd >= ?)`, [end, start]);
+      `SELECT * FROM tasks WHERE deletedAt IS NULL AND recurrenceType IS NOT NULL AND dueDate <= ? AND (recurrenceEnd IS NULL OR recurrenceEnd >= ?) AND (? IS NULL OR projectId = ?)`, [end, start, projectId ?? null, projectId ?? null]);
     const recurringTasks = recurringRows.map(mapTask);
     const recurringIds = recurringTasks.map((t) => t.id);
     let occurrences: TaskOccurrenceRow[] = [];
@@ -1264,19 +1354,19 @@ class SqliteDb implements Db {
     });
   }
 
-  async streakSummary(): Promise<StreakData> {
-    const rows = await this.db.select<SqlRow[]>(`SELECT dueDate, isCompleted, isFailed FROM tasks WHERE deletedAt IS NULL AND dueDate <= ? ORDER BY dueDate DESC`, [todayStr()]);
+  async streakSummary(projectId?: ProjectScope): Promise<StreakData> {
+    const rows = await this.db.select<SqlRow[]>(`SELECT dueDate, isCompleted, isFailed FROM tasks WHERE deletedAt IS NULL AND dueDate <= ? AND (? IS NULL OR projectId = ?) ORDER BY dueDate DESC`, [todayStr(), projectId ?? null, projectId ?? null]);
     return computeStreakFrom(rows.map((r) => ({ dueDate: r.dueDate as string, isCompleted: Boolean(r.isCompleted), isFailed: Boolean(r.isFailed) })));
   }
 
-  async taskTrend(range: TimeRange): Promise<import("@/shared/types").TaskTrendStats[]> {
+  async taskTrend(range: TimeRange, projectId?: ProjectScope): Promise<import("@/shared/types").TaskTrendStats[]> {
     const { start, end } = getDateRange(range);
     const today = todayStr();
     const taskRows = await this.db.select<SqlRow[]>(
       `SELECT * FROM tasks WHERE deletedAt IS NULL AND (
          (recurrenceType IS NULL AND dueDate >= ? AND dueDate <= ?)
          OR (recurrenceType IS NOT NULL AND dueDate <= ? AND (recurrenceEnd IS NULL OR recurrenceEnd >= ?))
-       )`, [start, end, end, start]);
+       ) AND (? IS NULL OR projectId = ?)`, [start, end, end, start, projectId ?? null, projectId ?? null]);
     const tasks = taskRows.map(mapTask);
     const recurringIds = tasks.filter((t) => t.recurrenceType).map((t) => t.id);
     let occRowsAll: SqlRow[] = [];
@@ -1313,7 +1403,7 @@ class SqliteDb implements Db {
           if (task.isCompleted) { completedCount = 1; streak = 1; }
           if (task.isFailed) failedCount = 1;
         }
-        return { taskId: task.id, title: task.title, completedCount, failedCount, totalCount, streak, isRecurring: !!task.recurrenceType };
+        return { taskId: task.id, projectId: task.projectId, title: task.title, completedCount, failedCount, totalCount, streak, isRecurring: !!task.recurrenceType };
       })
       .filter((t) => t.totalCount > 0);
   }
@@ -1383,7 +1473,9 @@ class SqliteDb implements Db {
 
 /* ================= 内存实现（浏览器预览） ================= */
 
-class MemoryDb implements Db {
+export class MemoryDb implements Db {
+  private projects: Project[] = [{ id: DEFAULT_PROJECT_ID, name: DEFAULT_PROJECT_NAME, createdAt: nowIso() }];
+  private nextProjectId = DEFAULT_PROJECT_ID + 1;
   private tasks: Task[] = [];
   private taskOccurrences: TaskOccurrenceRow[] = [];
   private subtasks: Subtask[] = [];
@@ -1410,9 +1502,47 @@ class MemoryDb implements Db {
 
   private nid() { return this.nextId++; }
 
-  private listRaw(start: string, end: string): TaskListRaw {
+  async listProjects(): Promise<Project[]> { return this.projects.map((project) => ({ ...project })); }
+
+  private requireProject(projectId: number): void {
+    if (!this.projects.some((project) => project.id === projectId)) throw new Error('项目不存在，请重新选择');
+  }
+
+  async createProject(name: string): Promise<Project> {
+    const normalized = normalizeProjectName(name);
+    if (this.projects.some((project) => project.name.toLowerCase() === normalized.toLowerCase())) {
+      throw new Error('已存在同名项目，请换一个名称');
+    }
+    const project = { id: this.nextProjectId++, name: normalized, createdAt: nowIso() };
+    this.projects.push(project);
+    return { ...project };
+  }
+
+  async renameProject(id: number, name: string): Promise<Project> {
+    const normalized = normalizeProjectName(name);
+    const project = this.projects.find((item) => item.id === id);
+    if (!project) throw new Error('项目不存在，请重新选择');
+    if (this.projects.some((item) => item.id !== id && item.name.toLowerCase() === normalized.toLowerCase())) {
+      throw new Error('已存在同名项目，请换一个名称');
+    }
+    project.name = normalized;
+    return { ...project };
+  }
+
+  async getSelectedProjectId(): Promise<ProjectScope> {
+    const selected = await this.getSetting<ProjectScope>(PROJECT_SELECTION_KEY, DEFAULT_PROJECT_ID);
+    return selected === null || this.projects.some((project) => project.id === selected) ? selected : DEFAULT_PROJECT_ID;
+  }
+
+  async selectProject(projectId: ProjectScope): Promise<void> {
+    if (projectId !== null) this.requireProject(projectId);
+    await this.setSetting(PROJECT_SELECTION_KEY, projectId);
+  }
+
+  private listRaw(start: string, end: string, projectId?: ProjectScope): TaskListRaw {
     const tasks = this.tasks.filter((t) => {
       if (t.deletedAt) return false;
+      if (!matchesProject(t.projectId, projectId)) return false;
       if (!t.recurrenceType) return t.dueDate >= start && t.dueDate <= end;
       return t.dueDate <= end && (!t.recurrenceEnd || t.recurrenceEnd >= start);
     });
@@ -1434,17 +1564,20 @@ class MemoryDb implements Db {
     this.settings["lastFailedCheckDate"] = today;
   }
 
-  async listTasks(start: string, end: string): Promise<TaskListItem[]> {
+  async listTasks(start: string, end: string, projectId?: ProjectScope): Promise<TaskListItem[]> {
     this.checkAndMarkFailed();
-    return buildTaskList(this.listRaw(start, end), start, end);
+    return buildTaskList(this.listRaw(start, end, projectId), start, end);
   }
 
   async createTask(payload: CreateTaskPayload): Promise<Task> {
+    const projectId = payload.projectId ?? DEFAULT_PROJECT_ID;
+    this.requireProject(projectId);
     const ts = nowIso();
     const today = todayStr();
     const isHistoricalFailed = !payload.recurrenceType && payload.dueDate < today;
     const task: Task = {
       id: this.nid(),
+      projectId,
       title: payload.title,
       priority: payload.priority ?? "none",
       dueDate: payload.dueDate,
@@ -1471,6 +1604,7 @@ class MemoryDb implements Db {
   }
 
   async updateTask(id: number, patch: UpdateTaskPayload): Promise<Task> {
+    if (patch.projectId !== undefined) this.requireProject(patch.projectId);
     const { occurrenceDate: _occ, ...rest } = patch;
     const task = this.tasks.find((t) => t.id === id);
     if (!task) throw new Error("任务不存在");
@@ -1571,24 +1705,26 @@ class MemoryDb implements Db {
     }
   }
 
-  async detachOccurrence(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null> {
+  async detachOccurrence(taskId: number, date: string, patch: { projectId?: number; title?: string; priority?: Priority; notes?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null> {
     const task = this.tasks.find((t) => t.id === taskId);
     if (!task) return null;
+    if (patch.projectId !== undefined) this.requireProject(patch.projectId);
     await this.skipOccurrence(taskId, date);
     const titles = patch.subtasks?.map((s) => s.title.trim()).filter(Boolean);
-    const newTask = await this.createTask({ title: patch.title ?? task.title, priority: patch.priority ?? task.priority, dueDate: date, notes: patch.notes !== undefined ? patch.notes || undefined : task.notes ?? undefined, subtasks: titles?.length ? titles : undefined });
+    const newTask = await this.createTask({ projectId: patch.projectId ?? task.projectId, title: patch.title ?? task.title, priority: patch.priority ?? task.priority, dueDate: date, notes: patch.notes !== undefined ? patch.notes || undefined : task.notes ?? undefined, subtasks: titles?.length ? titles : undefined });
     if (patch.subtasks?.length && newTask.subtasks?.length) {
       this.applySubtaskCompletionMem(newTask.subtasks, patch.subtasks, date);
     }
     return newTask;
   }
 
-  async splitFromDate(taskId: number, date: string, patch: { title?: string; priority?: Priority; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null> {
+  async splitFromDate(taskId: number, date: string, patch: { projectId?: number; title?: string; priority?: Priority; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }): Promise<Task | null> {
     const task = this.tasks.find((t) => t.id === taskId);
     if (!task) return null;
+    if (patch.projectId !== undefined) this.requireProject(patch.projectId);
     const prevDay = format(subDays(parseISO(date), 1), "yyyy-MM-dd");
     if (date <= task.dueDate) {
-      const updated = await this.updateTask(taskId, { title: patch.title ?? task.title, priority: patch.priority ?? task.priority, notes: patch.notes !== undefined ? patch.notes || undefined : task.notes ?? undefined, recurrenceEnd: patch.recurrenceEnd !== undefined ? patch.recurrenceEnd || null : task.recurrenceEnd });
+      const updated = await this.updateTask(taskId, { projectId: patch.projectId ?? task.projectId, title: patch.title ?? task.title, priority: patch.priority ?? task.priority, notes: patch.notes !== undefined ? patch.notes || undefined : task.notes ?? undefined, recurrenceEnd: patch.recurrenceEnd !== undefined ? patch.recurrenceEnd || null : task.recurrenceEnd });
       if (patch.subtasks) {
         await this.updateSubtasks(taskId, patch.subtasks.map((s) => ({ id: s.id, title: s.title.trim() })).filter((s) => s.title.length > 0));
         for (const s of patch.subtasks) {
@@ -1601,12 +1737,13 @@ class MemoryDb implements Db {
       return updated;
     }
     const existingOcc = this.taskOccurrences.find((o) => o.taskId === taskId && o.date === date);
+    const originalRecurrenceEnd = task.recurrenceEnd;
     task.recurrenceEnd = prevDay;
     task.updatedAt = nowIso();
     this.taskOccurrences = this.taskOccurrences.filter((o) => !(o.taskId === taskId && o.date >= date));
-    const newRecurrenceEnd = patch.recurrenceEnd !== undefined ? patch.recurrenceEnd || null : task.recurrenceEnd;
+    const newRecurrenceEnd = patch.recurrenceEnd !== undefined ? patch.recurrenceEnd || null : originalRecurrenceEnd;
     const titles = patch.subtasks?.map((s) => s.title.trim()).filter(Boolean);
-    const newTask = await this.createTask({ title: patch.title ?? task.title, priority: patch.priority ?? task.priority, dueDate: date, notes: patch.notes !== undefined ? patch.notes || undefined : task.notes ?? undefined, recurrenceType: task.recurrenceType ?? undefined, recurrenceEnd: newRecurrenceEnd ?? undefined, subtasks: titles?.length ? titles : undefined });
+    const newTask = await this.createTask({ projectId: patch.projectId ?? task.projectId, title: patch.title ?? task.title, priority: patch.priority ?? task.priority, dueDate: date, notes: patch.notes !== undefined ? patch.notes || undefined : task.notes ?? undefined, recurrenceType: task.recurrenceType ?? undefined, recurrenceEnd: newRecurrenceEnd ?? undefined, subtasks: titles?.length ? titles : undefined });
     if (patch.subtasks?.length && newTask.subtasks?.length) {
       // 保留历史进度：date 起的完成记录按原子任务 id 迁移到新序列对应子任务上
       const snapshot = [...this.subtaskOccurrences];
@@ -1654,9 +1791,9 @@ class MemoryDb implements Db {
     });
   }
 
-  async listDeleted(): Promise<Task[]> {
+  async listDeleted(projectId?: ProjectScope): Promise<Task[]> {
     const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    return this.tasks.filter((t) => t.deletedAt && t.deletedAt >= cutoff).sort((a, b) => (b.deletedAt ?? "").localeCompare(a.deletedAt ?? ""));
+    return this.tasks.filter((t) => t.deletedAt && t.deletedAt >= cutoff && matchesProject(t.projectId, projectId)).sort((a, b) => (b.deletedAt ?? "").localeCompare(a.deletedAt ?? ""));
   }
 
   async restore(id: number): Promise<Task> {
@@ -1675,9 +1812,9 @@ class MemoryDb implements Db {
     this.subtasks = this.subtasks.filter((s) => s.taskId !== id);
   }
 
-  async emptyTrash(): Promise<void> {
+  async emptyTrash(projectId?: ProjectScope): Promise<void> {
     for (const t of [...this.tasks]) {
-      if (t.deletedAt) await this.purgeTrashed(t.id);
+      if (t.deletedAt && matchesProject(t.projectId, projectId)) await this.purgeTrashed(t.id);
     }
   }
 
@@ -1775,10 +1912,10 @@ class MemoryDb implements Db {
     return note;
   }
 
-  async completion(range: TimeRange): Promise<import("@/shared/types").CompletionStats> {
+  async completion(range: TimeRange, projectId?: ProjectScope): Promise<import("@/shared/types").CompletionStats> {
     const { start, end } = getDateRange(range);
     const today = todayStr();
-    const raw = this.listRaw(start, end);
+    const raw = this.listRaw(start, end, projectId);
     const occMap = new Map(raw.occurrences.map((o) => [`${o.taskId}:${o.date}`, { isCompleted: o.isCompleted, isFailed: o.isFailed, isSkipped: o.isSkipped }]));
     const recurringItems = raw.tasks.filter((t) => t.recurrenceType).flatMap((t) => expandRecurringStats(t, occMap, start, end, today));
     const all = [
@@ -1817,14 +1954,14 @@ class MemoryDb implements Db {
       });
   }
 
-  async streakSummary(): Promise<StreakData> {
-    return computeStreakFrom(this.tasks.filter((t) => !t.deletedAt && t.dueDate <= todayStr()).map((t) => ({ dueDate: t.dueDate, isCompleted: t.isCompleted, isFailed: t.isFailed })));
+  async streakSummary(projectId?: ProjectScope): Promise<StreakData> {
+    return computeStreakFrom(this.tasks.filter((t) => !t.deletedAt && t.dueDate <= todayStr() && matchesProject(t.projectId, projectId)).map((t) => ({ dueDate: t.dueDate, isCompleted: t.isCompleted, isFailed: t.isFailed })));
   }
 
-  async taskTrend(range: TimeRange): Promise<import("@/shared/types").TaskTrendStats[]> {
+  async taskTrend(range: TimeRange, projectId?: ProjectScope): Promise<import("@/shared/types").TaskTrendStats[]> {
     const { start, end } = getDateRange(range);
     const today = todayStr();
-    const raw = this.listRaw(start, end);
+    const raw = this.listRaw(start, end, projectId);
     return raw.tasks
       .map((task) => {
         let completedCount = 0;
@@ -1847,7 +1984,7 @@ class MemoryDb implements Db {
           if (task.isCompleted) { completedCount = 1; streak = 1; }
           if (task.isFailed) failedCount = 1;
         }
-        return { taskId: task.id, title: task.title, completedCount, failedCount, totalCount, streak, isRecurring: !!task.recurrenceType };
+        return { taskId: task.id, projectId: task.projectId, title: task.title, completedCount, failedCount, totalCount, streak, isRecurring: !!task.recurrenceType };
       })
       .filter((t) => t.totalCount > 0);
   }

@@ -20,6 +20,7 @@ import { TaskEditDialog } from '@/components/tasks/TaskEditDialog'
 import { RecurringChangeDialog } from '@/components/tasks/RecurringChangeDialog'
 import { applyRecurringDelete } from '@/components/tasks/recurringActions'
 import type { Task, CheckinDefinition, Priority } from '@shared/types'
+import { TaskProjectField, useNewTaskProject, defaultTaskProjectId } from '@/components/projects/TaskProjectField'
 
 interface DayDetailPopupProps {
   date: string | null
@@ -30,6 +31,7 @@ interface DayDetailPopupProps {
 }
 
 export function DayDetailPopup({ date, definitions, onClose, onTaskToggle, onAfterTaskChange }: DayDetailPopupProps) {
+  const [projectId, setProjectId] = useNewTaskProject()
   const { tasks: allTasks, deleteTask, skipOccurrence, deleteFromDate, deleteBeforeDate, createTask, toggleSubtask } = useTaskStore()
   const { getEntriesForDate, upsertEntry, deleteCheckinDef } = useCheckinStore()
   const { upsertNote } = useNotesStore()
@@ -52,6 +54,7 @@ export function DayDetailPopup({ date, definitions, onClose, onTaskToggle, onAft
     setCreating(true)
     try {
       await createTask({
+        projectId,
         title: newTitle.trim(),
         priority: newPriority,
         dueDate: date,
@@ -120,7 +123,7 @@ export function DayDetailPopup({ date, definitions, onClose, onTaskToggle, onAft
                     variant="ghost"
                     size="sm"
                     className="h-7 text-xs rounded-full"
-                    onClick={(e) => { e.stopPropagation(); setShowCreate(true) }}
+                    onClick={(e) => { e.stopPropagation(); setProjectId(defaultTaskProjectId()); setShowCreate(true) }}
                   >
                     <Plus className="h-3.5 w-3.5 mr-1" />
                     新建任务
@@ -156,6 +159,7 @@ export function DayDetailPopup({ date, definitions, onClose, onTaskToggle, onAft
                         }}
                         className="text-sm rounded-xl w-full border border-input bg-background px-3 py-2 resize-none overflow-hidden focus:outline-none focus:ring-1 focus:ring-ring placeholder:text-muted-foreground leading-snug"
                       />
+                      <TaskProjectField value={projectId} onChange={setProjectId} />
                       <PrioritySelector value={newPriority} onChange={setNewPriority} />
                       <SubtaskInputList value={newSubtasks} onChange={setNewSubtasks} />
                       <div className="flex gap-2">

@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { useJustCompleted, useJustCompletedMap } from '@/lib/use-completion-feedback'
 import { PRIORITY_CONFIG, RECURRENCE_LABELS } from '@shared/constants'
 import type { Task } from '@shared/types'
+import { TaskProjectBadge } from '@/components/projects/TaskProjectField'
 
 // 与主界面日历格保持相同的任务状态/优先级底色
 function getTaskBg(task: Task): string {
@@ -103,6 +104,7 @@ function WidgetTaskRow({ task, onToggle, onSubtaskToggle, titleRefs, onShowToolt
         >
           {task.title}
         </span>
+        <TaskProjectBadge projectId={task.projectId} />
       </div>
 
       {task.subtasks && task.subtasks.length > 0 && (() => {

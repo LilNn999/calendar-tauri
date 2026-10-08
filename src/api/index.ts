@@ -3,6 +3,7 @@ import type {
   Task, CreateTaskPayload, UpdateTaskPayload, SubtaskPatchItem,
   CheckinDefinition, CheckinEntry, CreateCheckinDefPayload, UpsertCheckinEntryPayload,
   DailyNote, CompletionStats, TrendPoint, StreakData, WidgetPrefs, TimeRange,
+  Project, ProjectScope,
 } from '@shared/types'
 
 // 类型化的 invoke 封装
@@ -11,9 +12,17 @@ function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
 }
 
 // ==================== 任务 API ====================
+export const projectsApi = {
+  list: () => invoke<Project[]>(IPC.PROJECTS_LIST),
+  create: (name: string) => invoke<Project>(IPC.PROJECTS_CREATE, name),
+  rename: (id: number, name: string) => invoke<Project>(IPC.PROJECTS_RENAME, id, name),
+  getSelection: () => invoke<ProjectScope>(IPC.PROJECTS_GET_SELECTION),
+  select: (projectId: ProjectScope) => invoke<void>(IPC.PROJECTS_SELECT, projectId),
+}
+
 export const tasksApi = {
-  list: (start: string, end: string) =>
-    invoke<Task[]>(IPC.TASKS_LIST, { start, end }),
+  list: (start: string, end: string, projectId?: ProjectScope) =>
+    invoke<Task[]>(IPC.TASKS_LIST, { start, end, projectId }),
   create: (payload: CreateTaskPayload) =>
     invoke<Task>(IPC.TASKS_CREATE, payload),
   update: (id: number, patch: UpdateTaskPayload) =>
@@ -28,18 +37,18 @@ export const tasksApi = {
     invoke<void>(IPC.TASKS_DELETE_FROM_DATE, taskId, date),
   deleteBeforeDate: (taskId: number, date: string) =>
     invoke<void>(IPC.TASKS_DELETE_BEFORE_DATE, taskId, date),
-  detachOccurrence: (taskId: number, date: string, patch: { title?: string; priority?: string; notes?: string; subtasks?: SubtaskPatchItem[] }) =>
+  detachOccurrence: (taskId: number, date: string, patch: { projectId?: number; title?: string; priority?: string; notes?: string; subtasks?: SubtaskPatchItem[] }) =>
     invoke<Task>(IPC.TASKS_DETACH_OCCURRENCE, taskId, date, patch),
-  splitFromDate: (taskId: number, date: string, patch: { title?: string; priority?: string; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }) =>
+  splitFromDate: (taskId: number, date: string, patch: { projectId?: number; title?: string; priority?: string; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }) =>
     invoke<Task>(IPC.TASKS_SPLIT_FROM_DATE, taskId, date, patch),
   toggleSubtask: (subtaskId: number, date: string, isCompleted: boolean) =>
     invoke<void>(IPC.SUBTASKS_TOGGLE, subtaskId, date, isCompleted),
   updateSubtasks: (taskId: number, items: { id?: number; title: string }[]) =>
     invoke<void>(IPC.SUBTASKS_UPDATE, taskId, items),
-  listDeleted: () => invoke<Task[]>(IPC.TASKS_LIST_DELETED),
+  listDeleted: (projectId?: ProjectScope) => invoke<Task[]>(IPC.TASKS_LIST_DELETED, projectId),
   restore: (id: number) => invoke<Task>(IPC.TASKS_RESTORE, id),
   purgeTrashed: (id: number) => invoke<void>(IPC.TASKS_PURGE_TRASHED, id),
-  emptyTrash: () => invoke<void>(IPC.TASKS_EMPTY_TRASH),
+  emptyTrash: (projectId?: ProjectScope) => invoke<void>(IPC.TASKS_EMPTY_TRASH, projectId),
 }
 
 // ==================== 打卡 API ====================
@@ -72,14 +81,14 @@ export const notesApi = {
 
 // ==================== 统计 API ====================
 export const analyticsApi = {
-  completion: (range: TimeRange) =>
-    invoke<CompletionStats>(IPC.ANALYTICS_COMPLETION, range),
+  completion: (range: TimeRange, projectId?: ProjectScope) =>
+    invoke<CompletionStats>(IPC.ANALYTICS_COMPLETION, range, projectId),
   numericTrend: (defId: number, range: TimeRange) =>
     invoke<TrendPoint[]>(IPC.ANALYTICS_NUMERIC_TREND, defId, range),
-  streakSummary: () =>
-    invoke<StreakData>(IPC.ANALYTICS_STREAK_SUMMARY),
-  taskTrend: (range: TimeRange) =>
-    invoke<import('@shared/types').TaskTrendStats[]>(IPC.ANALYTICS_TASK_TREND, range),
+  streakSummary: (projectId?: ProjectScope) =>
+    invoke<StreakData>(IPC.ANALYTICS_STREAK_SUMMARY, projectId),
+  taskTrend: (range: TimeRange, projectId?: ProjectScope) =>
+    invoke<import('@shared/types').TaskTrendStats[]>(IPC.ANALYTICS_TASK_TREND, range, projectId),
 }
 
 // ==================== 成就 API ====================

@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils'
 import { useJustCompleted, useJustCompletedMap } from '@/lib/use-completion-feedback'
 import { PRIORITY_CONFIG, RECURRENCE_LABELS } from '@shared/constants'
 import type { Task, CheckinDefinition, CheckinEntry } from '@shared/types'
+import { TaskProjectBadge } from '@/components/projects/TaskProjectField'
 
 // ── 优先级 × 状态 → 背景色 ──────────────────────────────────
 function getTaskBg(task: Task): string {
@@ -218,6 +219,7 @@ export function TaskItemRow({ task, onToggle, onClick, compact, onMarkComplete, 
       </div>
 
       {/* 循环标记 */}
+      <TaskProjectBadge projectId={task.projectId} compact={compact} />
       {task.isRecurring && (
         <RotateCcw className={cn('shrink-0 h-2.5 w-2.5 opacity-60', getTaskFg(task), !compact && 'mt-1')} />
       )}

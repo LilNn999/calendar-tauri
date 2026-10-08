@@ -10,6 +10,8 @@ import { zhCN } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { PRIORITY_CONFIG } from '@shared/constants'
 import type { Task } from '@shared/types'
+import { useProjectStore } from '@/store/useProjectStore'
+import { TaskProjectBadge } from '@/components/projects/TaskProjectField'
 
 interface RecycleBinDialogProps {
   open: boolean
@@ -18,6 +20,7 @@ interface RecycleBinDialogProps {
 }
 
 export function RecycleBinDialog({ open, onOpenChange, onRestored }: RecycleBinDialogProps) {
+  const selectedProjectId = useProjectStore((state) => state.selectedProjectId)
   const [deletedTasks, setDeletedTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(false)
   const [actionLoading, setActionLoading] = useState<number | null>(null)
@@ -25,7 +28,7 @@ export function RecycleBinDialog({ open, onOpenChange, onRestored }: RecycleBinD
   const loadDeleted = async () => {
     setLoading(true)
     try {
-      const tasks = await tasksApi.listDeleted()
+      const tasks = await tasksApi.listDeleted(selectedProjectId)
       setDeletedTasks(tasks)
     } finally {
       setLoading(false)
@@ -34,7 +37,7 @@ export function RecycleBinDialog({ open, onOpenChange, onRestored }: RecycleBinD
 
   useEffect(() => {
     if (open) loadDeleted()
-  }, [open])
+  }, [open, selectedProjectId])
 
   const handleRestore = async (id: number) => {
     setActionLoading(id)
@@ -60,7 +63,7 @@ export function RecycleBinDialog({ open, onOpenChange, onRestored }: RecycleBinD
   const handleEmptyTrash = async () => {
     setLoading(true)
     try {
-      await tasksApi.emptyTrash()
+      await tasksApi.emptyTrash(selectedProjectId)
       setDeletedTasks([])
     } finally {
       setLoading(false)
@@ -114,6 +117,7 @@ export function RecycleBinDialog({ open, onOpenChange, onRestored }: RecycleBinD
                         {deletedLabel && ` · 删除于 ${deletedLabel}`}
                       </span>
                     </div>
+                    <TaskProjectBadge projectId={task.projectId} />
                     <div className="flex items-center gap-0.5 shrink-0">
                       <button
                         disabled={actionLoading === task.id}
@@ -158,7 +162,7 @@ export function RecycleBinDialog({ open, onOpenChange, onRestored }: RecycleBinD
               onClick={handleEmptyTrash}
               disabled={loading}
             >
-              清空全部
+              清空当前范围
             </Button>
           </div>
         )}

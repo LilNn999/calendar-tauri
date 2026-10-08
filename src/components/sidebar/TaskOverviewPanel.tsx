@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils'
 import { format, parseISO } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import type { Task, CheckinDefinition } from '@shared/types'
+import { TaskProjectBadge } from '@/components/projects/TaskProjectField'
 
 type FilterType = 'pending' | 'completed'
 
@@ -283,6 +284,7 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
               </span>
             )}
           </div>
+          <TaskProjectBadge projectId={task.projectId} />
           <div className="flex items-center gap-0.5 shrink-0">
             <button
               onClick={() => setEditDialogTask(task)}

@@ -6,6 +6,7 @@ import { useUIStore } from '@/store/useUIStore'
 import { SettingsDialog } from './SettingsDialog'
 import { SkinSwitcher } from './SkinSwitcher'
 import { WindowControls } from './WindowControls'
+import { ProjectSwitcher } from '@/components/projects/ProjectSwitcher'
 
 type TabId = 'calendar' | 'analytics'
 
@@ -47,6 +48,8 @@ export function TabBar({ activeTab, onTabChange }: TabBarProps) {
         <div className="flex-1 flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-primary shadow-raised inline-block" />
           <span className="font-skin-display text-sm font-extrabold tracking-wide select-none text-foreground">日历</span>
+          <span aria-hidden="true" className="mx-2 h-4 w-px shrink-0 bg-current opacity-25" />
+          <ProjectSwitcher />
         </div>
 
         {/* 中间：Tab 导航 */}

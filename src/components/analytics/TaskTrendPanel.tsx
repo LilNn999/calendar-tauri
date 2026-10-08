@@ -3,29 +3,38 @@ import { BarChart2, CheckCircle, XCircle, Flame, ChevronDown } from 'lucide-reac
 import { analyticsApi } from '@/api'
 import type { TaskTrendStats, TimeRange } from '@shared/types'
 import { cn } from '@/lib/utils'
+import { useProjectStore } from '@/store/useProjectStore'
+import { TaskProjectBadge } from '@/components/projects/TaskProjectField'
 
 interface TaskTrendPanelProps {
   range: TimeRange
 }
 
 export function TaskTrendPanel({ range }: TaskTrendPanelProps) {
+  const selectedProjectId = useProjectStore((state) => state.selectedProjectId)
   const [stats, setStats] = useState<TaskTrendStats[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [showAll, setShowAll] = useState(false)
 
   useEffect(() => {
+    let cancelled = false
     setLoading(true)
-    analyticsApi.taskTrend(range)
+    setStats([])
+    setSelectedId(null)
+    analyticsApi.taskTrend(range, selectedProjectId)
       .then((data) => {
+        if (cancelled) return
         setStats(
           data
             .filter((t) => t.isRecurring)
             .sort((a, b) => b.completedCount - a.completedCount)
         )
       })
-      .finally(() => setLoading(false))
-  }, [range])
+      .catch(() => { if (!cancelled) setStats([]) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [range, selectedProjectId])
 
   const RANGE_LABEL: Record<TimeRange, string> = {
     week: '近7天', month: '近30天', quarter: '近90天', year: '近1年',
@@ -123,6 +132,7 @@ export function TaskTrendPanel({ range }: TaskTrendPanelProps) {
                   {task.completedCount}完 · {task.failedCount}失 · {rate}%
                 </span>
               </div>
+              <TaskProjectBadge projectId={task.projectId} />
               {task.isRecurring && (
                 <span className="shrink-0 text-[10px] text-muted-foreground/60">重复</span>
               )}

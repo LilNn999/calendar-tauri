@@ -1,9 +1,12 @@
+export type { Project, ProjectScope } from '@/lib/types'
+
 // ==================== 任务 ====================
 export type Priority = 'none' | 'low' | 'medium' | 'high'
 export type RecurrenceType = 'daily' | 'weekday' | 'weekend' | 'weekly' | 'monthly'
 
 export interface Task {
   id: number
+  projectId: number
   title: string
   priority: Priority
   dueDate: string // YYYY-MM-DD（重复任务为每次发生日期）
@@ -35,6 +38,7 @@ export interface Subtask {
 
 export interface CreateTaskPayload {
   title: string
+  projectId?: number
   priority?: Priority
   dueDate: string
   notes?: string
@@ -54,6 +58,7 @@ export interface SubtaskPatchItem {
 
 export interface UpdateTaskPayload {
   title?: string
+  projectId?: number
   priority?: Priority
   dueDate?: string
   isCompleted?: boolean
@@ -136,6 +141,7 @@ export type TimeRange = 'week' | 'month' | 'quarter' | 'year'
 
 export interface TaskTrendStats {
   taskId: number
+  projectId: number
   title: string
   completedCount: number
   failedCount: number

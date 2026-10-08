@@ -10,12 +10,14 @@ import { useTaskStore } from '@/store/useTaskStore'
 import { useCalendarStore } from '@/store/useCalendarStore'
 import { toDateString } from '@/lib/utils'
 import type { Priority, RecurrenceType } from '@shared/types'
+import { TaskProjectField, useNewTaskProject } from '@/components/projects/TaskProjectField'
 
 interface TaskPanelProps {
   selectedDate: string | null
 }
 
 export function TaskPanel({ selectedDate }: TaskPanelProps) {
+  const [projectId, setProjectId] = useNewTaskProject()
   const { createTask, fetchTasks, loading } = useTaskStore()
   const { getVisibleRange } = useCalendarStore()
 
@@ -40,6 +42,7 @@ export function TaskPanel({ selectedDate }: TaskPanelProps) {
     setSubmitting(true)
     try {
       await createTask({
+        projectId,
         title: title.trim(),
         priority,
         dueDate: date,
@@ -101,6 +104,7 @@ export function TaskPanel({ selectedDate }: TaskPanelProps) {
       />
 
       {/* 优先级 */}
+      <TaskProjectField value={projectId} onChange={setProjectId} />
       <PrioritySelector value={priority} onChange={setPriority} />
 
       {/* 子任务 */}

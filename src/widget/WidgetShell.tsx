@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Pin, PinOff, Minus, GripHorizontal, ExternalLink, SlidersHorizontal, Plus, X } from 'lucide-react'
 import { Slider } from '@/components/ui/slider'
 import { systemApi } from '@/api'
@@ -13,6 +13,10 @@ import { fireSmallConfetti } from '@/lib/confetti'
 import { TASK_FEEDBACK_MS } from '@/lib/use-completion-feedback'
 import { SubtaskInputList, type SubtaskInputItem } from '@/components/tasks/SubtaskInputList'
 import type { Task, CheckinDefinition, CheckinEntry, Priority } from '@shared/types'
+import { ProjectSwitcher } from '@/components/projects/ProjectSwitcher'
+import { TaskProjectField, useNewTaskProject, defaultTaskProjectId } from '@/components/projects/TaskProjectField'
+import { useProjectStore } from '@/store/useProjectStore'
+import { useToast } from '@/components/ui/toast'
 
 type ResizeDirection = 'East' | 'North' | 'NorthEast' | 'NorthWest' | 'South' | 'SouthEast' | 'SouthWest' | 'West'
 
@@ -45,6 +49,10 @@ function isActiveToday(def: CheckinDefinition, today: string): boolean {
 }
 
 export function WidgetShell() {
+  const selectedProjectId = useProjectStore((state) => state.selectedProjectId)
+  const [projectId, setProjectId] = useNewTaskProject()
+  const { addToast } = useToast()
+  const loadRequest = useRef(0)
   const today = toDateString(new Date())
   const [tasks, setTasks] = useState<Task[]>([])
   const [definitions, setDefinitions] = useState<CheckinDefinition[]>([])
@@ -61,19 +69,32 @@ export function WidgetShell() {
   // 完成反馈宽限期：刚勾选完成的任务先原地停留播放动画，再沉底
   const [justCompleted, setJustCompleted] = useState<Set<string>>(new Set())
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
+    const request = ++loadRequest.current
+    const date = toDateString(new Date())
+    const scope = useProjectStore.getState().selectedProjectId
     const [taskList, defs, entryList] = await Promise.all([
-      tasksApi.list(today, today),
+      tasksApi.list(date, date, scope),
       checkinsApi.listDefs(),
-      checkinsApi.getEntries(today, today),
+      checkinsApi.getEntries(date, date),
     ])
+    if (request !== loadRequest.current || scope !== useProjectStore.getState().selectedProjectId) return
     setTasks(taskList)
     setDefinitions(defs)
     setEntries(entryList)
-  }
+  }, [])
 
   useEffect(() => {
-    loadData()
+    setTasks([])
+    setJustCompleted(new Set())
+    setShowAddForm(false)
+    setNewTitle('')
+    setNewSubtasks([])
+    void loadData().catch(() => addToast({ title: '读取悬浮窗数据失败，请重试', variant: 'destructive' }))
+    return () => { ++loadRequest.current }
+  }, [selectedProjectId, loadData, addToast])
+
+  useEffect(() => {
     systemApi.getWidgetPrefs().then((prefs) => {
       setAlwaysOnTop(prefs.alwaysOnTop)
       setOpacity(Math.round(prefs.opacity * 100))
@@ -97,9 +118,9 @@ export function WidgetShell() {
   }, [])
 
   useEffect(() => {
-    const unsub = window.electronAPI.on(IPC.PUSH_WIDGET_DATA_REFRESH, () => loadData())
+    const unsub = window.electronAPI.on(IPC.PUSH_WIDGET_DATA_REFRESH, () => { void loadData().catch(() => {}) })
     return () => unsub()
-  }, [])
+  }, [loadData])
 
   // 窗口移动/缩放时持久化偏好（Tauri 环境）
   useEffect(() => {
@@ -127,11 +148,11 @@ export function WidgetShell() {
   // 窗口从隐藏恢复可见时重新加载（document.visibilityState 变化）
   useEffect(() => {
     const onVisible = () => {
-      if (document.visibilityState === 'visible') loadData()
+      if (document.visibilityState === 'visible') void loadData().catch(() => {})
     }
     document.addEventListener('visibilitychange', onVisible)
     return () => document.removeEventListener('visibilitychange', onVisible)
-  }, [])
+  }, [loadData])
 
   const toggleAlwaysOnTop = async () => {
     const next = !alwaysOnTop
@@ -198,7 +219,7 @@ export function WidgetShell() {
           ? {
               ...t,
               subtasks: t.subtasks?.map((st) =>
-                st.id === subtaskId ? { ...st, isCompleted: completed } : st
+                st.id === subtaskId ? { ...st, isCompleted: t.isCompleted || completed } : st
               ),
             }
           : t
@@ -225,6 +246,7 @@ export function WidgetShell() {
     setSaving(true)
     try {
       await tasksApi.create({
+        projectId,
         title,
         priority: newPriority,
         dueDate: newDate,
@@ -237,6 +259,8 @@ export function WidgetShell() {
       setShowAddForm(false)
       // 重新拉取本地列表；主窗口由 TASKS_CREATE 的刷新信号同步
       await loadData()
+    } catch (error) {
+      addToast({ title: error instanceof Error ? error.message : '添加任务失败，请重试', variant: 'destructive' })
     } finally {
       setSaving(false)
     }
@@ -335,6 +359,8 @@ export function WidgetShell() {
         </div>
       </div>
 
+      <div className="px-3 py-2 border-b border-border-subtle shrink-0"><ProjectSwitcher compact /></div>
+
       {/* 透明度滑块 */}
       {showOpacitySlider && (
         <div className="px-3 py-2 border-b border-border-subtle bg-surface-subtle/80 flex-shrink-0">
@@ -404,6 +430,7 @@ export function WidgetShell() {
                 ))}
               </select>
             </div>
+            <TaskProjectField value={projectId} onChange={setProjectId} />
             <SubtaskInputList value={newSubtasks} onChange={setNewSubtasks} />
             <div className="flex items-center justify-end gap-1.5">
               <button
@@ -423,7 +450,7 @@ export function WidgetShell() {
           </div>
         ) : (
           <button
-            onClick={() => setShowAddForm(true)}
+            onClick={() => { setProjectId(defaultTaskProjectId()); setShowAddForm(true) }}
             className="flex-shrink-0 flex items-center justify-center gap-1 rounded-full border border-dashed border-border-subtle text-[11px] text-muted-foreground hover:text-foreground hover:border-primary/50 hover:bg-surface-hover py-1 transition-colors"
           >
             <Plus className="h-3 w-3" /> 添加日程

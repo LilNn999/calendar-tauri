@@ -10,8 +10,12 @@ import { NumericTrendChart } from '@/components/analytics/NumericTrendChart'
 import { TaskTrendPanel } from '@/components/analytics/TaskTrendPanel'
 import { StreakBadge } from '@/components/streaks/StreakBadge'
 import type { CompletionStats, TrendPoint, TimeRange, StreakData } from '@shared/types'
+import { useProjectStore } from '@/store/useProjectStore'
+import { useToast } from '@/components/ui/toast'
 
 export function AnalyticsPage() {
+  const selectedProjectId = useProjectStore((state) => state.selectedProjectId)
+  const { addToast } = useToast()
   const { definitions, fetchDefinitions } = useCheckinStore()
   const [range, setRange] = useState<TimeRange>('month')
   const [stats, setStats] = useState<CompletionStats | null>(null)
@@ -20,29 +24,38 @@ export function AnalyticsPage() {
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    let cancelled = false
     fetchDefinitions()
-    analyticsApi.streakSummary().then(setStreak)
-  }, [fetchDefinitions])
+    analyticsApi.streakSummary(selectedProjectId)
+      .then((data) => { if (!cancelled) setStreak(data) })
+      .catch(() => { if (!cancelled) addToast({ title: '读取任务连续完成数据失败，请重试', variant: 'destructive' }) })
+    return () => { cancelled = true }
+  }, [fetchDefinitions, selectedProjectId, addToast])
 
   useEffect(() => {
+    let cancelled = false
     setLoading(true)
     // 支持数值型和时间型打卡趋势
     const numericDefs = definitions.filter((d) => d.type === 'numeric' || d.type === 'time')
 
     Promise.all([
-      analyticsApi.completion(range),
+      analyticsApi.completion(range, selectedProjectId),
       ...numericDefs.map((d) =>
         analyticsApi.numericTrend(d.id, range).then((data) => ({ id: d.id, data }))
       ),
     ]).then(([completionStats, ...trends]) => {
+      if (cancelled) return
       setStats(completionStats as CompletionStats)
       const trendMap: Record<number, TrendPoint[]> = {}
       for (const t of trends as Array<{ id: number; data: TrendPoint[] }>) {
         trendMap[t.id] = t.data
       }
       setTrendData(trendMap)
-    }).finally(() => setLoading(false))
-  }, [range, definitions])
+    }).catch(() => {
+      if (!cancelled) addToast({ title: '读取统计数据失败，请重试', variant: 'destructive' })
+    }).finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [range, definitions, selectedProjectId, addToast])
 
   const numericDefs = definitions.filter((d) => d.type === 'numeric' || d.type === 'time')
 
