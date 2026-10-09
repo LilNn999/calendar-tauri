@@ -8,6 +8,14 @@ export interface VersionNote {
 /** 更新历史（最新版本在最前） */
 export const VERSION_NOTES: VersionNote[] = [
   {
+    version: '0.9.1',
+    date: '2026-10-09',
+    fixes: [
+      '修复待办编辑窗口在子任务较多时超出边界、无法向下滚动的问题，现在长内容可以正常滚动查看',
+      '新建和编辑待办时，标题、关闭按钮及底部操作按钮保持可见，小窗口下也能正常保存和取消',
+    ],
+  },
+  {
     version: '0.9.0',
     date: '2026-10-08',
     features: [

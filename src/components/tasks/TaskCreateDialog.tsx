@@ -78,45 +78,47 @@ export function TaskCreateDialog({ open, onOpenChange, defaultDate }: TaskCreate
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent onClose={() => onOpenChange(false)}>
-        <DialogHeader>
+      <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col" onClose={() => onOpenChange(false)}>
+        <DialogHeader className="shrink-0">
           <DialogTitle>新建任务</DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 px-6 py-2">
-          <textarea
-            ref={titleRef}
-            autoFocus
-            value={title}
-            rows={1}
-            onChange={(e) => { setTitle(e.target.value); autoResize(e.target) }}
-            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCreate() } }}
-            placeholder="任务标题"
-            className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm resize-none overflow-hidden hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground leading-snug transition-colors"
-          />
-          <div>
-            <label className="text-xs text-muted-foreground block mb-1">截止日期</label>
-            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        <div className="min-h-0 overflow-y-auto overscroll-contain">
+          <div className="flex flex-col gap-4 px-6 py-2">
+            <textarea
+              ref={titleRef}
+              autoFocus
+              value={title}
+              rows={1}
+              onChange={(e) => { setTitle(e.target.value); autoResize(e.target) }}
+              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleCreate() } }}
+              placeholder="任务标题"
+              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm resize-none overflow-hidden hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground leading-snug transition-colors"
+            />
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">截止日期</label>
+              <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            </div>
+            <TaskProjectField value={projectId} onChange={setProjectId} />
+            <PrioritySelector value={priority} onChange={setPriority} />
+            <RecurrenceSelector
+              value={recurrenceType}
+              onChange={setRecurrenceType}
+              endDate={recurrenceEnd}
+              onEndDateChange={setRecurrenceEnd}
+              startDate={date}
+            />
+            <SubtaskInputList value={subtasks} onChange={setSubtasks} />
+            <Textarea
+              placeholder="备注（选填）"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+            />
           </div>
-          <TaskProjectField value={projectId} onChange={setProjectId} />
-          <PrioritySelector value={priority} onChange={setPriority} />
-          <RecurrenceSelector
-            value={recurrenceType}
-            onChange={setRecurrenceType}
-            endDate={recurrenceEnd}
-            onEndDateChange={setRecurrenceEnd}
-            startDate={date}
-          />
-          <SubtaskInputList value={subtasks} onChange={setSubtasks} />
-          <Textarea
-            placeholder="备注（选填）"
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            rows={3}
-          />
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="shrink-0">
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>取消</Button>
           <Button size="sm" onClick={handleCreate} disabled={loading || !title.trim()}>
             {loading ? <RefreshCw className="h-4 w-4 mr-1 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}

@@ -477,7 +477,7 @@ dependencies = [
 
 [[package]]
 name = "calendar-tauri"
-version = "0.9.0"
+version = "0.9.1"
 dependencies = [
  "png 0.17.16",
  "serde",

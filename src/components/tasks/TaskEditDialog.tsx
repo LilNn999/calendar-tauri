@@ -183,54 +183,56 @@ export function TaskEditDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={(o) => !o && closeMain()}>
-        <DialogContent onClose={closeMain}>
-          <DialogHeader>
+        <DialogContent className="flex max-h-[calc(100dvh-2rem)] flex-col" onClose={closeMain}>
+          <DialogHeader className="shrink-0">
             <DialogTitle>
               {isRecurringOccurrence ? '编辑循环任务' : '编辑任务'}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="flex flex-col gap-4 px-6 py-2">
-            <textarea
-              ref={titleRef}
-              autoFocus
-              value={title}
-              rows={1}
-              onChange={(e) => { setTitle(e.target.value); autoResize(e.target) }}
-              onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveClick() } }}
-              placeholder="任务标题"
-              className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm resize-none overflow-hidden hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground leading-snug transition-colors"
-            />
-            {/* 非循环实例才允许修改日期（循环任务日期由重复规则决定） */}
-            {!isRecurringOccurrence && (
-              <div>
-                <label className="text-xs text-muted-foreground block mb-1">截止日期</label>
-                <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-              </div>
-            )}
-            <TaskProjectField value={projectId} onChange={setProjectId} />
-            <PrioritySelector value={priority} onChange={setPriority} />
-            {/* 非循环 occurrence 才允许修改重复规则 */}
-            {!isRecurringOccurrence && (
-              <RecurrenceSelector
-                value={recurrenceType}
-                onChange={setRecurrenceType}
-                endDate={recurrenceEnd}
-                onEndDateChange={setRecurrenceEnd}
-                startDate={date}
+          <div className="min-h-0 overflow-y-auto overscroll-contain">
+            <div className="flex flex-col gap-4 px-6 py-2">
+              <textarea
+                ref={titleRef}
+                autoFocus
+                value={title}
+                rows={1}
+                onChange={(e) => { setTitle(e.target.value); autoResize(e.target) }}
+                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSaveClick() } }}
+                placeholder="任务标题"
+                className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm resize-none overflow-hidden hover:border-primary/40 focus:outline-none focus:ring-2 focus:ring-ring placeholder:text-muted-foreground leading-snug transition-colors"
               />
-            )}
-            {/* 子任务（循环 occurrence 同样可编辑，保存时随所选范围应用：仅此次落到拆出的单次任务，此后全部落到新序列） */}
-            <SubtaskInputList value={subtasks} onChange={setSubtasks} />
-            <Textarea
-              placeholder="备注（选填）"
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-            />
+              {/* 非循环实例才允许修改日期（循环任务日期由重复规则决定） */}
+              {!isRecurringOccurrence && (
+                <div>
+                  <label className="text-xs text-muted-foreground block mb-1">截止日期</label>
+                  <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+                </div>
+              )}
+              <TaskProjectField value={projectId} onChange={setProjectId} />
+              <PrioritySelector value={priority} onChange={setPriority} />
+              {/* 非循环 occurrence 才允许修改重复规则 */}
+              {!isRecurringOccurrence && (
+                <RecurrenceSelector
+                  value={recurrenceType}
+                  onChange={setRecurrenceType}
+                  endDate={recurrenceEnd}
+                  onEndDateChange={setRecurrenceEnd}
+                  startDate={date}
+                />
+              )}
+              {/* 子任务（循环 occurrence 同样可编辑，保存时随所选范围应用：仅此次落到拆出的单次任务，此后全部落到新序列） */}
+              <SubtaskInputList value={subtasks} onChange={setSubtasks} />
+              <Textarea
+                placeholder="备注（选填）"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+              />
+            </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="shrink-0">
             <Button
               variant="ghost"
               size="sm"
