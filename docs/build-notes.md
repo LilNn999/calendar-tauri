@@ -12,6 +12,41 @@
 - 测试窗口规则：`启动测试窗口.bat` 使用 `scripts/check-test-build-stale.mjs` 自动判断源码/配置/dist 是否新于 release exe；如有更新，先执行 `npm run tauri build -- --no-bundle` 再启动最新测试版，禁止直接启动旧 exe。
 - Codex 内部验收必须主动执行 `npm run tauri build -- --no-bundle`，并确认 `node scripts/check-test-build-stale.mjs` 输出 `0`；此后用户直接打开 `启动测试窗口.bat` 应直接启动最新版，不得再次构建。
 
+## 2026-10-09 0.9.1 正式版
+
+- 时间：2026-10-09 16:40:22（北京时间）
+- 分支：`codex/release-0.3.4`（发布目标：码云 `origin/main` 与 `origin/codex/release-0.3.4`）
+- 发布提交：`2ce2079`（`release: 0.9.1 修复待办弹窗越界与无法滚动`；构建记录另行提交）
+- 版本：`0.9.1`（纯修复，修订号递增；前端包、锁文件、Tauri 配置、Rust crate 与更新公告同步）
+- 命令：`npm test`；`npm run tauri build -- --no-bundle`；`npm run tauri build`。
+- 构建结果：成功（退出码 0）；默认前端类型检查及生产构建通过，桌面测试程序 release 编译约 2 分 02 秒，正式打包 release 编译约 1 分 48 秒，NSIS 打包成功。
+- 安装包源文件：`src-tauri/target/release/bundle/nsis/日历_0.9.1_x64-setup.exe`
+- 已交付：`安装包/日历_0.9.1_x64-setup.exe`
+- 大小：2,245,213 bytes（约 2.14 MiB）
+- SHA256：`DEF4B8A292C271CBE90A424AC76DC06A5C63BCB4E25C433C85050341130859A9`
+- 本次改动：待办编辑、新建弹窗随当前窗口限制高度，长表单可独立滚动，标题、关闭按钮及底部操作按钮保持可见；同步 0.9.1 更新公告。
+- 验证：`npm test` 30/30 通过；长列表、小窗口及 12 套深浅主题验证详见下方修复记录。生产构建的浏览器实测从 0.9.0 升级会显示 0.9.1 公告、确认后刷新不重复提示、设置中可再次查看，0.9.0 历史公告保留；980×660 窗口公告显示完整，浏览器无运行异常。
+- 模板校验：生成的 `installer.nsi` 对比打包前保留的 0.9.0 基线，仅 `VERSION` 与 `VERSIONWITHBUILD` 变化（0.9.1 / 0.9.1.0）；`ESTIMATEDSIZE` 仍为 5060 KB，自定义覆盖升级选项、带版本窗口标题及 `NSIS_HOOK_PREINSTALL` 保持，无其他差异。
+- 数据检查：`dist` 不含数据库文件，`bundle.resources` 未配置；安装器文件复制清单不含数据库或用户数据，WebView2 使用下载引导程序模式。正式 `calendar.db` 与测试 `test-calendar.db` 继续由运行模式选择，升级清理仅作用于安装目录。源安装包与交付副本 SHA256 一致。
+- 测试版时效：`node scripts/check-test-build-stale.mjs` 在测试构建及正式打包后均输出 `0`；最新主程序大小 5,181,952 bytes，SHA256 `5C38528F40BF082221CDE96815CF1769E19773586B08C9723D8E7FD7C9305A4C`，Windows 文件版本及产品版本均为 0.9.1。
+- 注意事项：安装包与测试窗口均未由代理启动，由用户自行双击安装；源码及构建记录同步码云，安装包按既有规则保存在本地 `安装包/`，不提交编译产物。沙箱内默认配置加载无法解析已安装的 Vite 依赖，在沙箱外按原命令完成构建，未修改构建配置或依赖。
+
+## 2026-10-09 待办弹窗边界与滚动修复（桌面测试构建）
+
+- 时间：2026-10-09 16:29（北京时间，构建后核验）
+- 分支：`codex/release-0.3.4`
+- 提交基线：`6a9d57c`；本次修复为工作区未提交改动。
+- 版本：`0.9.0`（修复记录在 CHANGELOG 的未发布条目）
+- 命令：`npm run build`（由 Tauri 构建前置步骤执行）；`npm run tauri build -- --no-bundle`；`node scripts/check-test-build-stale.mjs`。
+- 构建结果：成功（退出码 0）；前端类型检查及生产构建通过，Cargo release 编译约 2 分 10 秒。
+- 产物：`src-tauri/target/release/calendar-tauri.exe`
+- 大小：5,180,928 bytes（约 4.94 MiB）
+- SHA256：`DEAFF6413D2CEB46EF46FE0EC5F14ABDE9892BE0BF61A5624BB8579CCD3A55C2`
+- 本次改动：待办编辑、新建弹窗高度随窗口限制，表单单独滚动，标题、关闭按钮及底部操作按钮保持可见；仅调整弹窗布局。
+- 验证：浏览器内存模式实测编辑 30 个子任务及长备注、鼠标滚轮滚动、底部保存后保留全部子任务与修改后的备注；新建表单 20 个子任务的滚动、末行回车追加及取消。两个弹窗分别覆盖 12 套深浅主题，检查 980×660、1280×820 及 980×440 可用高度，标题与按钮均未越界，浏览器无运行异常。
+- 测试版时效：`node scripts/check-test-build-stale.mjs` 输出 `0`，用户打开 `启动测试窗口.bat` 可直接使用本次修复后的测试程序。
+- 注意事项：沙箱内默认配置加载无法解析已安装的 Vite 依赖；在沙箱外按原构建命令完成验证，未修改项目构建配置或依赖。本次未生成 NSIS 安装包，现有安装包仍为此前正式版；未启动桌面程序或测试窗口，测试库仍由脚本使用 `CALENDAR_TEST_MODE=1` 与 `test-calendar.db`。
+
 ## 2026-10-08 0.9.0 正式版
 
 - 时间：2026-10-08 15:01:47（北京时间）
