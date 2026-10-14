@@ -14,6 +14,7 @@
 | Rust 单元测试 | `cargo test --manifest-path src-tauri/Cargo.toml task_export` | 通过：14 个用例，0 失败 |
 | Rust 编译 | `cargo check --manifest-path src-tauri/Cargo.toml` | 通过，无警告 |
 | 桌面 release 构建（不含安装包） | `npm run tauri build -- --no-bundle` | 通过，退出码 0，见 §5 |
+| NSIS 安装包打包 | `npm run tauri build` | 通过，退出码 0，产物 `安装包/日历_0.11.0_x64-setup.exe`，见 §5 |
 | 测试版过期检查 | `node scripts/check-test-build-stale.mjs` | 输出 `0`（测试版为最新），见 §5 |
 | 浏览器渲染与分页核对 | `node scripts/verify-task-export-render.mjs` + 无头 Chrome 打印 | 通过，见 §4 |
 | 原生 WebView2 保存与弹窗操作 | 用户在测试窗口操作 | **待用户实机确认** |
@@ -96,21 +97,40 @@
 ## 5. 桌面构建与测试版
 
 ```
-npm run tauri build -- --no-bundle     # 退出码 0，约 2m01s
+npm run tauri build -- --no-bundle     # 退出码 0
+npm run tauri build                    # 退出码 0，产出 NSIS 安装包
 node scripts/check-test-build-stale.mjs # 输出 0
 ```
+
+### 测试版主程序
 
 | 项 | 值 |
 | --- | --- |
 | 产物 | `src-tauri/target/release/calendar-tauri.exe` |
-| 大小 | 5,272,576 字节（约 5.03 MB） |
-| SHA256 | `0598DA641A0DA1FEC9882F038EB25EA6E98EB1CD001528F53AEC29623D3780BF` |
-| 构建时间 | 2026-10-14 16:25:30 |
+| 大小 | 5,271,552 字节（约 5.03 MB） |
+| SHA256 | `879C1CE97B8B7B5B025F6263DA25DD54D225425767DC83B016F70FF8AE884D79` |
+| 版本 | 文件版本与产品版本均为 0.11.0 |
 | 过期检查 | `0`，测试版为最新 |
-| 安装包 | **本轮未打包**（未运行 `npm run tauri build`，未生成、未复制 NSIS 安装包） |
 
+### NSIS 安装包（0.11.0）
+
+| 项 | 值 |
+| --- | --- |
+| 源文件 | `src-tauri/target/release/bundle/nsis/日历_0.11.0_x64-setup.exe` |
+| 已交付 | `安装包/日历_0.11.0_x64-setup.exe` |
+| 大小 | 2,280,804 字节（约 2.18 MiB） |
+| SHA256 | `4456A84D072D230C03FFB39A0807EBAD33DE2A55EE0C3A53DD8F5380F1B58D2B`（源与副本一致） |
+| 版本 | 文件版本与产品版本均为 0.11.0 |
+
+- 模板校验：生成的 `installer.nsi` 对比打包前保留的 0.10.0 基线，**仅 3 行变化**——
+  `VERSION`、`VERSIONWITHBUILD`、`ESTIMATEDSIZE`（5064 → 5148 KB）；946 行文件其余部分完全一致，
+  自定义覆盖升级选项、带版本窗口标题与 `NSIS_HOOK_PREINSTALL` 均保持。
+- 数据检查：`dist` 不含任何数据库文件，`bundle.resources` 未配置，安装包不携带用户数据。
 - 代理没有运行生成的 release exe，也没有启动 `启动测试窗口.bat`：这两步按仓库规范由用户完成。
-- 可执行文件体积落在仓库目标的 5~10 MB 区间内；安装包体积未测量，因此不声称安装包达标。
+- 打包时测试窗口正在运行并锁住 release exe（首次构建报 `failed to remove file`，退出码 1），
+  经用户确认后结束该测试版进程再打包成功；正式版进程未受影响。
+- 安装包体积约 2.18 MiB，低于仓库「5~10 MB」的目标区间；这是全系列安装包一贯水平
+  （0.9.1 为 2.14 MiB、0.10.0 为 2.14 MiB），未因此调整目标或改变打包配置。
 - 构建日志中唯一的警告是 `linker_messages`（MSVC 生成导入库的提示），与本功能无关，历史上同样存在。
 - 另有一处与功能无关的既有格式问题：`src-tauri/src/commands.rs` 此前未按 rustfmt 格式化，
   使仓库级 `cargo fmt -- --check` 在本次开发前就返回非 0。已单独提交 `dea3c03`
@@ -147,5 +167,8 @@ node scripts/check-test-build-stale.mjs # 输出 0
   也不会用 Blob 或示例 PDF 冒充当前任务导出。
 - 循环任务的搜索窗口为 `max(今天, 开始日期)+62 天`：开始日期在更远的未来时，
   该循环任务本轮不导出（与「只导出最近一次待完成」的口径一致）。
-- 安装包体积未测量（本轮未打包）；新增依赖为 `tauri-plugin-dialog 2.3.3`（含 `rfd`、`tauri-plugin-fs`）、
-  `webview2-com`、`windows-core`、`tokio(sync/time)`、`url`，均在原依赖树内或为小体积 crate。
+- 安装包已打包并交付（`安装包/日历_0.11.0_x64-setup.exe`，2.18 MiB），但**体积低于仓库
+  「5~10 MB」目标区间**：这是全系列安装包的一贯水平（0.9.1 与 0.10.0 均为 2.14 MiB），
+  未在本轮为此调整打包配置或目标。新增依赖为 `tauri-plugin-dialog 2.3.3`
+  （含 `rfd`、`tauri-plugin-fs`）、`webview2-com`、`windows-core`、`tokio(sync/time)`、`url`，
+  均在原依赖树内或为小体积 crate（主程序 5.19 MB → 5.27 MB，增加约 86 KB）。

@@ -12,6 +12,26 @@
 - 测试窗口规则：`启动测试窗口.bat` 使用 `scripts/check-test-build-stale.mjs` 自动判断源码/配置/dist 是否新于 release exe；如有更新，先执行 `npm run tauri build -- --no-bundle` 再启动最新测试版，禁止直接启动旧 exe。
 - Codex 内部验收必须主动执行 `npm run tauri build -- --no-bundle`，并确认 `node scripts/check-test-build-stale.mjs` 输出 `0`；此后用户直接打开 `启动测试窗口.bat` 应直接启动最新版，不得再次构建。
 
+## 2026-10-14 0.11.0 正式版
+
+- 时间：2026-10-14 16:38（北京时间）
+- 分支：`codex/release-0.3.4`（发布目标：码云 `origin/codex/release-0.3.4`）
+- 发布提交：`a2c7b01`（`release: 0.11.0 未完成任务导出`；功能提交 `47c05d2`…`5c3ff27`，构建记录另行提交）
+- 版本：`0.11.0`（新增功能，次版本号递增；`package.json`、`package-lock.json`、`src-tauri/tauri.conf.json`、`src-tauri/Cargo.toml`、`src-tauri/Cargo.lock` 与更新公告同步）
+- 命令：`npm test`；`npm run build`；`cargo fmt -- --check`；`cargo test task_export`；`npm run tauri build -- --no-bundle`；`npm run tauri build`。
+- 构建结果：成功（退出码 0）；前端生产构建约 4.6 秒，正式打包 release 编译约 1 分 41 秒，NSIS 打包成功。
+- 安装包源文件：`src-tauri/target/release/bundle/nsis/日历_0.11.0_x64-setup.exe`
+- 已交付：`安装包/日历_0.11.0_x64-setup.exe`
+- 大小：2,280,804 bytes（约 2.18 MiB）
+- SHA256：`4456A84D072D230C03FFB39A0807EBAD33DE2A55EE0C3A53DD8F5380F1B58D2B`
+- 本次改动：任务总览新增「导出未完成任务」——把全部项目的未完成母任务及其全部子任务导出为 A4 PDF；母任务未完成时保留全部子任务（已完成子任务保留勾选与划线），普通任务不限月份与项目、逾期与远期任务都在清单内；新增可选「包含循环任务」复选框（默认不勾选、不持久化），勾选后每条循环任务只取今天或未来最近一次未完成、未失败、未跳过的有效发生；新增全量只读查询（单条 `SELECT` + `UNION ALL`，不触发失败标记等写库副作用）与统一选择器、唯一静态文档渲染器与分页样式；新增 Rust 原生保存（系统保存对话框 + Windows WebView2 `PrintToPdf`、单作业守卫、60 秒超时、`%PDF-` 签名校验与同目录替换）。新增依赖 `tauri-plugin-dialog =2.3.3`、`webview2-com =0.38.2`、`windows-core =0.61.2`、`tokio =1.53.1`（仅 sync/time）、`url = "2"`；`rust-version` 校正为 1.77.2。
+- 验证：`npm test` 117/117 通过；`npm run build` 通过；`cargo fmt -- --check` 退出码 0；`cargo test task_export` 14/14 通过；`cargo check` 无警告。浏览器同源引擎（Skia/PDF）打印 100 条母任务为 13 页，每页有页码、第 1 与第 100 条母任务及子任务都在、无 URL 与本地路径，关键产物见 `docs/mockups/task-export-live-4-11-4.png` 与 `docs/mockups/task-export-live-long.pdf`；详见 `docs/task-export-validation.md`。
+- 模板校验：生成的 `installer.nsi` 对比打包前保留的 0.10.0 基线，仅 `VERSION`（0.10.0 → 0.11.0）、`VERSIONWITHBUILD`（0.10.0.0 → 0.11.0.0）与 `ESTIMATEDSIZE`（5064 → 5148 KB）三行变化，共 946 行文件无其他差异；自定义覆盖升级选项、带版本窗口标题及 `NSIS_HOOK_PREINSTALL` 保持。
+- 数据检查：`dist` 不含数据库文件，`bundle.resources` 未配置；源安装包与交付副本 SHA256 一致；安装包文件版本与产品版本均为 0.11.0。
+- 测试版时效：`node scripts/check-test-build-stale.mjs` 在正式打包后输出 `0`；最新主程序大小 5,271,552 bytes，SHA256 `879C1CE97B8B7B5B025F6263DA25DD54D225425767DC83B016F70FF8AE884D79`，Windows 文件版本及产品版本均为 0.11.0。
+- 注意事项：打包过程中测试窗口正在运行并锁住 release exe（首次 `npm run tauri build` 报 `failed to remove file`，退出码 1），经用户确认后结束该测试版进程（PID 25276）再打包成功；正式版进程（`D:\日历\calendar-tauri.exe`）未受影响。安装包与测试窗口均未由代理启动，由用户自行双击安装；安装包按既有规则保存在本地 `安装包/`，不提交编译产物。
+- **原生功能仍待用户实机验收**：原生 WebView2 打印、保存对话框、页码页脚与页边距叠加均只有编译与单元测试证据，需在测试窗口按 `docs/task-export-validation.md` §6 逐项确认；在完成前不得视为已通过。
+
 ## 2026-10-14 0.10.0 正式版
 
 - 时间：2026-10-14 11:38（北京时间）
