@@ -2,6 +2,27 @@
 
 本项目变更记录。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循语义化版本。
 
+## [未发布]
+
+### 新增
+- 未完成任务导出功能已落地：任务总览标题工具区新增下载图标，弹窗可预览并导出**全部项目的未完成母任务及其全部子任务**为 A4 PDF（`src/components/tasks/TaskExportDialog.tsx`）。母任务未完成即保留其全部子任务，已完成子任务保留绿色勾选与划线；普通任务不受当前月份与所选项目限制，逾期未完成、远期与跨项目任务都在清单内。
+- 新增可选的「包含循环任务」复选框，默认不勾选且不持久化（`src/lib/task-export-model.ts`）。不勾选时循环任务及其子任务完全不导出；勾选后每条循环母任务只保留今天或未来最近一次未完成、未失败、未跳过的有效发生，并读取该日期的子任务状态。模板自身的 `isCompleted`/`isFailed` 不代表整个序列，纳入与否只看所选发生日期的真实记录。
+- 新增导出专用的全量只读查询（`src/lib/task-export-query.ts`）：一条 `SELECT` + `UNION ALL` 读取候选任务、项目、子任务与发生记录，参数全部绑定、JSON 载荷统一解析、`0/1` 规范化为布尔。导出**不调用** `checkAndMarkFailed`，不写入 `lastFailedCheckDate`，也不改动任何任务、子任务、发生记录或设置。
+- 新增统一选择器与快照 DTO（`src/lib/task-export-model.ts`）与提取后的循环匹配规则（`src/lib/task-recurrence.ts`，`db.ts` 继续导入并重新导出，既有导入入口与循环展开行为不变）。SQLite 与浏览器内存实现共用同一份选择规则，测试断言两者结果一致。
+- 新增唯一的静态文档渲染器（`src/lib/task-export-document.ts` 与文档样式 `src/styles/task-export-document.css`）：预览 iframe 与原生打印使用同一个返回值。文档全部文本转义、无外链字体/图片/脚本、无示例 PDF 的 base64，带 CSP `default-src 'none'`，A4 页边距 14/15/16mm，页脚使用 CSS `@page` 页码与总页数，跨年日期带完整年份。
+- 新增 Windows 原生 PDF 保存（`src-tauri/src/task_export.rs`、`src-tauri/src/task_export/windows.rs`）：Rust 内弹出系统保存对话框（标题「导出未完成任务」、筛选「PDF 文档」），在专属隐藏窗口内用 WebView2 `PrintToPdf` 输出，关闭引擎默认页眉页脚并开启背景打印。单作业守卫、保存对话框取消返回 `cancelled`、打印超时与失败都释放守卫并清理临时文件；成功后校验 `%PDF-` 签名并在同目录替换目标文件，不破坏已有 PDF。打印窗标签不进入窗口状态记忆，前端不需要新增 dialog/fs 权限。
+- 新增 IPC 与数据入口：`TASKS_EXPORT_SNAPSHOT`（`tasks:exportSnapshot`）、`SYSTEM_EXPORT_TASK_PDF`（`system:exportTaskPdf`）、`tasksApi.exportSnapshot`、`systemApi.exportTaskPdf`、`useTaskStore.fetchExportSnapshot`。快照接口不改动 `tasks`、不改项目选择、不发数据变更通知；浏览器环境导出返回明确的「PDF 导出请在桌面版使用」，不以 Blob 或示例 PDF 冒充。
+
+### 测试
+- 新增导出相关测试：选择器与循环口径 21 例（`src/lib/task-export-model.test.ts`）、双实现只读查询 16 例（`src/lib/db-task-export.test.ts`）、文档渲染与分页 10 例（`src/lib/task-export-document.test.ts`）、只读 store 入口 2 例（`src/lib/project-store.test.ts`）、原生适配器生命周期 14 例（`src-tauri/src/task_export/tests.rs`）。前端 117 例、Rust 14 例全部通过。
+- 新增验证工具（不参与打包）：`scripts/verify-task-export-render.mjs` 输出真实渲染文档，`scripts/verify-pdf-text.mjs` 按页解析 PDF CMap 还原文字，用于核对页数与内容完整性。
+
+### 文档
+- 新增实现验证记录（`docs/task-export-validation.md`）：分列「编译通过/自动测试通过/浏览器渲染核对通过/原生待用户实机确认」，含 100 条母任务 13 页分页核对结果，以及用户需在测试窗口逐项确认的清单。
+
+### 依赖
+- 新增 `tauri-plugin-dialog =2.3.3`（固定版本，仅 Rust 侧使用）、`webview2-com =0.38.2`、`windows-core =0.61.2`（与 `tauri-runtime-wry` 锁定版本一致）、`tokio =1.53.1`（仅 `sync`/`time`）、`url = "2"`。`rust-version` 由 `1.77` 校正为依赖树实际要求的 `1.77.2`，未升级 CLI 与 NSIS 模板。
+
 ## [0.10.0] — 2026-10-14
 
 ### 新增
@@ -10,9 +31,11 @@
 - 新增月度统计回归测试（`src/lib/monthDayStats.test.ts`）：覆盖 2025—2026 年验收基线、逐月恒等式、全年法定合计 13 天、国庆中秋合并连休去重、跨月假期与补班切分、未收录年度的未知项处理及日期文案。
 
 ### 设计预览
+- 新增未完成任务导出的独立 UI 样式稿（`docs/mockups/task-export.html`）：在任务总览展示导出入口，支持弹窗、完整文件预览、深浅主题、窄窗口与键盘操作。母任务未完成时保留全部子任务，已完成子任务显示勾选和划线；提供按日期排列、包含项目/优先级/备注的 A4 PDF 示例（`output/pdf/task-export-sample.pdf`）。预览内嵌同款示例 PDF，可离线下载；当前使用示例数据，尚未接入正式界面与数据库。
 - 新增独立的月度天数统计 UI 预览（`docs/mockups/monthly-day-stats.html`）：年月标题旁显示统计图标，悬停展开工作日、休息日、法定节假日及本月假期/补班信息，移入悬浮窗保持展开，移开后收起。支持深浅主题、2026 年月份切换、日期高亮、点击和键盘操作。仅用于方案确认，未接入正式界面或数据库。
 
 ### 文档
+- 保存已接受的未完成任务导出方案、7 项实施任务及模型交接入口（`docs/superpowers/specs/2026-10-14-task-export-design.md`、`docs/superpowers/plans/2026-10-14-task-export.md`、`docs/handoffs/2026-10-14-task-export.md`）：包含用户新追加的循环任务勾选规则、全量只读查询、统一快照和渲染、Windows PDF 保存方案、文件接口、测试与桌面验收边界。当前仅完成规划，正式业务尚未实现。
 - 记录已确认的月度统计图标方案及开发计划（`docs/superpowers/plans/2026-10-14-monthly-day-stats.md`），包含统计口径、法定日期与连休区分、年度数据缺失处理、实施步骤、验收用例，以及实现后的验证结果记录；正式界面关键截图存档于 `docs/mockups/monthly-day-stats-live-light.png`、`-dark.png`、`-estimate.png`。
 
 ## [0.9.1] — 2026-10-09
