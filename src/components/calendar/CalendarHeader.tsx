@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronDown, ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import { format } from 'date-fns'
@@ -8,6 +8,7 @@ import { useCalendarStore } from '@/store/useCalendarStore'
 import { useUIStore } from '@/store/useUIStore'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { MonthlyDayStatsPopover } from './MonthlyDayStatsPopover'
 
 /** 年月选择面板的年份范围（与农历数据表 1900–2100 对齐） */
 const PICKER_MIN_YEAR = 1900
@@ -20,7 +21,15 @@ export function CalendarHeader() {
   const [pickerYear, setPickerYear] = useState(currentDate.getFullYear())
   const [pickerView, setPickerView] = useState<'month' | 'year'>('month')
   const [pickerPos, setPickerPos] = useState<React.CSSProperties | null>(null)
+  const [statsOpen, setStatsOpen] = useState(false)
   const titleRef = useRef<HTMLButtonElement>(null)
+
+  // 天数统计入口只在普通月视图与纯日历模式显示（周视图不展示月统计）
+  const showDayStats = calendarMode || viewMode === 'month'
+
+  useEffect(() => {
+    if (!showDayStats) setStatsOpen(false)
+  }, [showDayStats])
 
   // 年份宫格页起点：以当前选中年所在 12 年页展示（‹ › 按 pickerYear ±12 整页翻动）
   const yearPageStart = Math.floor(pickerYear / 12) * 12
@@ -35,6 +44,8 @@ export function CalendarHeader() {
   // .text-foreground），面板留在 header 内会继承红/金色系导致浅色面板上文字不可读
   const openPicker = (open: boolean) => {
     if (open) {
+      // 与统计信息窗互斥，避免两个浮层重叠
+      setStatsOpen(false)
       const rect = titleRef.current?.getBoundingClientRect()
       if (rect) {
         const W = 264
@@ -64,26 +75,40 @@ export function CalendarHeader() {
   return (
     <>
     <div className="surface-header flex items-center justify-between px-4 py-2.5 border-b shrink-0">
-      {calendarMode ? (
-        <button
-          ref={titleRef}
-          onClick={() => openPicker(!pickerOpen)}
-          className="font-skin-display flex items-center gap-1.5 text-base font-bold text-foreground hover:text-primary transition-colors"
-          title="选择年月"
-        >
-          <Calendar className="h-4 w-4" />
-          {title}
-          <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform duration-200', pickerOpen && 'rotate-180')} />
-        </button>
-      ) : (
-        <button
-          onClick={goToday}
-          className="font-skin-display flex items-center gap-1.5 text-base font-bold text-foreground hover:text-primary transition-colors"
-        >
-          <Calendar className="h-4 w-4" />
-          {title}
-        </button>
-      )}
+      <div className="flex min-w-0 items-center">
+        {calendarMode ? (
+          <button
+            ref={titleRef}
+            onClick={() => openPicker(!pickerOpen)}
+            className="font-skin-display flex items-center gap-1.5 text-base font-bold text-foreground hover:text-primary transition-colors"
+            title="选择年月"
+          >
+            <Calendar className="h-4 w-4" />
+            {title}
+            <ChevronDown className={cn('h-3.5 w-3.5 text-muted-foreground transition-transform duration-200', pickerOpen && 'rotate-180')} />
+          </button>
+        ) : (
+          <button
+            onClick={goToday}
+            className="font-skin-display flex items-center gap-1.5 text-base font-bold text-foreground hover:text-primary transition-colors"
+          >
+            <Calendar className="h-4 w-4" />
+            {title}
+          </button>
+        )}
+
+        {/* 月度天数统计：图标 + 悬停信息窗，与年月选择面板互斥 */}
+        {showDayStats && (
+          <MonthlyDayStatsPopover
+            currentDate={currentDate}
+            open={statsOpen}
+            onOpenChange={(next) => {
+              setStatsOpen(next)
+              if (next) setPickerOpen(false)
+            }}
+          />
+        )}
+      </div>
 
       <div className="flex items-center gap-1.5">
         <div className="control-inset flex items-center rounded-xl p-1 mr-1">

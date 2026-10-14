@@ -20,13 +20,14 @@
 | 主题 | `src/lib/theme.tsx` | next-themes 轻量替代（`ThemeProvider` + `.dark` class + 皮肤 class + 设置表持久化） |
 | 皮肤 | `src/lib/skin.ts` | Skin 类型、3 套参考稿皮肤选项、归一化与根 class |
 | 日历状态 | `src/lib/dayCellState.ts` | 选中/今天/非本月状态优先级 |
-| 节假日 | `src/lib/holidays.ts` | 法定节假日与调休静态数据（国办通知 2025–2026），供月视图格子「休/班」角标、节日名与悬浮说明 |
+| 节假日 | `src/lib/holidays.ts` | 法定节假日与调休静态数据（国办通知 2025–2026），含法定日期与年度来源登记；供月视图格子「休/班」角标、节日名、悬浮说明与月度统计查询 |
+| 月度天数统计 | `src/lib/monthDayStats.ts` | 月度工作日 / 休息日 / 法定节假日统计纯函数（含假期区间与补班日期、未收录年度的估算标记），供年月标题旁的统计图标使用 |
 | 农历历法 | `src/lib/lunar.ts` + `lunar-data.ts` | 公历→农历换算、二十四节气、农历/公历节日（1900–2100 内置表，提取自 solarlunar 并固化）；供日历模式纯日历格子展示 |
 | 动画替代 | `src/lib/motion.tsx` | framer-motion 轻量子集（CSS keyframes） |
 | 彩带 | `src/lib/confetti.ts` | canvas-confetti 原版多波彩带（与源项目一致） |
 | 工具函数 | `src/lib/utils.ts` | `cn()`、日期格式化、打卡频率判断 |
 | UI 组件 | `src/components/ui/` | shadcn 风格组件（badge/button/dialog/input/popover/select/slider/switch/textarea/toast） |
-| 日历组件 | `src/components/calendar/` | CalendarHeader / MonthView / WeekView / DayCell / PureDayCell（日历模式纯日历格子）/ HolidayBadge / DayDetailPopup |
+| 日历组件 | `src/components/calendar/` | CalendarHeader / MonthView / WeekView / DayCell / PureDayCell（日历模式纯日历格子）/ HolidayBadge / DayDetailPopup / MonthlyDayStatsPopover（月度天数统计图标与悬浮信息窗） |
 | 侧栏组件 | `src/components/sidebar/` | RightSidebar / TaskOverviewPanel / CheckinPanel / TaskPanel |
 | 任务组件 | `src/components/tasks/` | TaskCreationSidebar / TaskEditDialog / RecycleBinDialog / 子任务/优先级/重复 |
 | 打卡组件 | `src/components/checkins/` | 定义管理 / 布尔 / 数值 / 文本 / 时间 / 打卡值弹窗 |
@@ -81,3 +82,9 @@ npm run dev          # 浏览器预览（Tauri API 降级为内存实现）
 npm run tauri dev    # 完整桌面开发（需 Rust 工具链）
 npm run tauri build  # 打包 NSIS 安装包（目标 5~10 MB）
 ```
+
+## 六、开发计划与设计记录
+
+| 功能 | 记录 | 状态 |
+| --- | --- | --- |
+| 月度天数统计图标与悬浮信息窗 | [2026-10-14 开发计划](docs/superpowers/plans/2026-10-14-monthly-day-stats.md)；[交互预览](docs/mockups/monthly-day-stats.html)；[浅色截图](docs/mockups/monthly-day-stats-live-light.png)、[深色截图](docs/mockups/monthly-day-stats-live-dark.png)、[未收录年度截图](docs/mockups/monthly-day-stats-live-estimate.png) | 已实现：悬停展开当月工作日 / 休息日 / 法定节假日与假期、补班信息，月视图与纯日历模式共用入口；`npm test` 40 项、浏览器真实界面 49 项检查通过；桌面测试窗口与发布由用户执行 |
