@@ -12,6 +12,25 @@
 - 测试窗口规则：`启动测试窗口.bat` 使用 `scripts/check-test-build-stale.mjs` 自动判断源码/配置/dist 是否新于 release exe；如有更新，先执行 `npm run tauri build -- --no-bundle` 再启动最新测试版，禁止直接启动旧 exe。
 - Codex 内部验收必须主动执行 `npm run tauri build -- --no-bundle`，并确认 `node scripts/check-test-build-stale.mjs` 输出 `0`；此后用户直接打开 `启动测试窗口.bat` 应直接启动最新版，不得再次构建。
 
+## 2026-10-14 0.10.0 正式版
+
+- 时间：2026-10-14 11:38（北京时间）
+- 分支：`codex/release-0.3.4`（发布目标：码云 `origin/main` 与 `origin/codex/release-0.3.4`）
+- 发布提交：`641bc0d`（`release: 0.10.0 月度天数统计图标与悬浮信息窗`；构建记录另行提交）
+- 版本：`0.10.0`（新增功能，次版本号递增；前端包、锁文件、Tauri 配置、Rust crate 与更新公告同步）
+- 命令：`npm test`；`npm run tauri build -- --no-bundle`；`npm run tauri build`。
+- 构建结果：成功（退出码 0）；默认前端类型检查及生产构建通过，测试版 release 编译约 1 分 46 秒，正式打包 release 编译约 1 分 43 秒，NSIS 打包成功。
+- 安装包源文件：`src-tauri/target/release/bundle/nsis/日历_0.10.0_x64-setup.exe`
+- 已交付：`安装包/日历_0.10.0_x64-setup.exe`
+- 大小：2,247,650 bytes（约 2.14 MiB）
+- SHA256：`9346B5C4ACE84D74F10080B7D7327FF949D23C56C31ADBD566C0AC16C56B0A1F`
+- 本次改动：月历标题旁新增月度天数统计图标（悬停展开工作日、休息日、法定节假日与本月假期、调休补班信息）；新增 `monthDayStats` 纯函数与节假日结构化月份查询，补齐 2025—2026 年法定日期并校正 2025 年通知文号；普通月视图与纯日历模式共用入口，与年月选择面板互斥，未收录年度明确标注为按周末估算。
+- 验证：`npm test` 40/40 通过（含新增 11 项月度统计回归：验收基线、全年恒等式、法定合计 13 天、跨月切分、未收录年度与文案格式）；`npm run build` 通过；构建产物的浏览器真实界面检查 49 项全部通过（悬停展开与移入保持、移出收起、点击与键盘聚焦、Escape 不反复展开、切月联动、与年月面板互斥、周视图不显示入口、6 套皮肤 × 深浅主题对比度、900×620 窄窗口定位、无控制台错误），关键截图见 `docs/mockups/monthly-day-stats-live-*.png`。
+- 模板校验：生成的 `installer.nsi` 对比打包前保留的 0.9.1 基线，仅 `VERSION`、`VERSIONWITHBUILD` 与 `ESTIMATEDSIZE`（5060 → 5064 KB）变化；自定义覆盖升级选项、带版本窗口标题及 `NSIS_HOOK_PREINSTALL` 保持，无其他差异。
+- 数据检查：`dist` 不含数据库文件，`bundle.resources` 未配置，`installer.nsi` 文件复制清单不含数据库或用户数据；源安装包与交付副本 SHA256 一致；安装包文件版本与产品版本均为 0.10.0。
+- 测试版时效：`node scripts/check-test-build-stale.mjs` 在测试构建及正式打包后均输出 `0`；最新主程序大小 5,185,536 bytes，SHA256 `E1670156AEB508A8CED2B83CFDA7972D40626981D013DAEE364E5CF83A0293BD`，Windows 文件版本及产品版本均为 0.10.0。
+- 注意事项：安装包与测试窗口均未由代理启动，由用户自行双击安装；源码及构建记录同步码云，安装包按既有规则保存在本地 `安装包/`，不提交编译产物。
+
 ## 2026-10-09 0.9.1 正式版
 
 - 时间：2026-10-09 16:40:22（北京时间）
