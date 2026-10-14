@@ -67,29 +67,35 @@ pub fn register_shortcuts(app: &AppHandle) -> tauri::Result<()> {
         "Ctrl+Shift+M".parse().expect("invalid shortcut"),
     ];
 
-    app.global_shortcut().on_shortcuts(shortcuts, move |app, shortcut, event| {
-        if event.state == ShortcutState::Pressed {
-            match shortcut.to_string().as_str() {
-                // Alt+Q：唤起/隐藏悬浮窗
-                "Alt+Q" => {
-                    let _ = floating::toggle(app);
-                }
-                // Ctrl+Shift+M：显示/隐藏主窗口
-                "Ctrl+Shift+M" => {
-                    if let Some(win) = app.get_webview_window("main") {
-                        match win.is_visible() {
-                            Ok(true) => {
-                                let _ = win.hide();
+    app.global_shortcut()
+        .on_shortcuts(shortcuts, move |app, shortcut, event| {
+            if event.state == ShortcutState::Pressed {
+                match shortcut.to_string().as_str() {
+                    // Alt+Q：唤起/隐藏悬浮窗
+                    "Alt+Q" => {
+                        let _ = floating::toggle(app);
+                    }
+                    // Ctrl+Shift+M：显示/隐藏主窗口
+                    "Ctrl+Shift+M" => {
+                        if let Some(win) = app.get_webview_window("main") {
+                            match win.is_visible() {
+                                Ok(true) => {
+                                    let _ = win.hide();
+                                }
+                                _ => tray::show_main_window(app),
                             }
-                            _ => tray::show_main_window(app),
                         }
                     }
+                    _ => {}
                 }
-                _ => {}
             }
-        }
-    })
-    .map_err(|e| tauri::Error::from(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())))?;
+        })
+        .map_err(|e| {
+            tauri::Error::from(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                e.to_string(),
+            ))
+        })?;
     Ok(())
 }
 
