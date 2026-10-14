@@ -1,5 +1,6 @@
 mod commands;
 mod floating;
+mod task_export;
 mod tray;
 
 use tauri::Manager;
@@ -40,6 +41,8 @@ pub fn run() {
                         | StateFlags::DECORATIONS
                         | StateFlags::FULLSCREEN,
                 )
+                // 导出 PDF 的隐藏打印窗不参与状态记忆，避免污染主窗/悬浮窗记录
+                .with_filter(|label| !task_export::is_print_window_label(label))
                 .build(),
         );
     }
@@ -54,8 +57,10 @@ pub fn run() {
             commands::set_floating_always_on_top,
             commands::quit_app,
             commands::is_test_mode,
+            task_export::export_task_pdf,
         ])
         .setup(move |app| {
+            task_export::init_state(app.handle())?;
             tray::create_tray(app.handle())?;
             // 启动时显式显示主窗口，避免 window-state 将“上次隐藏到托盘”状态恢复后无窗口可见
             tray::show_main_window(app.handle());

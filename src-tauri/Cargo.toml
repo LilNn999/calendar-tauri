@@ -4,7 +4,9 @@ version = "0.10.0"
 description = "日历 · 任务 · 打卡 —— 本地优先的桌面日历应用"
 authors = ["Calendar Team"]
 edition = "2021"
-rust-version = "1.77"
+# 校正为依赖树实际声明的最低版本（tauri-runtime-wry 2.11.4 = 1.77.2）；
+# 不顺便升级到更高的 MSRV，也不动 CLI 与 NSIS 模板。
+rust-version = "1.77.2"
 
 [lib]
 name = "calendar_tauri_lib"
@@ -24,6 +26,19 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
 png = "0.17" # 解码托盘图标（已在依赖树中，不增加编译量）
+# 保存对话框：固定 2.3.3（声明的最低 Rust 版本为 1.77.2），不跟随更高的 2.7/2.8
+tauri-plugin-dialog = "=2.3.3"
+
+# 导出 PDF 的作业等待与超时；只为 sync/time 两个特性引入，不启用网络等其它特性
+tokio = { version = "=1.53.1", features = ["sync", "time"] }
+# 本地打印窗的 file:// 地址（已在依赖树中，不增加编译量）
+url = "2"
+
+# Windows WebView2 原生打印：与 tauri-runtime-wry 2.11.4 锁定的版本保持一致，
+# 避免 COM 接口类型来自不同版本的 windows 系列 crate。
+[target.'cfg(windows)'.dependencies]
+webview2-com = "=0.38.2"
+windows-core = "=0.61.2"
 
 # 打包体积优化：LTO + strip + 尺寸优先
 [profile.release]
