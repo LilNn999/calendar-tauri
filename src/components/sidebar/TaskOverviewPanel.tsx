@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react'
-import { Plus, Pencil, Trash2, Check, X, RotateCcw, Clock, Archive } from 'lucide-react'
+import { Plus, Pencil, Trash2, Check, X, RotateCcw, Clock, Archive, Download } from 'lucide-react'
 import { RecycleBinDialog } from '@/components/tasks/RecycleBinDialog'
 import { Button } from '@/components/ui/button'
 import { TaskCreateDialog } from '@/components/tasks/TaskCreateDialog'
 import { TaskEditDialog } from '@/components/tasks/TaskEditDialog'
 import { RecurringChangeDialog } from '@/components/tasks/RecurringChangeDialog'
+import { TaskExportDialog } from '@/components/tasks/TaskExportDialog'
 import { applyRecurringDelete } from '@/components/tasks/recurringActions'
 import { NumericCheckin } from '@/components/checkins/NumericCheckin'
 import { BooleanCheckin } from '@/components/checkins/BooleanCheckin'
@@ -96,6 +97,8 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
   // 重复任务编辑/删除使用 TaskEditDialog（含范围选择）
   const [editDialogTask, setEditDialogTask] = useState<Task | null>(null)
   const [showRecycleBin, setShowRecycleBin] = useState(false)
+  // 未完成任务导出弹窗（入口在标题工具区，不影响原筛选与完成逻辑）
+  const [showExport, setShowExport] = useState(false)
 
   const today = toDateString(new Date())
 
@@ -371,6 +374,14 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
         </div>
         <div className="flex items-center gap-1">
         <button
+          onClick={() => setShowExport(true)}
+          className="h-7 w-7 flex items-center justify-center rounded-full text-muted-foreground hover:text-primary hover:bg-primary/10 transition-colors"
+          aria-label="导出未完成任务"
+          title="导出未完成任务"
+        >
+          <Download className="h-3.5 w-3.5" />
+        </button>
+        <button
           onClick={() => setShowRecycleBin(true)}
           className="h-7 w-7 flex items-center justify-center rounded-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
           title="回收箱"
@@ -480,6 +491,9 @@ export function TaskOverviewPanel({ selectedDate }: { selectedDate: string | nul
           fetchTasks(range.start, range.end)
         }}
       />
+
+      {/* 导出未完成任务（只读快照，不改动任务或项目状态） */}
+      <TaskExportDialog open={showExport} onOpenChange={setShowExport} />
     </div>
   )
 }
