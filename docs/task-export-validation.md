@@ -104,8 +104,8 @@ node scripts/check-test-build-stale.mjs # 输出 0
 | --- | --- |
 | 产物 | `src-tauri/target/release/calendar-tauri.exe` |
 | 大小 | 5,272,576 字节（约 5.03 MB） |
-| SHA256 | `1A75B8B51129188BCE91F215B99AAFD7B2CC2F5C88A729763111A5150799FC7B` |
-| 构建时间 | 2026-10-14 16:22:39 |
+| SHA256 | `0598DA641A0DA1FEC9882F038EB25EA6E98EB1CD001528F53AEC29623D3780BF` |
+| 构建时间 | 2026-10-14 16:25:30 |
 | 过期检查 | `0`，测试版为最新 |
 | 安装包 | **本轮未打包**（未运行 `npm run tauri build`，未生成、未复制 NSIS 安装包） |
 
