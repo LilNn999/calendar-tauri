@@ -96,7 +96,7 @@
 ## 5. 桌面构建与测试版
 
 ```
-npm run tauri build -- --no-bundle     # 退出码 0，约 2m13s
+npm run tauri build -- --no-bundle     # 退出码 0，约 2m01s
 node scripts/check-test-build-stale.mjs # 输出 0
 ```
 
@@ -104,13 +104,17 @@ node scripts/check-test-build-stale.mjs # 输出 0
 | --- | --- |
 | 产物 | `src-tauri/target/release/calendar-tauri.exe` |
 | 大小 | 5,272,576 字节（约 5.03 MB） |
-| SHA256 | `A235A1F92149DE04D8791B71C20673DB2263A34EA0EF3BCCAB0909F1BF2942B7` |
+| SHA256 | `1A75B8B51129188BCE91F215B99AAFD7B2CC2F5C88A729763111A5150799FC7B` |
+| 构建时间 | 2026-10-14 16:22:39 |
 | 过期检查 | `0`，测试版为最新 |
 | 安装包 | **本轮未打包**（未运行 `npm run tauri build`，未生成、未复制 NSIS 安装包） |
 
 - 代理没有运行生成的 release exe，也没有启动 `启动测试窗口.bat`：这两步按仓库规范由用户完成。
 - 可执行文件体积落在仓库目标的 5~10 MB 区间内；安装包体积未测量，因此不声称安装包达标。
 - 构建日志中唯一的警告是 `linker_messages`（MSVC 生成导入库的提示），与本功能无关，历史上同样存在。
+- 另有一处与功能无关的既有格式问题：`src-tauri/src/commands.rs` 此前未按 rustfmt 格式化，
+  使仓库级 `cargo fmt -- --check` 在本次开发前就返回非 0。已单独提交 `dea3c03`
+  只为该文件补格式（仅换行与缩进），不改逻辑，本功能文件未受影响。
 
 ## 6. 用户待实机确认项（代理不能自动执行）
 
