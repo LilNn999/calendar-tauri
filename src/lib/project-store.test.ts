@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { build } from 'esbuild'
 import { fileURLToPath } from 'node:url'
 import type { Task, CreateTaskPayload, Project } from '@shared/types'
+import type { TaskExportSnapshot } from './task-export-model.ts'
 import type { useTaskStore as TaskStoreType } from '../store/useTaskStore'
 import type { useProjectStore as ProjectStoreType } from '../store/useProjectStore'
 
@@ -21,11 +22,21 @@ const projects: Project[] = [
   { id: 2, name: '工作', createdAt: '' },
 ]
 let savedProjectId: number | null = 1
+// 记录数据变更通知次数：导出快照必须是纯只读，不能触发任何通知
+let widgetNotifyCount = 0
+let lastExportOptions: { includeRecurring: boolean } | null = null
+let exportSnapshotResult: TaskExportSnapshot | null = null
 const api = {
   tasksApi: {
     list: async (_start: string, _end: string, _scope?: number | null): Promise<Task[]> => [],
     create: async (payload: CreateTaskPayload): Promise<Task> => task(1, payload.projectId ?? 1),
     update: async (_id: number, _patch: unknown): Promise<Task> => task(1, 1),
+    exportSnapshot: async (options: { includeRecurring: boolean }): Promise<TaskExportSnapshot> => {
+      lastExportOptions = options
+      if (!exportSnapshotResult) throw new Error('测试未设置导出快照结果')
+      return exportSnapshotResult
+    },
+    toggleSubtask: async () => { widgetNotifyCount += 1 },
   },
   projectsApi: {
     list: async () => projects,
@@ -154,6 +165,60 @@ test('改名前发出的旧列表不会恢复旧名称，同时仍同步另一�
   await refresh
   assert.equal(useProjectStore.getState().projects[1].name, '最新名称')
   assert.equal(useProjectStore.getState().selectedProjectId, 1)
+})
+
+test('导出快照是只读操作：不改 tasks、不改项目选择、不发数据变更通知', async () => {
+  const existingTasks = [task(7, 2)]
+  exportSnapshotResult = {
+    capturedAt: '2026-10-14T09:30:00.000Z',
+    today: '2026-10-14',
+    includeRecurring: true,
+    tasks: [{
+      key: '7:2026-10-14',
+      taskId: 7,
+      projectId: 2,
+      projectName: '工作',
+      title: '任务 7',
+      priority: 'none',
+      dueDate: '2026-10-14',
+      notes: null,
+      recurrenceType: null,
+      isOverdue: false,
+      subtasks: [],
+    }],
+    summary: { taskCount: 1, subtaskCount: 0, completedSubtaskCount: 0 },
+  }
+  useTaskStore.setState({ tasks: existingTasks })
+  useProjectStore.setState({ selectedProjectId: 2 })
+  widgetNotifyCount = 0
+  // 前面的用例可能改过项目选择，store 订阅会按“切换项目即清空列表”的既有约定清空任务；
+  // 因此在设置完项目之后、调用导出之前取基线。
+  const tasksBeforeExport = useTaskStore.getState().tasks
+  const selectionBeforeExport = useProjectStore.getState().selectedProjectId
+
+  const result = await useTaskStore.getState().fetchExportSnapshot({ includeRecurring: true })
+
+  assert.deepEqual(lastExportOptions, { includeRecurring: true }, '必须把选项原样传给数据层')
+  assert.equal(result.tasks[0].taskId, 7)
+  assert.equal(result.summary.taskCount, 1)
+  assert.deepEqual(useTaskStore.getState().tasks, tasksBeforeExport, '导出不能覆盖可见任务列表')
+  assert.equal(useProjectStore.getState().selectedProjectId, selectionBeforeExport, '导出不能改动当前项目选择')
+  assert.equal(widgetNotifyCount, 0, '导出不能触发悬浮窗刷新或完成事件')
+})
+
+test('导出快照不勾选循环任务时只传选项，不额外改动 store', async () => {
+  exportSnapshotResult = {
+    capturedAt: '2026-10-14T09:30:00.000Z',
+    today: '2026-10-14',
+    includeRecurring: false,
+    tasks: [],
+    summary: { taskCount: 0, subtaskCount: 0, completedSubtaskCount: 0 },
+  }
+  const before = useTaskStore.getState().tasks
+  const result = await useTaskStore.getState().fetchExportSnapshot({ includeRecurring: false })
+  assert.deepEqual(lastExportOptions, { includeRecurring: false })
+  assert.deepEqual(result.tasks, [])
+  assert.equal(useTaskStore.getState().tasks, before, '空结果也不能清空可见任务列表')
 })
 
 test.after(() => {

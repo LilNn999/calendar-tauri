@@ -6,6 +6,7 @@ import { getDb, initDb, isTauri } from "@/lib/db";
 import { VERSION_NOTES } from "@/data/whatsNew";
 import { IPC, type IpcChannel } from "@shared/ipc-channels";
 import type { WidgetPrefs, ProjectScope } from "@shared/types";
+import type { TaskExportOptions, TaskPdfRequest, TaskPdfResult } from "@/lib/task-export-model";
 import { invoke as invokeCore } from "@tauri-apps/api/core";
 
 // ==================== 本地事件总线 ====================
@@ -224,6 +225,11 @@ async function invoke(channel: IpcChannel, ...args: unknown[]): Promise<unknown>
     case IPC.TASKS_EMPTY_TRASH:
       await db.emptyTrash(args[0] as ProjectScope | undefined);
       return;
+    case IPC.TASKS_EXPORT_SNAPSHOT: {
+      // 只读快照：不触发数据变更通知，也不影响当前项目选择与已完成状态。
+      const options = (args[0] ?? {}) as TaskExportOptions;
+      return db.getTaskExportSnapshot(options);
+    }
     // ---------- 打卡 ----------
     case IPC.CHECKINS_LIST_DEFS:
       return db.listCheckinDefs();
@@ -399,6 +405,14 @@ async function invoke(channel: IpcChannel, ...args: unknown[]): Promise<unknown>
       zoomFactor = 1;
       await applyZoom();
       return;
+    case IPC.SYSTEM_EXPORT_TASK_PDF: {
+      // 只有桌面版能调用原生保存与打印；浏览器不伪造成功，也不用 Blob 冒充当前任务导出。
+      if (!isTauri) {
+        throw new Error("PDF 导出请在桌面版使用");
+      }
+      const request = (args[0] ?? {}) as TaskPdfRequest;
+      return await invokeCore<TaskPdfResult>("export_task_pdf", { request });
+    }
 
     // ---------- 推送（主进程→渲染器，这里做本地/跨窗口转发） ----------
     case IPC.PUSH_WIDGET_DATA_REFRESH:

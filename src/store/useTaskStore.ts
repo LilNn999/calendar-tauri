@@ -4,6 +4,7 @@ import { IPC } from '@shared/ipc-channels'
 import { useProjectStore } from './useProjectStore'
 import { DEFAULT_PROJECT_ID, matchesProject } from '@/lib/projects'
 import type { Task, CreateTaskPayload, UpdateTaskPayload, SubtaskPatchItem } from '@shared/types'
+import type { TaskExportOptions, TaskExportSnapshot } from '@/lib/task-export-model'
 
 function notifyWidget() {
   window.electronAPI.invoke(IPC.PUSH_WIDGET_DATA_REFRESH as never).catch(() => {/* ignore */})
@@ -28,6 +29,7 @@ interface TaskState {
   splitFromDate: (taskId: number, date: string, patch: { projectId?: number; title?: string; priority?: string; notes?: string; recurrenceEnd?: string; subtasks?: SubtaskPatchItem[] }) => Promise<Task>
   getTasksForDate: (date: string) => Task[]
   restoreTask: (id: number) => Promise<void>
+  fetchExportSnapshot: (options: TaskExportOptions) => Promise<TaskExportSnapshot>
 }
 
 export const useTaskStore = create<TaskState>((set, get) => ({
@@ -169,6 +171,14 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     await tasksApi.restore(id)
     // 恢复后由调用方触发 loadData，此处不修改本地 tasks
     notifyWidget()
+  },
+
+  /**
+   * 导出快照：直接返回 DTO，不写入 tasks、不改动 selectedProjectId，
+   * 也不触发完成通知、成就检测或悬浮窗刷新——导出必须是纯只读操作。
+   */
+  fetchExportSnapshot: async (options) => {
+    return tasksApi.exportSnapshot(options)
   },
 
   getTasksForDate: (date) => {

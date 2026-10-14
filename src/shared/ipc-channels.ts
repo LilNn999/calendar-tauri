@@ -23,6 +23,7 @@ export const IPC = {
   TASKS_SPLIT_FROM_DATE: 'tasks:splitFromDate',        // 修改当天及之后（截断+创建新循环任务）
   SUBTASKS_TOGGLE: 'subtasks:toggle',                  // 切换子任务当天完成状态
   SUBTASKS_UPDATE: 'subtasks:update',                  // 全量更新任务的子任务列表（增删改）
+  TASKS_EXPORT_SNAPSHOT: 'tasks:exportSnapshot',       // 全量只读导出快照（不受月份/项目筛选限制）
 
   // 打卡定义
   CHECKINS_LIST_DEFS: 'checkins:listDefs',
@@ -70,6 +71,7 @@ export const IPC = {
   SYSTEM_ZOOM_IN: 'system:zoomIn',
   SYSTEM_ZOOM_OUT: 'system:zoomOut',
   SYSTEM_ZOOM_RESET: 'system:zoomReset',
+  SYSTEM_EXPORT_TASK_PDF: 'system:exportTaskPdf',      // 桌面原生保存：把当前快照导出为 PDF
 
   // 推送（主进程 → 渲染器）
   PUSH_TASKS_FAILED: 'push:tasksFailed',

@@ -5,6 +5,9 @@ import type {
   DailyNote, CompletionStats, TrendPoint, StreakData, WidgetPrefs, TimeRange,
   Project, ProjectScope,
 } from '@shared/types'
+import type {
+  TaskExportOptions, TaskExportSnapshot, TaskPdfRequest, TaskPdfResult,
+} from '@/lib/task-export-model'
 
 // 类型化的 invoke 封装
 function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
@@ -49,6 +52,9 @@ export const tasksApi = {
   restore: (id: number) => invoke<Task>(IPC.TASKS_RESTORE, id),
   purgeTrashed: (id: number) => invoke<void>(IPC.TASKS_PURGE_TRASHED, id),
   emptyTrash: (projectId?: ProjectScope) => invoke<void>(IPC.TASKS_EMPTY_TRASH, projectId),
+  /** 全量只读导出快照；参数固定为一个 options 对象。 */
+  exportSnapshot: (options: TaskExportOptions) =>
+    invoke<TaskExportSnapshot>(IPC.TASKS_EXPORT_SNAPSHOT, options),
 }
 
 // ==================== 打卡 API ====================
@@ -121,4 +127,7 @@ export const systemApi = {
   zoomIn: () => invoke<void>(IPC.SYSTEM_ZOOM_IN),
   zoomOut: () => invoke<void>(IPC.SYSTEM_ZOOM_OUT),
   zoomReset: () => invoke<void>(IPC.SYSTEM_ZOOM_RESET),
+  /** 桌面原生保存 PDF；浏览器环境由 ipc-bridge 返回明确的不可用错误。 */
+  exportTaskPdf: (request: TaskPdfRequest) =>
+    invoke<TaskPdfResult>(IPC.SYSTEM_EXPORT_TASK_PDF, request),
 }
