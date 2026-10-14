@@ -138,6 +138,26 @@ fn cleanup_paths(paths: &[PathBuf]) {
     }
 }
 
+/// 清理目标目录里上一次异常退出留下的同类临时 PDF。
+///
+/// 只有和 `temporary_sibling_path` 同构的名字（隐藏文件、以 `.tmp` 结尾）才会被删除，
+/// 因此不会碰到用户自己的文件；正常流程本来就删得掉，这一层只兜住“上次进程被杀”的情形。
+fn cleanup_stale_siblings(target: &Path) {
+    let Some(directory) = target.parent() else {
+        return;
+    };
+    let Ok(entries) = std::fs::read_dir(directory) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let name = entry.file_name();
+        let name = name.to_string_lossy();
+        if name.starts_with('.') && name.ends_with(".tmp") {
+            let _ = std::fs::remove_file(entry.path());
+        }
+    }
+}
+
 /// 作业 id：时间戳 + 单调计数，避免同一毫秒内的多次导出互相覆盖目录。
 fn next_job_id(counter: &Mutex<u64>) -> String {
     let stamp = SystemTime::now()
@@ -219,6 +239,8 @@ pub(crate) fn run_job(
         .and_then(|dir| dir.file_name())
         .map(|name| name.to_string_lossy().to_string())
         .unwrap_or_else(|| "job".to_string());
+    // 目标目录已确定，顺手清掉上次异常退出留下的同类临时文件。
+    cleanup_stale_siblings(&target);
     let temporary_pdf = temporary_sibling_path(&target, &job_id)?;
     let owned = vec![ctx.temp_html.clone(), temporary_pdf.clone()];
 
@@ -345,7 +367,7 @@ pub async fn export_task_pdf(
             temp_html,
         };
         let outcome = run_job(&ctx, &request);
-        // 本作业的缓存目录整目录清理，不留下临时 HTML。
+        // 成功时自己负责清掉临时 HTML；失败、取消与超时也一并清理本作业目录。
         let _ = std::fs::remove_dir_all(&job_dir);
         guard.release();
         outcome

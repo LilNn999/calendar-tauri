@@ -1,6 +1,6 @@
 [package]
 name = "calendar-tauri"
-version = "0.11.0"
+version = "0.11.1"
 description = "日历 · 任务 · 打卡 —— 本地优先的桌面日历应用"
 authors = ["Calendar Team"]
 edition = "2021"
@@ -48,3 +48,6 @@ lto = true
 opt-level = "s"
 strip = true
 incremental = false
+# 保留行号表：崩溃诊断钩子（src/diag.rs）用 Backtrace 记录调用链，
+# 没有调试信息时回溯只剩地址、无法定位。只影响体积，不影响运行性能。
+debug = 1

@@ -2,6 +2,18 @@
 
 本项目变更记录。格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本遵循语义化版本。
 
+## [0.11.1] — 2026-10-14
+
+### 修复
+- 修复点击「导出 PDF」直接闪退（0.11.0 引入）：`app.dialog()` 取的是 `tauri-plugin-dialog` 注册的状态，而 `tauri_plugin_dialog::init()` 当时未在 `lib.rs` 注册，首次调用即 panic；release 下 `panic = "abort"` 使进程立即终止，前端收不到任何错误提示。现已注册插件本体（不新增任何前端 dialog/fs 权限）。
+- 修复打印完成后闪退（0.11.0 引入）：打印文档以 `file://` 加载，而页面 `postMessage` 会进入 wry 的 IPC 处理器，那里把消息来源当 HTTP URI 解析并 `unwrap()`，`InvalidUri` 直接 panic 掉主线程。现改为导航完成后由原生侧执行就绪脚本、在脚本回调里启动打印，不再使用 `postMessage`。
+- 修复就绪脚本不生效导致的 60 秒超时：`AddScriptToExecuteOnDocumentCreated` 在窗口已经开始加载之后再注册会被静默丢弃，不能作为就绪检测的主路径。
+- 导出结束后清理隐藏临时文件；若上次异常退出留下过同类残留，下次导出会自动清理（只匹配与临时文件同构的名字，不动用户文件）。
+
+### 新增
+- 新增崩溃诊断钩子（`src-tauri/src/diag.rs`）：release 下 `panic = "abort"` 原本不留任何线索，现在 panic 会把线程、位置与调用链写入 `%APPDATA%\com.calendar.desktop\task-export.log`；release 构建保留行号表（`debug = 1`）让回溯可读。
+- 新增 3 项诊断模块测试与 1 项临时文件清理测试，Rust 测试合计 18 项。
+
 ## [0.11.0] — 2026-10-14
 
 ### 新增

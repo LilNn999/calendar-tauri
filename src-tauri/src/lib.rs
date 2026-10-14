@@ -1,4 +1,5 @@
 mod commands;
+mod diag;
 mod floating;
 mod task_export;
 mod tray;
@@ -7,6 +8,9 @@ use tauri::Manager;
 use tauri_plugin_window_state::{Builder as WindowStateBuilder, StateFlags};
 
 pub fn run() {
+    // 最先安装崩溃诊断钩子：release 使用 panic = "abort"，没有它崩溃后不留任何线索。
+    diag::install_panic_hook();
+
     let test_mode = std::env::var("CALENDAR_TEST_MODE").as_deref() == Ok("1");
 
     let mut builder = tauri::Builder::default()
@@ -17,6 +21,10 @@ pub fn run() {
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             None,
         ))
+        // 保存对话框：必须在 Rust 侧注册插件，`app.dialog()` 取的是插件注册的状态；
+        // 未注册就调用会 panic（release 下 panic = "abort"，表现为点击导出直接闪退）。
+        // 这里只注册插件本体，不新增任何前端 dialog/fs 权限。
+        .plugin(tauri_plugin_dialog::init())
         // 全局快捷键
         .plugin(tauri_plugin_global_shortcut::Builder::new().build());
 

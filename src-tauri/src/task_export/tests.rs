@@ -410,3 +410,30 @@ fn 打印窗标签不与主窗和悬浮窗冲突() {
     assert!(!is_print_window_label("main"));
     assert!(!is_print_window_label("floating"));
 }
+
+#[test]
+fn 导出前清理上次异常退出留下的临时文件但不碰用户文件() {
+    let workspace = Workspace::new("stale-sibling");
+    let target = workspace.join("未完成任务清单.pdf");
+    // 上一次作业崩溃留下的中间文件（与 temporary_sibling_path 同构）
+    let stale = workspace.join(".未完成任务清单.pdf.task-export-pdf-abc-1.tmp");
+    std::fs::write(&stale, b"%PDF-1.7\nhalf written").unwrap();
+    // 用户自己的文件，无论名字如何都不能被删
+    let user_pdf = workspace.join("同名旧版本.pdf");
+    std::fs::write(&user_pdf, b"%PDF-1.4\nuser data").unwrap();
+    let user_hidden = workspace.join(".用户隐藏配置");
+    std::fs::write(&user_hidden, b"keep me").unwrap();
+
+    let saver = FakeSaver::saving(target.clone());
+    let renderer = FakeRenderer::writing(NEW_BODY);
+    run(&workspace, "main", &saver, &renderer).unwrap();
+
+    assert!(!stale.exists(), "上次的临时文件必须被清掉");
+    assert!(user_pdf.exists(), "用户自己的 PDF 不能被删除");
+    assert!(user_hidden.exists(), "用户自己的隐藏文件不能被删除");
+    assert_eq!(
+        std::fs::read(&user_pdf).unwrap(),
+        b"%PDF-1.4\nuser data",
+        "用户文件内容不能被动过"
+    );
+}

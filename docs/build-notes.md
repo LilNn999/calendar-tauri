@@ -12,6 +12,27 @@
 - 测试窗口规则：`启动测试窗口.bat` 使用 `scripts/check-test-build-stale.mjs` 自动判断源码/配置/dist 是否新于 release exe；如有更新，先执行 `npm run tauri build -- --no-bundle` 再启动最新测试版，禁止直接启动旧 exe。
 - Codex 内部验收必须主动执行 `npm run tauri build -- --no-bundle`，并确认 `node scripts/check-test-build-stale.mjs` 输出 `0`；此后用户直接打开 `启动测试窗口.bat` 应直接启动最新版，不得再次构建。
 
+## 2026-10-14 0.11.1 修复版
+
+- 时间：2026-10-14 17:34（北京时间）
+- 分支：`codex/release-0.3.4`（发布目标：码云 `origin/codex/release-0.3.4` 与 `origin/main`）
+- 版本：`0.11.1`（纯修复，修订号递增；前端包、锁文件、Tauri 配置、Rust crate 与更新公告同步）
+- 命令：`npm test`；`npm run build`；`cargo test`；`cargo fmt -- --check`；`npm run tauri build`。
+- 构建结果：成功（退出码 0）；NSIS 打包成功。
+- 安装包源文件：`src-tauri/target/release/bundle/nsis/日历_0.11.1_x64-setup.exe`
+- 已交付：`安装包/日历_0.11.1_x64-setup.exe`
+- 大小：2,318,759 bytes（约 2.21 MiB）
+- SHA256：`A8FD3C4527FE0F0142240FA9DB5AE3C677201725ABBDABE25057E1A0D389C31C`（源与副本一致）
+- 测试版主程序：5,406,208 bytes，SHA256 `B2944A7099BBDA0C4DA2B4D7671536615D454D41A38F78E84B3D2D6CF8888E86`，文件版本与产品版本均为 0.11.1；过期检查输出 `0`。
+- 本次改动：**修复 0.11.0 的两处导出闪退**。①`app.dialog()` 依赖 `tauri-plugin-dialog` 注册的状态，而 `tauri_plugin_dialog::init()` 未在 `lib.rs` 注册，首次调用即 panic；`panic = "abort"` 让进程立即终止，所以表现为“一点导出就闪退”。②打印文档以 `file://` 加载，页面 `postMessage` 会进入 wry 的 IPC 处理器，那里把消息来源当 HTTP URI 解析并 `unwrap()`，`InvalidUri` panic 掉主线程，所以表现为“打印完成后闪退”。现改为导航完成后由原生侧执行就绪脚本、在脚本回调里启动打印，不再使用 `postMessage`；同时修掉 `AddScriptToExecuteOnDocumentCreated` 注册过晚导致就绪脚本被静默丢弃、导出白等 60 秒超时的问题。另加导出结束后清理隐藏临时文件的逻辑（含上次异常退出残留的兜底清理）。
+- 本次同时新增崩溃诊断能力：`src-tauri/src/diag.rs` 安装 panic 钩子，把线程、位置与调用链写入 `%APPDATA%\com.calendar.desktop\task-export.log`；release 保留行号表（`debug = 1`）以便回溯可读。**排查线上闪退时先看这个日志文件。**
+- 验证：`npm test` 117/117 通过；`cargo test` 18/18 通过（含 3 项诊断模块测试与 1 项临时文件清理测试，后者断言不会误删用户文件）；`npm run build` 通过；`cargo fmt -- --check` 退出码 0。用户在测试窗口实测：系统保存对话框正常弹出、导出成功且无闪退，产物为 2 页 A4 PDF（149,953 bytes），页码、中文、优先级、逾期标记、备注与子任务齐全，无 URL 与本地路径，缓存目录与桌面无临时文件残留。
+- 模板校验：生成的 `installer.nsi` 对比打包前保留的 0.11.0 基线，**仅 3 行变化**——`VERSION`（0.11.0 → 0.11.1）、`VERSIONWITHBUILD`（0.11.0.0 → 0.11.1.0）与 `ESTIMATEDSIZE`（5148 → 5279 KB）；946 行文件其余部分完全一致，自定义覆盖升级选项、带版本窗口标题与 `NSIS_HOOK_PREINSTALL` 均保持。
+- 数据检查：`dist` 不含数据库文件，`bundle.resources` 未配置；安装包不携带用户数据。
+- 体积说明：安装包由 2.18 MiB 增至 2.21 MiB（`debug = 1` 与诊断钩子），仍远低于仓库 5~10 MB 目标，属全系列一贯水平。
+- 注意事项：打包前测试窗口（PID 29852）仍在运行并锁住 release exe，经确认后结束该进程再打包；安装包与测试窗口均未由代理启动，由用户自行双击安装。
+- **待用户确认**：本轮修复由用户在测试窗口实测通过，但**尚未由用户安装 0.11.1 正式包复验**；另外测试库当时没有未完成的循环任务，勾选「包含循环任务」的导出路径本轮未被实际覆盖。
+
 ## 2026-10-14 0.11.0 正式版
 
 - 时间：2026-10-14 16:38（北京时间）

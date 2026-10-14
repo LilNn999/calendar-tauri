@@ -2,7 +2,8 @@
 
 - 功能：从任务总览导出全部未完成任务及全部子任务为 PDF，循环任务可选（默认不导出）。
 - 依据：[需求设计](../superpowers/specs/2026-10-14-task-export-design.md) · [实施计划](../superpowers/plans/2026-10-14-task-export.md) · [快速交接](../handoffs/2026-10-14-task-export.md)。
-- 本轮实现范围：任务 1~7 的代码全部落地。**原生保存与视觉验收仍需用户在桌面测试窗口确认**，见文末。
+- 当前发布版本：**0.11.1**（0.11.0 存在两处导出闪退，已在 0.11.1 修复，见 §8）。
+- 状态：原生导出已由用户在测试窗口实测成功；**0.11.1 正式包尚未由用户安装复验**，勾选「包含循环任务」的导出路径也还没被实际跑过。
 
 ## 1. 检查结论一览
 
@@ -11,13 +12,15 @@
 | 前端测试 | `npm test` | 通过：117 个用例，0 失败 |
 | 前端构建（含类型检查） | `npm run build` | 通过，退出码 0 |
 | Rust 格式 | `cargo fmt --manifest-path src-tauri/Cargo.toml -- --check` | 通过，退出码 0 |
-| Rust 单元测试 | `cargo test --manifest-path src-tauri/Cargo.toml task_export` | 通过：14 个用例，0 失败 |
+| Rust 单元测试 | `cargo test --manifest-path src-tauri/Cargo.toml` | 通过：18 个用例，0 失败 |
 | Rust 编译 | `cargo check --manifest-path src-tauri/Cargo.toml` | 通过，无警告 |
 | 桌面 release 构建（不含安装包） | `npm run tauri build -- --no-bundle` | 通过，退出码 0，见 §5 |
-| NSIS 安装包打包 | `npm run tauri build` | 通过，退出码 0，产物 `安装包/日历_0.11.0_x64-setup.exe`，见 §5 |
+| NSIS 安装包打包 | `npm run tauri build` | 通过，退出码 0，产物 `安装包/日历_0.11.1_x64-setup.exe`，见 §5 |
 | 测试版过期检查 | `node scripts/check-test-build-stale.mjs` | 输出 `0`（测试版为最新），见 §5 |
 | 浏览器渲染与分页核对 | `node scripts/verify-task-export-render.mjs` + 无头 Chrome 打印 | 通过，见 §4 |
-| 原生 WebView2 保存与弹窗操作 | 用户在测试窗口操作 | **待用户实机确认** |
+| 原生保存、弹窗与实机 PDF | 用户在测试窗口实测 | **已通过**（0.11.1，2 页 A4、中文与页码正常） |
+| 勾选「包含循环任务」的原生导出 | 用户在测试窗口实测 | **未覆盖**（测试库当时没有未完成的循环任务） |
+| 安装 0.11.1 正式包后复验 | 用户操作 | **待用户确认** |
 
 ## 2. 自动测试覆盖（已通过）
 
@@ -102,73 +105,112 @@ npm run tauri build                    # 退出码 0，产出 NSIS 安装包
 node scripts/check-test-build-stale.mjs # 输出 0
 ```
 
-### 测试版主程序
+### 测试版主程序（0.11.1）
 
 | 项 | 值 |
 | --- | --- |
 | 产物 | `src-tauri/target/release/calendar-tauri.exe` |
-| 大小 | 5,271,552 字节（约 5.03 MB） |
-| SHA256 | `CF8F51455BC89BDE631B76DC9AD2F21028D18D90A6EF21637E738238402B7707` |
-| 版本 | 文件版本与产品版本均为 0.11.0 |
+| 大小 | 5,406,208 字节（约 5.16 MB） |
+| SHA256 | `B2944A7099BBDA0C4DA2B4D7671536615D454D41A38F78E84B3D2D6CF8888E86` |
+| 版本 | 文件版本与产品版本均为 0.11.1 |
 | 过期检查 | `0`，测试版为最新 |
 
-### NSIS 安装包（0.11.0）
+### NSIS 安装包（0.11.1）
 
 | 项 | 值 |
 | --- | --- |
-| 源文件 | `src-tauri/target/release/bundle/nsis/日历_0.11.0_x64-setup.exe` |
-| 已交付 | `安装包/日历_0.11.0_x64-setup.exe` |
-| 大小 | 2,280,804 字节（约 2.18 MiB） |
-| SHA256 | `4456A84D072D230C03FFB39A0807EBAD33DE2A55EE0C3A53DD8F5380F1B58D2B`（源与副本一致） |
-| 版本 | 文件版本与产品版本均为 0.11.0 |
+| 源文件 | `src-tauri/target/release/bundle/nsis/日历_0.11.1_x64-setup.exe` |
+| 已交付 | `安装包/日历_0.11.1_x64-setup.exe` |
+| 大小 | 2,318,759 字节（约 2.21 MiB） |
+| SHA256 | `A8FD3C4527FE0F0142240FA9DB5AE3C677201725ABBDABE25057E1A0D389C31C`（源与副本一致） |
+| 版本 | 文件版本与产品版本均为 0.11.1 |
 
-- 模板校验：生成的 `installer.nsi` 对比打包前保留的 0.10.0 基线，**仅 3 行变化**——
-  `VERSION`、`VERSIONWITHBUILD`、`ESTIMATEDSIZE`（5064 → 5148 KB）；946 行文件其余部分完全一致，
+- 模板校验：生成的 `installer.nsi` 对比打包前保留的 0.11.0 基线，**仅 3 行变化**——
+  `VERSION`、`VERSIONWITHBUILD`、`ESTIMATEDSIZE`（5148 → 5279 KB）；946 行文件其余部分完全一致，
   自定义覆盖升级选项、带版本窗口标题与 `NSIS_HOOK_PREINSTALL` 均保持。
 - 数据检查：`dist` 不含任何数据库文件，`bundle.resources` 未配置，安装包不携带用户数据。
 - 代理没有运行生成的 release exe，也没有启动 `启动测试窗口.bat`：这两步按仓库规范由用户完成。
 - 打包时测试窗口正在运行并锁住 release exe（首次构建报 `failed to remove file`，退出码 1），
   经用户确认后结束该测试版进程再打包成功；正式版进程未受影响。
-- 安装包体积约 2.18 MiB，低于仓库「5~10 MB」的目标区间；这是全系列安装包一贯水平
-  （0.9.1 为 2.14 MiB、0.10.0 为 2.14 MiB），未因此调整目标或改变打包配置。
+- 安装包体积约 2.21 MiB，低于仓库「5~10 MB」的目标区间；这是全系列安装包一贯水平
+  （0.9.1 与 0.10.0 均约 2.14 MiB、0.11.0 约 2.18 MiB），未因此调整目标或改变打包配置。
+- 本次为修复 0.11.0 的两处闪退新增了崩溃诊断钩子与 release 行号表（`debug = 1`），
+  安装包由 2.18 MiB 增至 2.21 MiB。
 - 构建日志中唯一的警告是 `linker_messages`（MSVC 生成导入库的提示），与本功能无关，历史上同样存在。
 - 另有一处与功能无关的既有格式问题：`src-tauri/src/commands.rs` 此前未按 rustfmt 格式化，
   使仓库级 `cargo fmt -- --check` 在本次开发前就返回非 0。已单独提交 `dea3c03`
   只为该文件补格式（仅换行与缩进），不改逻辑，本功能文件未受影响。
 
-## 6. 用户待实机确认项（代理不能自动执行）
+## 6. 仍需用户确认的项（代理不能自动执行）
 
-请在测试窗口按以下步骤确认，并把结果补记到本文档：
+已在测试窗口实测通过（0.11.1）：下载图标能打开弹窗、系统保存对话框正常弹出、导出成功且不闪退，
+产物为 2 页 A4 PDF，中文、页码、优先级、逾期标记、备注与子任务齐全，桌面与缓存无临时文件残留。
 
-1. 打开 `启动测试窗口.bat`（自动使用 `CALENDAR_TEST_MODE=1` 与 `test-calendar.db`，不影响正式库）。
-2. 任务总览标题右侧的下载图标可打开导出弹窗；文案与样式应与
-   [`task-export-dialog-light.png`](task-export-dialog-light.png) /
-   [`task-export-dialog-dark.png`](task-export-dialog-dark.png) 一致。
-3. **默认不勾选循环任务**：预览里完全没有循环任务；勾选后预览增多一条「最近一次待完成」的循环任务，
-   底部计数同步变化。
-4. 点击「导出 PDF」弹出系统保存对话框，标题「导出未完成任务」，筛选「PDF 文档」。
-5. **取消保存**：回到弹窗，预览与选项都保留，没有错误或成功提示，没有写出文件。
-6. 选择位置保存成功：提示「PDF 已导出：<路径>」；导出的 PDF 是 A4，
-   含页码页脚、中文正常、已完成子任务有勾选与划线。
-7. 覆盖已存在的同名文件：旧文件被新文件替换，不残留临时文件。
-8. 导出期间：按钮显示「正在导出…」，选项、刷新与关闭被禁用；重复点击不会产生第二个作业。
-9. 观察导出过程：没有额外窗口闪现、不抢焦点、不进入任务栏；主窗口与悬浮窗保持正常。
-10. 完成状态核对：导出前后在月视图、周视图、日期详情、任务总览、悬浮窗五个入口抽查同一任务，
-    状态与「完成母任务再取消后子任务恢复各自真实状态」的行为均不变。
-11. 确认测试模式使用的是 `test-calendar.db`，正式库 `calendar.db` 未被打开或改写。
+仍需确认：
+
+1. 安装 `安装包/日历_0.11.1_x64-setup.exe`（正式包）后重跑一次导出，确认正式环境同样正常。
+2. **勾选「包含循环任务」再导出**：测试库当时没有未完成的循环任务，这条路径还没被实际跑过。
+   勾选后预览应多出一条「最近一次待完成」的循环任务，且计数同步变化。
+3. 取消保存后回到弹窗，预览与选项保留、无错误或成功提示、不写文件。
+4. 覆盖已存在的同名文件：旧文件被新文件替换，不残留临时文件。
+5. 导出期间按钮显示「正在导出…」，选项、刷新与关闭被禁用；重复点击不会产生第二个作业。
+6. 导出过程没有额外窗口闪现、不抢焦点、不进入任务栏；主窗口与悬浮窗保持正常。
+7. 导出前后在月视图、周视图、日期详情、任务总览、悬浮窗五个入口抽查同一任务，
+   状态与「完成母任务再取消后子任务恢复各自真实状态」的行为均不变。
+8. 确认测试模式使用的是 `test-calendar.db`，正式库 `calendar.db` 未被打开或改写。
 
 ## 7. 未验证与已知限制
 
-- **原生 WebView2 打印未实机验证**：`PrintToPdf`、隐藏打印窗、作业超时与清理只有编译与单元测试证据。
-- **CSS `@page` 页码在 WebView2 内核下的表现未实机确认**：若内核过旧会丢失页脚页码，
-  此时应在 §6 记录，并考虑把页码改为原生侧负责。
-- **原生与 CSS 边距是否叠加未实机确认**：已把原生边距设为 0 以避免叠加，仍需实机量取。
+- **勾选「包含循环任务」的原生导出未实测**：其余原生路径已实测通过，这一条分支还缺一次实跑。
+- **0.11.1 正式包未复验**：本轮实测是在测试版上完成的。
+- **原生与 CSS 边距是否叠加**：已把原生边距设为 0 以避免叠加，实测排版正常，
+  但未用工具量取具体毫米数。
 - 浏览器开发模式下导出按钮点击后显示「PDF 导出请在桌面版使用」，不会伪造成功，
   也不会用 Blob 或示例 PDF 冒充当前任务导出。
 - 循环任务的搜索窗口为 `max(今天, 开始日期)+62 天`：开始日期在更远的未来时，
   该循环任务本轮不导出（与「只导出最近一次待完成」的口径一致）。
-- 安装包已打包并交付（`安装包/日历_0.11.0_x64-setup.exe`，2.18 MiB），但**体积低于仓库
-  「5~10 MB」目标区间**：这是全系列安装包的一贯水平（0.9.1 与 0.10.0 均为 2.14 MiB），
-  未在本轮为此调整打包配置或目标。新增依赖为 `tauri-plugin-dialog 2.3.3`
+- 安装包已打包并交付（`安装包/日历_0.11.1_x64-setup.exe`，2.21 MiB），但**体积低于仓库
+  「5~10 MB」目标区间**：这是全系列安装包的一贯水平（0.9.1 与 0.10.0 均约 2.14 MiB、
+  0.11.0 约 2.18 MiB），未因此调整打包配置或目标。新增依赖为 `tauri-plugin-dialog 2.3.3`
   （含 `rfd`、`tauri-plugin-fs`）、`webview2-com`、`windows-core`、`tokio(sync/time)`、`url`，
-  均在原依赖树内或为小体积 crate（主程序 5.19 MB → 5.27 MB，增加约 86 KB）。
+  均在原依赖树内或为小体积 crate。
+
+## 8. 0.11.0 的两处闪退：根因与修复
+
+0.11.0 上线后用户实测「一点导出就闪退」，修复过程中又暴露出第二处「打印完成后闪退」。
+两处都是 **panic → `panic = "abort"` → 进程立即终止**，所以前端收不到任何错误提示。
+定位手段是新增的崩溃诊断钩子（`src-tauri/src/diag.rs`），它把 panic 位置与调用链写进
+`%APPDATA%\com.calendar.desktop\task-export.log`。
+
+### 8.1 点击导出即闪退：插件未注册
+
+```
+payload: state() called before manage() for tauri_plugin_dialog::desktop::Dialog<...>
+  13: tauri_plugin_dialog::impl$0::dialog      tauri-plugin-dialog-2.3.3\src\lib.rs:70
+  14: calendar_tauri_lib::task_export::impl$3::select   task_export.rs:282
+```
+
+`DialogExt::dialog()` 的实现是 `app.state::<Dialog<R>>()`，取的是插件注册时 `app.manage()`
+塞进去的状态。实现时误把设计文档的「Rust 内调用、通常不需要新增前端权限」理解为
+「不需要注册插件」，于是 `lib.rs` 漏了 `tauri_plugin_dialog::init()`，首次调用 `app.dialog()`
+直接 panic。
+
+修复：在 `lib.rs` 注册 `tauri_plugin_dialog::init()`。插件本体注册会顺带注册 IPC 命令，
+但 `capabilities/default.json` 未授予任何 `dialog:*` 权限，前端仍然调不到，权限面没有扩大。
+
+### 8.2 打印完成后闪退：`file://` 页面的 IPC 处理器
+
+```
+payload: called `Result::unwrap()` on an `Err` value: http::Error(InvalidUri(InvalidFormat))
+  11: wry::webview2::attach_ipc_handler::closure$0     wry-0.55.1\src\webview2\mod.rs:910
+thread: ThreadId(1)     ← 主线程
+```
+
+wry 的 IPC 处理器里执行 `Request::builder().uri(url).body(js).unwrap()`，其中 `url` 取自
+`args.Source()`。打印文档用 `file://` 加载，来源是 `file:///C:/...`，不是合法 HTTP URI，
+`unwrap()` 直接 panic 掉主线程。**只要页面 origin 是 `file://`，`postMessage` 就必然崩主线程。**
+
+修复：不再用 `postMessage` 汇报就绪，改为导航完成后由原生侧执行就绪脚本，并在脚本回调里启动打印。
+顺带修掉一个隐蔽问题：`AddScriptToExecuteOnDocumentCreated` 在窗口已开始加载之后再注册会被
+静默丢弃，不能作为就绪检测的主路径——这曾导致导出白等 60 秒后超时。
+
