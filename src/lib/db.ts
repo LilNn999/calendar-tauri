@@ -2,6 +2,7 @@ import Database from "@tauri-apps/plugin-sql";
 import { invoke as invokeCore } from "@tauri-apps/api/core";
 import { DEFAULT_PROJECT_ID, DEFAULT_PROJECT_NAME, PROJECT_SELECTION_KEY, matchesProject, normalizeProjectName } from "@/lib/projects";
 import { migrateProjects } from "@/lib/project-migration";
+import { matchesRecurrence } from "@/lib/task-recurrence";
 import {
   addDays, eachDayOfInterval, format, isAfter, isBefore,
   parseISO, subDays,
@@ -12,6 +13,12 @@ import type {
   TimeRange, TrendPoint, UpdateTaskPayload, UpsertCheckinEntryPayload,
   Project, ProjectScope,
 } from "@/shared/types";
+import {
+  buildTaskExportSnapshot,
+  type TaskExportOptions,
+  type TaskExportSnapshot,
+} from "@/lib/task-export-model";
+import { readTaskExportRaw } from "@/lib/task-export-query";
 
 export const isTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -51,17 +58,8 @@ function todayStr(): string {
   return format(new Date(), "yyyy-MM-dd");
 }
 
-export function matchesRecurrence(date: Date, startDate: Date, type: string): boolean {
-  const dow = date.getDay();
-  switch (type) {
-    case "daily": return true;
-    case "weekday": return dow >= 1 && dow <= 5;
-    case "weekend": return dow === 0 || dow === 6;
-    case "weekly": return date.getDay() === startDate.getDay();
-    case "monthly": return date.getDate() === startDate.getDate();
-    default: return false;
-  }
-}
+// 循环匹配规则已提取到 task-recurrence.ts，这里重新导出以保持既有导入入口不变。
+export { matchesRecurrence } from "@/lib/task-recurrence";
 
 function expandRecurringTasks(
   tasks: Task[],
@@ -178,6 +176,8 @@ export interface Db {
   getSelectedProjectId(): Promise<ProjectScope>;
   selectProject(projectId: ProjectScope): Promise<void>;
   listTasks(start: string, end: string, projectId?: ProjectScope): Promise<TaskListItem[]>;
+  /** 全量只读导出快照：不做月份/项目筛选，也不触发失败标记等写库副作用。 */
+  getTaskExportSnapshot(options: TaskExportOptions): Promise<TaskExportSnapshot>;
   createTask(payload: CreateTaskPayload): Promise<Task>;
   updateTask(id: number, patch: UpdateTaskPayload): Promise<Task>;
   updateOccurrence(taskId: number, date: string, patch: { isCompleted?: boolean; isFailed?: boolean }): Promise<void>;
@@ -871,6 +871,21 @@ export class SqliteDb implements Db {
     await this.checkAndMarkFailed();
     const raw = await this.listRaw(start, end, projectId);
     return buildTaskList(raw, start, end);
+  }
+
+  /**
+   * 导出快照：走独立的只读查询，不调用 checkAndMarkFailed，
+   * 也不受当前月份与所选项目影响。捕获一次时间作为 capturedAt/today。
+   */
+  async getTaskExportSnapshot(options: TaskExportOptions): Promise<TaskExportSnapshot> {
+    if (!this.inited) await this.connect();
+    const capturedAt = new Date();
+    const raw = await readTaskExportRaw(
+      { select: <T>(query: string, values?: unknown[]) => this.db.select<T>(query, values) },
+      options,
+      capturedAt,
+    );
+    return buildTaskExportSnapshot(raw, options);
   }
 
   async createTask(payload: CreateTaskPayload): Promise<Task> {
@@ -1567,6 +1582,42 @@ export class MemoryDb implements Db {
   async listTasks(start: string, end: string, projectId?: ProjectScope): Promise<TaskListItem[]> {
     this.checkAndMarkFailed();
     return buildTaskList(this.listRaw(start, end, projectId), start, end);
+  }
+
+  /**
+   * 导出快照：用完整私有集合构造与 SQLite 相同的 raw，再交给同一个纯选择器，
+   * 不调用 checkAndMarkFailed，也不修改任何任务或子任务状态。
+   */
+  async getTaskExportSnapshot(options: TaskExportOptions): Promise<TaskExportSnapshot> {
+    this.ensureSeeded();
+    if (typeof options.includeRecurring !== "boolean") {
+      throw new Error("导出选项 includeRecurring 必须是布尔值");
+    }
+    const capturedAt = new Date();
+    const today = format(capturedAt, "yyyy-MM-dd");
+    const tasks = this.tasks.filter(
+      (task) => !task.deletedAt && !task.isCompleted && (!task.recurrenceType || options.includeRecurring),
+    );
+    const taskIds = new Set(tasks.map((task) => task.id));
+    const subtasks = this.subtasks.filter((subtask) => taskIds.has(subtask.taskId));
+    const subtaskIds = new Set(subtasks.map((subtask) => subtask.id));
+    return buildTaskExportSnapshot(
+      {
+        tasks: tasks.map((task) => ({ ...task })),
+        // 只保留仍有意义的状态记录：循环任务今天及之后、子任务同一起始日期。
+        occurrences: this.taskOccurrences
+          .filter((occurrence) => taskIds.has(occurrence.taskId) && occurrence.date >= today)
+          .map((occurrence) => ({ ...occurrence })),
+        subtasks: subtasks.map((subtask) => ({ ...subtask })),
+        subtaskOccurrences: this.subtaskOccurrences
+          .filter((occurrence) => subtaskIds.has(occurrence.subtaskId) && occurrence.date >= today)
+          .map((occurrence) => ({ ...occurrence })),
+        capturedAt: capturedAt.toISOString(),
+        today,
+        projects: this.projects.map((project) => ({ ...project })),
+      },
+      options,
+    );
   }
 
   async createTask(payload: CreateTaskPayload): Promise<Task> {
