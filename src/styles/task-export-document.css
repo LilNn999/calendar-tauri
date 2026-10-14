@@ -1,0 +1,413 @@
+/*
+ * 未完成任务清单文档样式（唯一排版来源）。
+ *
+ * 这份 CSS 会被 renderTaskExportHtml 内联进静态 HTML，预览 iframe 与原生打印共用同一份排版。
+ * 约束：
+ * - 使用固定的文档浅色令牌，与应用深浅主题解耦，打印始终是白底黑字；
+ * - 不引用任何外部字体、图片或脚本，A4 竖版边距由 @page 决定；
+ * - 允许长清单自然分页，但不把整份清单或单个任务块强行锁在一页内。
+ */
+
+.paper {
+  color-scheme: light;
+
+  /* 文档专属语义令牌：只在这里定义颜色，渲染组件不散落颜色值 */
+  --paper-bg: #ffffff;
+  --paper-fg: #141414;
+  --paper-muted: #737373;
+  --paper-subtle: #fbfcfd;
+  --paper-inset: #f3f4f6;
+  --paper-border: #e6e9ed;
+  --paper-accent: #2f6fd6;
+  --paper-accent-bg: rgb(47 111 214 / 0.1);
+  --paper-success: #137a4f;
+  --paper-success-bg: #eaf8f0;
+  --paper-high: #d64545;
+  --paper-high-bg: #fdecec;
+  --paper-medium: #c27000;
+  --paper-medium-bg: #fff3e0;
+  --paper-low: #5f7184;
+  --paper-low-bg: #eef1f5;
+
+  background: var(--paper-bg);
+  color: var(--paper-fg);
+  font: 12px/1.65 "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.paper * {
+  box-sizing: border-box;
+}
+
+.paper svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+
+/* ---------- 文档页眉 ---------- */
+.paper-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 9px;
+  color: var(--paper-muted);
+}
+
+.paper-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--paper-accent);
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.paper h1 {
+  margin: 13px 0 6px;
+  font-size: 25px;
+  font-weight: 650;
+  letter-spacing: -0.7px;
+  line-height: 1.4;
+}
+
+.paper-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 15px;
+  color: var(--paper-muted);
+  font-size: 9px;
+}
+
+/* ---------- 统计摘要 ---------- */
+.paper-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  background: var(--paper-subtle);
+  border: 1px solid var(--paper-border);
+  border-radius: 8px;
+  padding: 11px 0;
+  margin-top: 20px;
+}
+
+.paper-stat {
+  text-align: center;
+  padding: 0 5px;
+}
+
+.paper-stat + .paper-stat {
+  border-left: 1px solid var(--paper-border);
+}
+
+.paper-stat strong {
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.paper-stat:last-child strong {
+  color: var(--paper-success);
+}
+
+.paper-stat span {
+  display: block;
+  font-size: 9px;
+  color: var(--paper-muted);
+  margin-top: 4px;
+}
+
+/* ---------- 日期分组 ---------- */
+.paper-group {
+  margin-top: 18px;
+}
+
+.paper-date {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 600;
+  /* 日期标题不能孤立在页底：标题与紧随其后的任务块一起分页 */
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+.paper-date::after {
+  content: "";
+  height: 1px;
+  background: var(--paper-border);
+  flex: 1;
+}
+
+.paper-date-tag {
+  font-size: 8px;
+  font-weight: 500;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--paper-accent-bg);
+  color: var(--paper-accent);
+}
+
+.paper-date-tag.overdue {
+  background: var(--paper-high-bg);
+  color: var(--paper-high);
+}
+
+/* ---------- 母任务 ---------- */
+.paper-task {
+  border: 1px solid var(--paper-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-top: 8px;
+  /*
+   * 尽量整块显示，但超过一页时必须允许内容自行分页：
+   * 不用裁切内容的方式锁死高度，也不对整个清单避分页。
+   */
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.paper-task.long {
+  break-inside: auto;
+  page-break-inside: auto;
+}
+
+.paper-task-heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+.paper-task-number {
+  color: var(--paper-muted);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  line-height: 21px;
+}
+
+.paper-task h3 {
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0;
+  flex: 1;
+  line-height: 1.7;
+  white-space: pre-wrap;
+}
+
+.paper-priority {
+  font-size: 8px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+  margin-top: 1px;
+}
+
+.paper-priority.high {
+  color: var(--paper-high);
+  background: var(--paper-high-bg);
+}
+
+.paper-priority.medium {
+  color: var(--paper-medium);
+  background: var(--paper-medium-bg);
+}
+
+.paper-priority.low {
+  color: var(--paper-low);
+  background: var(--paper-low-bg);
+}
+
+.paper-task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px 12px;
+  margin: 5px 0 0 25px;
+  color: var(--paper-muted);
+  font-size: 10px;
+}
+
+.paper-project {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.paper-project svg {
+  width: 11px;
+  height: 11px;
+}
+
+.paper-recurrence {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--paper-accent-bg);
+  color: var(--paper-accent);
+}
+
+.paper-progress {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.paper-progress b {
+  font-weight: 500;
+  color: var(--paper-success);
+}
+
+.paper-note {
+  margin: 8px 0 0 25px;
+  font-size: 10px;
+  color: var(--paper-muted);
+  white-space: pre-wrap;
+}
+
+/* ---------- 子任务 ---------- */
+.paper-subtasks {
+  list-style: none;
+  padding: 0 0 0 11px;
+  margin: 12px 0 0 27px;
+  border-left: 1px solid var(--paper-border);
+}
+
+.paper-subtasks li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 11px;
+  /* 单个子任务行不能被裁掉或断裂 */
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.paper-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 12px;
+  width: 12px;
+  border: 1px solid var(--paper-border);
+  border-radius: 3px;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.paper-subtask-title {
+  flex: 1;
+  white-space: pre-wrap;
+}
+
+.paper-subtasks .done .paper-checkbox {
+  background: var(--paper-success-bg);
+  border-color: var(--paper-success);
+  color: var(--paper-success);
+}
+
+.paper-checkbox svg {
+  width: 9px;
+  height: 9px;
+  stroke-width: 2.4;
+}
+
+.paper-subtasks .done .paper-subtask-title {
+  text-decoration: line-through;
+  color: var(--paper-muted);
+}
+
+.paper-state {
+  font-size: 8px;
+  color: var(--paper-muted);
+  white-space: nowrap;
+  padding-top: 1px;
+}
+
+.paper-subtasks .done .paper-state {
+  color: var(--paper-success);
+}
+
+/* ---------- 页脚与空态 ---------- */
+.paper-footer {
+  border-top: 1px solid var(--paper-border);
+  margin-top: 14px;
+  padding-top: 10px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 15px;
+  font-size: 8px;
+  color: var(--paper-muted);
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+.paper-footer p {
+  margin: 0;
+}
+
+.paper-footer > span {
+  white-space: nowrap;
+}
+
+.paper-empty {
+  padding: 45px 0;
+  color: var(--paper-muted);
+  text-align: center;
+}
+
+/* ---------- 分页 ---------- */
+/*
+ * A4 竖版：上 14mm、左右 15mm、下 16mm。
+ * 页码使用 CSS 页边距内容；原生打印侧把引擎默认页眉页脚关闭，避免两边叠加。
+ */
+@page {
+  size: A4;
+  margin: 14mm 15mm 16mm;
+
+  @bottom-center {
+    content: "第 " counter(page) " 页 / 共 " counter(pages) " 页";
+    font: 8px/1.4 "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+    color: #737373;
+  }
+}
+
+@media print {
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+  }
+
+  .paper {
+    width: auto !important;
+    max-width: none !important;
+    border: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .paper-task,
+  .paper-summary,
+  .paper-subtasks li,
+  .paper-footer {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
