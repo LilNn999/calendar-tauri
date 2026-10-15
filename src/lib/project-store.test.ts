@@ -173,6 +173,7 @@ test('导出快照是只读操作：不改 tasks、不改项目选择、不发�
     capturedAt: '2026-10-14T09:30:00.000Z',
     today: '2026-10-14',
     includeRecurring: true,
+    project: null,
     tasks: [{
       key: '7:2026-10-14',
       taskId: 7,
@@ -211,6 +212,7 @@ test('导出快照不勾选循环任务时只传选项，不额外改动 store',
     capturedAt: '2026-10-14T09:30:00.000Z',
     today: '2026-10-14',
     includeRecurring: false,
+    project: null,
     tasks: [],
     summary: { taskCount: 0, subtaskCount: 0, completedSubtaskCount: 0 },
   }

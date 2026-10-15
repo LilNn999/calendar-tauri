@@ -548,3 +548,43 @@ test("普通任务不受 sortOrder 影响：子任务按 sortOrder 与 id 稳定
     [0, 1, 2],
   );
 });
+
+test("指定导出项目只保留该项目的母子任务并重新统计", () => {
+  const raw = makeRaw({
+    tasks: [
+      { id: 1, title: "个人任务", dueDate: "2026-10-14", projectId: 1, subtaskTitles: ["个人步骤"] },
+      { id: 2, title: "工作任务", dueDate: "2026-10-14", projectId: 2, subtaskTitles: ["工作甲", "工作乙"] },
+      { id: 3, title: "工作循环", dueDate: "2026-10-14", projectId: 2, recurrenceType: "daily" },
+    ],
+    subtaskOccurrences: [{ subtaskId: 200, date: "2026-10-14", isCompleted: true }],
+  });
+  const snapshot = buildTaskExportSnapshot(raw, { includeRecurring: false, projectId: 2 });
+  assert.deepEqual(snapshot.tasks.map((task) => task.taskId), [2]);
+  assert.deepEqual(snapshot.project, { id: 2, name: "工作" });
+  assert.deepEqual(snapshot.summary, { taskCount: 1, subtaskCount: 2, completedSubtaskCount: 1 });
+  assert.deepEqual(snapshot.tasks[0].subtasks.map((subtask) => subtask.title), ["工作甲", "工作乙"]);
+});
+
+test("全部项目选项保留跨项目任务", () => {
+  const raw = makeRaw({ tasks: [
+    { id: 1, title: "个人", dueDate: "2026-10-14", projectId: 1 },
+    { id: 2, title: "工作", dueDate: "2027-01-05", projectId: 2 },
+  ] });
+  const snapshot = buildTaskExportSnapshot(raw, { includeRecurring: false, projectId: null });
+  assert.deepEqual(snapshot.tasks.map((task) => task.taskId), [1, 2]);
+  assert.equal(snapshot.project, null);
+});
+
+test("没有未完成任务的项目仍保留所选项目名", () => {
+  const snapshot = buildTaskExportSnapshot(makeRaw({ tasks: [] }), { includeRecurring: false, projectId: 2 });
+  assert.deepEqual(snapshot.project, { id: 2, name: "工作" });
+  assert.deepEqual(snapshot.summary, { taskCount: 0, subtaskCount: 0, completedSubtaskCount: 0 });
+});
+
+test("非法或不存在的导出项目被明确拒绝", () => {
+  const raw = makeRaw({ tasks: [] });
+  for (const projectId of [0, -1, 1.5, "2" as unknown as number]) {
+    assert.throws(() => buildTaskExportSnapshot(raw, { includeRecurring: false, projectId }), /导出项目/);
+  }
+  assert.throws(() => buildTaskExportSnapshot(raw, { includeRecurring: false, projectId: 99 }), /项目不存在/);
+});

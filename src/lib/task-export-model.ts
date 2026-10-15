@@ -1,7 +1,8 @@
 import { addDays, format, isAfter, parseISO } from "date-fns";
-import type { Priority, RecurrenceType, Project } from "@shared/types";
+import type { Priority, RecurrenceType, Project, ProjectScope } from "@shared/types";
 import type { TaskListRaw } from "./db";
 import { matchesRecurrence } from "@/lib/task-recurrence";
+import { matchesProject } from "@/lib/projects";
 
 /**
  * 未完成任务导出的统一选择器。
@@ -12,6 +13,8 @@ import { matchesRecurrence } from "@/lib/task-recurrence";
 
 export interface TaskExportOptions {
   includeRecurring: boolean;
+  /** 未传或 null 表示全部项目，仅影响导出，不修改主界面项目选择。 */
+  projectId?: ProjectScope;
 }
 
 export type TaskExportRaw = TaskListRaw & {
@@ -43,6 +46,8 @@ export interface TaskExportSnapshot {
   capturedAt: string;
   today: string;
   includeRecurring: boolean;
+  /** 捕获导出范围名称，空清单也能正确显示所选项目。 */
+  project: Pick<Project, "id" | "name"> | null;
   tasks: TaskExportItem[];
   summary: {
     taskCount: number;
@@ -61,6 +66,16 @@ export interface TaskPdfRequest {
 export type TaskPdfResult =
   | { status: "saved"; path: string }
   | { status: "cancelled" };
+
+/** SQLite、内存实现与选择器共用的导出选项校验。 */
+export function validateTaskExportOptions(options: TaskExportOptions): void {
+  if (typeof options.includeRecurring !== "boolean") {
+    throw new Error("导出选项 includeRecurring 必须是布尔值");
+  }
+  if (options.projectId != null && (!Number.isInteger(options.projectId) || options.projectId < 1)) {
+    throw new Error("请选择有效的导出项目");
+  }
+}
 
 /**
  * 无结束日期的循环任务搜索上界。
@@ -137,9 +152,10 @@ export function buildTaskExportSnapshot(
   raw: TaskExportRaw,
   options: TaskExportOptions,
 ): TaskExportSnapshot {
-  if (typeof options.includeRecurring !== "boolean") {
-    throw new Error("导出选项 includeRecurring 必须是布尔值");
-  }
+  validateTaskExportOptions(options);
+  const projectId = options.projectId ?? null;
+  const project = projectId === null ? null : raw.projects.find((item) => item.id === projectId);
+  if (projectId !== null && !project) throw new Error("导出项目不存在，请重新选择");
   const today = requireDate(raw.today, "快照日期");
   const occurrenceMap = new Map(
     raw.occurrences.map((occurrence) => [
@@ -168,7 +184,7 @@ export function buildTaskExportSnapshot(
 
   const items: TaskExportItem[] = [];
   for (const task of raw.tasks) {
-    if (task.deletedAt) continue;
+    if (task.deletedAt || !matchesProject(task.projectId, projectId)) continue;
 
     let dueDate = task.dueDate;
     if (task.recurrenceType) {
@@ -245,6 +261,7 @@ export function buildTaskExportSnapshot(
     capturedAt: raw.capturedAt,
     today: raw.today,
     includeRecurring: options.includeRecurring,
+    project: project ? { id: project.id, name: project.name } : null,
     tasks: items,
     summary: { taskCount: items.length, subtaskCount, completedSubtaskCount },
   };

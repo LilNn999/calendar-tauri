@@ -3,7 +3,7 @@
  *
  * 这份 CSS 会被 renderTaskExportHtml 内联进静态 HTML，预览 iframe 与原生打印共用同一份排版。
  * 约束：
- * - 使用固定的文档浅色令牌，与应用深浅主题解耦，打印始终是白底黑字；
+ * - 默认使用文档浅色令牌；屏幕预览可覆盖为应用皮肤，打印始终是白底黑字；
  * - 不引用任何外部字体、图片或脚本，A4 竖版边距由 @page 决定；
  * - 允许长清单自然分页，但不把整份清单或单个任务块强行锁在一页内。
  */
@@ -369,6 +369,42 @@
 }
 
 /* ---------- 分页 ---------- */
+/* 预览继承当前皮肤令牌；限定 screen，任何打印路径都保留原有白底排版。 */
+@media screen {
+  .paper-preview {
+    color-scheme: inherit;
+    --paper-bg: var(--surface-raised);
+    --paper-fg: hsl(var(--foreground));
+    --paper-muted: hsl(var(--muted-foreground));
+    --paper-subtle: var(--surface-subtle);
+    --paper-inset: var(--surface-inset);
+    --paper-border: var(--border-strong);
+    --paper-accent: hsl(var(--primary));
+    --paper-accent-bg: hsl(var(--primary) / 0.1);
+    --paper-success: hsl(var(--success));
+    --paper-success-bg: var(--task-done-bg);
+    --paper-high: var(--task-high-fg);
+    --paper-high-bg: var(--task-high-bg);
+    --paper-medium: var(--task-medium-fg);
+    --paper-medium-bg: var(--task-medium-bg);
+    --paper-low: var(--task-low-fg);
+    --paper-low-bg: var(--task-low-bg);
+    margin: 0;
+    padding: 16px;
+    font-family: var(--font-display);
+    scrollbar-color: var(--scrollbar-thumb) var(--paper-bg);
+  }
+
+  .paper-preview .paper-task {
+    background: var(--paper-subtle);
+    box-shadow: var(--shadow-raised);
+  }
+
+  .paper-preview .paper-summary {
+    box-shadow: var(--shadow-inset);
+  }
+}
+
 /*
  * A4 竖版：上 14mm、左右 15mm、下 16mm。
  * 页码使用 CSS 页边距内容；原生打印侧把引擎默认页眉页脚关闭，避免两边叠加。

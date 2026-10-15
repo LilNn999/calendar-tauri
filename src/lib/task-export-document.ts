@@ -3,6 +3,20 @@ import { format, parseISO } from "date-fns";
 import documentCss from "@/styles/task-export-document.css?inline";
 import type { TaskExportItem, TaskExportSnapshot } from "./task-export-model";
 
+/** 只把预览需要的皮肤令牌传入隔离 iframe，PDF 使用文档自己的浅色令牌。 */
+export const TASK_EXPORT_PREVIEW_TOKENS = [
+  "--foreground", "--muted-foreground", "--primary", "--success",
+  "--surface-raised", "--surface-subtle", "--surface-inset", "--border-strong",
+  "--task-high-fg", "--task-high-bg", "--task-medium-fg", "--task-medium-bg",
+  "--task-low-fg", "--task-low-bg", "--task-done-bg", "--scrollbar-thumb",
+  "--font-display", "--shadow-raised", "--shadow-inset",
+] as const;
+
+export interface TaskExportPreviewAppearance {
+  colorScheme: "light" | "dark";
+  variables: Partial<Record<typeof TASK_EXPORT_PREVIEW_TOKENS[number], string>>;
+}
+
 /**
  * 未完成任务清单的唯一 HTML 渲染器。
  *
@@ -10,6 +24,7 @@ import type { TaskExportItem, TaskExportSnapshot } from "./task-export-model";
  * 因此不存在“两份排版”。文档是纯静态 HTML：
  * - 全部文本转义，任务标题与备注不会被解释为富文本或脚本；
  * - 不引用外部字体、图片、脚本，也不包含示例 PDF 的 base64；
+ * - 预览可接收当前皮肤令牌，原生打印不传预览参数，始终保持白底文档；
  * - 页边距与页码由文档 CSS 的 @page 控制，原生侧不再叠加默认页边距。
  */
 
@@ -147,19 +162,28 @@ function renderGroups(tasks: TaskExportItem[], today: string): string {
  *
  * 返回内容可直接作为 iframe 的 srcDoc，也可直接交给原生打印适配器。
  */
-export function renderTaskExportHtml(snapshot: TaskExportSnapshot): string {
+export function renderTaskExportHtml(snapshot: TaskExportSnapshot, preview?: TaskExportPreviewAppearance): string {
   const { summary, today } = snapshot;
-  const scopeNote = snapshot.includeRecurring
-    ? "全部项目 · 不限日期 · 含循环任务（每条仅最近一次待完成）"
-    : "全部项目 · 不限日期 · 不含循环任务";
+  const scope = snapshot.project?.name ?? "全部项目";
+  const scopeNote = `${scope} · 不限日期 · ${snapshot.includeRecurring
+    ? "含循环任务（每条仅最近一次待完成）"
+    : "不含循环任务"}`;
+  const previewVariables = preview ? TASK_EXPORT_PREVIEW_TOKENS.map((token) => {
+    const value = preview.variables[token];
+    // 令牌来自应用 CSS；限定属性名并排除样式结束符，避免生成可执行节点。
+    return value ? `${token}:${value.replace(/[{};<>\u0000]/g, "")};` : "";
+  }).join("") : "";
+  const previewCss = preview
+    ? `@media screen{:root{color-scheme:${preview.colorScheme};${previewVariables}}}`
+    : "";
   const body = snapshot.tasks.length === 0
     ? `<p class="paper-empty">当前没有可导出的未完成任务</p>`
     : renderGroups(snapshot.tasks, today);
 
   return `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8">`
     + `<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">`
-    + `<title>未完成任务清单</title><style>${documentCss}</style></head>`
-    + `<body class="paper">`
+    + `<title>未完成任务清单</title><style>${documentCss}${previewCss}</style></head>`
+    + `<body class="paper${preview ? " paper-preview" : ""}">`
     + `<div class="paper-topline"><span class="paper-brand">${CALENDAR_ICON}日历 / 任务清单</span>`
     + `<span>数据生成时间：${escapeHtml(formatCapturedAt(snapshot.capturedAt))}</span></div>`
     + `<h1>未完成任务清单</h1>`

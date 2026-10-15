@@ -15,6 +15,7 @@ import type {
 } from "@/shared/types";
 import {
   buildTaskExportSnapshot,
+  validateTaskExportOptions,
   type TaskExportOptions,
   type TaskExportSnapshot,
 } from "@/lib/task-export-model";
@@ -176,7 +177,7 @@ export interface Db {
   getSelectedProjectId(): Promise<ProjectScope>;
   selectProject(projectId: ProjectScope): Promise<void>;
   listTasks(start: string, end: string, projectId?: ProjectScope): Promise<TaskListItem[]>;
-  /** 全量只读导出快照：不做月份/项目筛选，也不触发失败标记等写库副作用。 */
+  /** 只读导出快照：不限月份、按导出项目筛选，不触发失败标记等写库副作用。 */
   getTaskExportSnapshot(options: TaskExportOptions): Promise<TaskExportSnapshot>;
   createTask(payload: CreateTaskPayload): Promise<Task>;
   updateTask(id: number, patch: UpdateTaskPayload): Promise<Task>;
@@ -875,7 +876,7 @@ export class SqliteDb implements Db {
 
   /**
    * 导出快照：走独立的只读查询，不调用 checkAndMarkFailed，
-   * 也不受当前月份与所选项目影响。捕获一次时间作为 capturedAt/today。
+   * 不受当前月份影响，按导出选项筛选项目。捕获一次时间作为 capturedAt/today。
    */
   async getTaskExportSnapshot(options: TaskExportOptions): Promise<TaskExportSnapshot> {
     if (!this.inited) await this.connect();
@@ -1590,13 +1591,12 @@ export class MemoryDb implements Db {
    */
   async getTaskExportSnapshot(options: TaskExportOptions): Promise<TaskExportSnapshot> {
     this.ensureSeeded();
-    if (typeof options.includeRecurring !== "boolean") {
-      throw new Error("导出选项 includeRecurring 必须是布尔值");
-    }
+    validateTaskExportOptions(options);
     const capturedAt = new Date();
     const today = format(capturedAt, "yyyy-MM-dd");
     const tasks = this.tasks.filter(
-      (task) => !task.deletedAt && !task.isCompleted && (!task.recurrenceType || options.includeRecurring),
+      (task) => !task.deletedAt && !task.isCompleted && (!task.recurrenceType || options.includeRecurring)
+        && matchesProject(task.projectId, options.projectId),
     );
     const taskIds = new Set(tasks.map((task) => task.id));
     const subtasks = this.subtasks.filter((subtask) => taskIds.has(subtask.taskId));

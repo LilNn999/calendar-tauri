@@ -1,17 +1,20 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import * as DialogPrimitive from '@radix-ui/react-dialog'
 import { Download, FileText, ListChecks, Loader2, RefreshCw, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useTaskStore } from '@/store/useTaskStore'
+import { useProjectStore } from '@/store/useProjectStore'
 import { isTauri } from '@/lib/db'
-import { renderTaskExportHtml } from '@/lib/task-export-document'
+import { renderTaskExportHtml, TASK_EXPORT_PREVIEW_TOKENS, type TaskExportPreviewAppearance } from '@/lib/task-export-document'
 import type { TaskExportSnapshot } from '@/lib/task-export-model'
+import type { ProjectScope } from '@shared/types'
 import { cn } from '@/lib/utils'
 
 /**
  * 未完成任务导出弹窗。
  *
- * - 预览与 PDF 使用同一个 renderTaskExportHtml 输出，不存在两份排版；
+ * - 预览与 PDF 共用文档排版，预览跟随皮肤，PDF 始终使用白底；
+ * - 导出项目选择独立于主界面，默认当前项目，可切换为全部项目；
  * - 循环任务是可选内容：默认不勾选，切换后重新读取快照，旧请求结果不会覆盖新选择；
  * - 导出保存的是当前已展示的那一份快照，点击导出后不再重新查库；
  * - 浏览器开发模式禁用导出并说明需要桌面版，不伪造成功。
@@ -31,7 +34,10 @@ function defaultFileName(today: string): string {
 
 export function TaskExportDialog({ open, onOpenChange }: TaskExportDialogProps) {
   const fetchExportSnapshot = useTaskStore((state) => state.fetchExportSnapshot)
+  const projects = useProjectStore((state) => state.projects)
+  const [projectId, setProjectId] = useState<ProjectScope>(() => useProjectStore.getState().selectedProjectId)
   const [includeRecurring, setIncludeRecurring] = useState(false)
+  const [previewAppearance, setPreviewAppearance] = useState<TaskExportPreviewAppearance | null>(null)
   const [snapshot, setSnapshot] = useState<TaskExportSnapshot | null>(null)
   const [loading, setLoading] = useState(false)
   const [readError, setReadError] = useState<string | null>(null)
@@ -41,12 +47,13 @@ export function TaskExportDialog({ open, onOpenChange }: TaskExportDialogProps) 
   const requestRef = useRef(0)
   const busy = phase === 'exporting'
 
-  const load = useCallback(async (nextIncludeRecurring: boolean) => {
+  const load = useCallback(async (nextIncludeRecurring: boolean, nextProjectId: ProjectScope) => {
     const request = ++requestRef.current
     setLoading(true)
     setReadError(null)
+    setSnapshot(null)
     try {
-      const result = await fetchExportSnapshot({ includeRecurring: nextIncludeRecurring })
+      const result = await fetchExportSnapshot({ includeRecurring: nextIncludeRecurring, projectId: nextProjectId })
       if (request !== requestRef.current) return
       setSnapshot(result)
     } catch (error) {
@@ -58,7 +65,7 @@ export function TaskExportDialog({ open, onOpenChange }: TaskExportDialogProps) 
     }
   }, [fetchExportSnapshot])
 
-  // 每次打开都重置为默认选项并重新读取；关闭后不再更新状态。
+  // 每次打开默认当前项目且不包含循环任务；关闭后丢弃迟到的读取结果。
   useEffect(() => {
     if (!open) {
       ++requestRef.current
@@ -70,15 +77,34 @@ export function TaskExportDialog({ open, onOpenChange }: TaskExportDialogProps) 
       setIncludeRecurring(false)
       return
     }
+    const initialProjectId = useProjectStore.getState().selectedProjectId
+    setProjectId(initialProjectId)
+    setIncludeRecurring(false)
     setPhase('idle')
     setExportMessage(null)
-    void load(includeRecurring)
-    // includeRecurring 变化由下面的开关处理，这里只在打开时读取一次
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    void load(false, initialProjectId)
   }, [open, load])
 
-  const html = useMemo(() => (snapshot ? renderTaskExportHtml(snapshot) : ''), [snapshot])
+  // iframe 不继承父页面样式：读取当前皮肤令牌，根 class 变化时同步（含系统深浅主题）。
+  useLayoutEffect(() => {
+    if (!open) return
+    const root = document.documentElement
+    const syncAppearance = () => {
+      const style = getComputedStyle(root)
+      setPreviewAppearance({
+        colorScheme: root.classList.contains('dark') ? 'dark' : 'light',
+        variables: Object.fromEntries(TASK_EXPORT_PREVIEW_TOKENS.map((token) => [token, style.getPropertyValue(token).trim()])),
+      })
+    }
+    syncAppearance()
+    const observer = new MutationObserver(syncAppearance)
+    observer.observe(root, { attributes: true, attributeFilter: ['class', 'style'] })
+    return () => observer.disconnect()
+  }, [open])
+
+  const html = useMemo(() => (snapshot ? renderTaskExportHtml(snapshot, previewAppearance ?? undefined) : ''), [snapshot, previewAppearance])
   const summary = snapshot?.summary
+  const projectLabel = projectId === null ? '全部项目' : projects.find((project) => project.id === projectId)?.name ?? '所选项目'
   const canExport = Boolean(snapshot) && !loading && !busy && (summary?.taskCount ?? 0) > 0
 
   const handleToggleRecurring = (checked: boolean) => {
@@ -88,7 +114,15 @@ export function TaskExportDialog({ open, onOpenChange }: TaskExportDialogProps) 
     setSnapshot(null)
     setPhase('idle')
     setExportMessage(null)
-    void load(checked)
+    void load(checked, projectId)
+  }
+
+  const handleProjectChange = (nextProjectId: ProjectScope) => {
+    if (busy) return
+    setProjectId(nextProjectId)
+    setPhase('idle')
+    setExportMessage(null)
+    void load(includeRecurring, nextProjectId)
   }
 
   const handleExport = async () => {
@@ -131,7 +165,7 @@ export function TaskExportDialog({ open, onOpenChange }: TaskExportDialogProps) 
         <DialogPrimitive.Content
           className={cn(
             'task-export-dialog fixed left-1/2 top-1/2 z-50 -translate-x-1/2 -translate-y-1/2',
-            'flex w-[min(990px,calc(100vw-32px))] max-h-[calc(100vh-48px)] flex-col',
+            'flex h-[min(760px,calc(100dvh-48px))] w-[min(990px,calc(100vw-32px))] max-h-[calc(100dvh-48px)] flex-col',
             'rounded-2xl border border-border-subtle bg-surface-raised text-card-foreground overflow-hidden',
           )}
           aria-describedby="task-export-description"
@@ -163,15 +197,29 @@ export function TaskExportDialog({ open, onOpenChange }: TaskExportDialogProps) 
 
           {/* 中部：左右分栏，右侧独立滚动 */}
           <div className="flex min-h-0 flex-1 flex-col md:flex-row">
-            <aside className="shrink-0 overflow-y-auto border-b border-border-subtle px-6 py-4 md:w-[280px] md:border-b-0 md:border-r">
+            <aside className="max-h-[32vh] shrink-0 overflow-y-auto border-b border-border-subtle px-6 py-4 md:max-h-none md:w-[280px] md:border-b-0 md:border-r">
               <p className="text-[11px] font-semibold text-muted-foreground">导出范围</p>
               <div className="mt-2 rounded-xl border border-border-subtle bg-surface-subtle/60 px-3 py-2">
                 <p className="flex items-center gap-1.5 text-xs font-medium">
                   <ListChecks className="h-3.5 w-3.5 text-primary" />
                   所有未完成任务
                 </p>
-                <p className="mt-1 text-[11px] text-muted-foreground">全部项目 · 不限日期</p>
+                <p className="mt-1 break-words text-[11px] text-muted-foreground">{projectLabel} · 不限日期</p>
               </div>
+
+              <label className="mt-3 block text-[11px] font-semibold text-muted-foreground" htmlFor="task-export-project">
+                导出项目
+              </label>
+              <select
+                id="task-export-project"
+                value={projectId ?? 'all'}
+                disabled={busy}
+                onChange={(event) => handleProjectChange(event.target.value === 'all' ? null : Number(event.target.value))}
+                className="control-inset mt-1.5 h-9 w-full rounded-xl bg-background px-2.5 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
+              >
+                <option value="all">全部项目</option>
+                {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
+              </select>
 
               <div className="mt-4">
                 <p className="text-[11px] font-semibold text-muted-foreground">导出内容</p>
@@ -228,7 +276,7 @@ export function TaskExportDialog({ open, onOpenChange }: TaskExportDialogProps) 
                   <FileText className="h-4 w-4 text-primary" />
                   <span className="min-w-0 flex-1">
                     <span className="block text-xs font-medium">PDF 文档</span>
-                    <span className="block text-[10px] text-muted-foreground">A4 排版 · 适合查看和打印</span>
+                    <span className="block text-[10px] text-muted-foreground">A4 白底排版 · 适合查看和打印</span>
                   </span>
                 </div>
               </div>
@@ -243,12 +291,12 @@ export function TaskExportDialog({ open, onOpenChange }: TaskExportDialogProps) 
                 <div className="flex items-center gap-2">
                   {snapshot && (
                     <span className="hidden text-[10px] text-muted-foreground sm:inline">
-                      数据生成时间：{snapshot.capturedAt.replace('T', ' ').slice(0, 16)}
+                      数据生成时间：{new Date(snapshot.capturedAt).toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false })}
                     </span>
                   )}
                   <button
                     type="button"
-                    onClick={() => void load(includeRecurring)}
+                    onClick={() => void load(includeRecurring, projectId)}
                     disabled={loading || busy}
                     title="重新读取任务"
                     aria-label="重新读取任务"
@@ -259,7 +307,7 @@ export function TaskExportDialog({ open, onOpenChange }: TaskExportDialogProps) 
                 </div>
               </div>
 
-              <div className="relative min-h-[280px] flex-1 overflow-hidden bg-muted/30">
+              <div className="relative min-h-[200px] flex-1 overflow-hidden bg-surface-raised md:min-h-[280px]">
                 {loading && (
                   <p className="flex items-center justify-center gap-2 py-10 text-xs text-muted-foreground">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -269,7 +317,7 @@ export function TaskExportDialog({ open, onOpenChange }: TaskExportDialogProps) 
                 {!loading && readError && (
                   <div className="flex flex-col items-center gap-2 py-10 text-xs">
                     <p className="text-destructive">{readError}</p>
-                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => void load(includeRecurring)}>
+                    <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => void load(includeRecurring, projectId)}>
                       重试
                     </Button>
                   </div>
@@ -277,7 +325,7 @@ export function TaskExportDialog({ open, onOpenChange }: TaskExportDialogProps) 
                 {!loading && !readError && snapshot && (
                   <iframe
                     title="未完成任务清单预览"
-                    className="h-full min-h-[320px] w-full border-0 bg-white"
+                    className="h-full min-h-[200px] w-full border-0 bg-surface-raised"
                     // sandbox 禁止脚本，预览只是静态文档
                     sandbox=""
                     srcDoc={html}

@@ -284,4 +284,41 @@ for (const kind of ["SQLite", "浏览器内存"] as const) {
       assert.equal(item.projectName.startsWith("项目 #"), false);
     } finally { close(); }
   });
+
+  test(`${kind}：按所选项目导出普通及循环任务且不改当前项目与数据`, async () => {
+    const { db, database, close } = await makeDb();
+    try {
+      const work = await db.createProject("工作");
+      await db.createTask({ title: "个人任务", dueDate: dateOffset(), subtasks: ["个人步骤"] });
+      const normal = await db.createTask({ projectId: work.id, title: "工作任务", dueDate: dateOffset(1), subtasks: ["工作步骤"] });
+      await db.toggleSubtask(normal.subtasks![0].id, dateOffset(1), true);
+      const recurring = await db.createTask({ projectId: work.id, title: "工作循环", dueDate: dateOffset(), recurrenceType: "daily", subtasks: ["循环步骤"] });
+      await db.updateOccurrence(recurring.id, dateOffset(), { isCompleted: true });
+      await db.selectProject(1);
+      const before = database ? fingerprint(database) : null;
+      const snapshot = await db.getTaskExportSnapshot({ includeRecurring: true, projectId: work.id });
+      assert.deepEqual(snapshot.tasks.map((task) => task.title).sort(), ["工作任务", "工作循环"]);
+      assert.deepEqual(snapshot.project, { id: work.id, name: "工作" });
+      assert.deepEqual(snapshot.summary, { taskCount: 2, subtaskCount: 2, completedSubtaskCount: 1 });
+      assert.equal(snapshot.tasks.find((task) => task.taskId === recurring.id)!.dueDate, dateOffset(1));
+      assert.equal(await db.getSelectedProjectId(), 1, "导出范围不能切换主界面项目");
+      if (database) assert.equal(fingerprint(database), before, "按项目导出仍须只读");
+      const all = await db.getTaskExportSnapshot({ includeRecurring: true, projectId: null });
+      assert.equal(all.summary.taskCount, 3);
+      assert.equal(all.project, null);
+    } finally { close(); }
+  });
+
+  test(`${kind}：空项目导出给出零统计与正确的项目范围`, async () => {
+    const { db, close } = await makeDb();
+    try {
+      const empty = await db.createProject("空项目");
+      await db.createTask({ title: "别的项目任务", dueDate: dateOffset() });
+      const snapshot = await db.getTaskExportSnapshot({ includeRecurring: false, projectId: empty.id });
+      assert.deepEqual(snapshot.tasks, []);
+      assert.deepEqual(snapshot.project, { id: empty.id, name: "空项目" });
+      assert.deepEqual(snapshot.summary, { taskCount: 0, subtaskCount: 0, completedSubtaskCount: 0 });
+      await assert.rejects(db.getTaskExportSnapshot({ includeRecurring: false, projectId: 999 }), /项目不存在/);
+    } finally { close(); }
+  });
 }

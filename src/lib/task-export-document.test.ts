@@ -29,13 +29,37 @@ const bundled = await build({
 const renderer = await import(
   `data:text/javascript;base64,${Buffer.from(bundled.outputFiles[0].text).toString("base64")}`
 ) as {
-  renderTaskExportHtml: (snapshot: TaskExportSnapshot) => string;
+  renderTaskExportHtml: (snapshot: TaskExportSnapshot, preview?: { colorScheme: "light" | "dark"; variables: Record<string, string> }) => string;
   buildTaskExportSnapshot: (
     raw: ReturnType<typeof makeRaw>,
-    options: { includeRecurring: boolean },
+    options: { includeRecurring: boolean; projectId?: number | null },
   ) => TaskExportSnapshot;
 };
 const { renderTaskExportHtml, buildTaskExportSnapshot } = renderer;
+
+test("指定项目的文档范围使用快照项目名并转义", () => {
+  const raw = makeRaw({ tasks: [{ id: 1, title: "项目任务", projectId: 2, dueDate: "2026-10-14" }] });
+  raw.projects = raw.projects.map((project) => project.id === 2 ? { ...project, name: "工作 <&>" } : project);
+  const snapshot = buildTaskExportSnapshot(raw, { includeRecurring: false, projectId: 2 });
+  const body = bodyOf(renderTaskExportHtml(snapshot));
+  assert.match(body, /范围：工作 &lt;&amp;&gt; · 不限日期/);
+  assert.doesNotMatch(body, /范围：全部项目/);
+});
+
+test("皮肤预览注入当前颜色但正文与白底 PDF 完全相同", () => {
+  const snapshot = sampleSnapshot();
+  const preview = renderTaskExportHtml(snapshot, {
+    colorScheme: "dark",
+    variables: { "--surface-raised": "#27211b", "--foreground": "35 30% 90%" },
+  });
+  const pdf = renderTaskExportHtml(snapshot);
+  assert.match(preview, /<body class="paper paper-preview">/);
+  assert.match(preview, /--surface-raised:\s*#27211b/);
+  assert.equal(bodyOf(preview), bodyOf(pdf), "预览与导出必须保留相同任务、统计与范围");
+  assert.match(pdf, /<body class="paper">/);
+  assert.match(pdf, /--paper-bg:\s*#ffffff/);
+  assert.doesNotMatch(pdf, /#27211b|35 30% 90%/, "皮肤颜色不能进入 PDF");
+});
 
 /** 已确认样式的 4 母任务 / 11 子任务 / 4 已完成子任务示例。 */
 const SAMPLE_SEED: Seed = {

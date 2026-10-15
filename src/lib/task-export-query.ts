@@ -3,13 +3,14 @@ import { DEFAULT_PROJECT_ID, DEFAULT_PROJECT_NAME } from "@/lib/projects";
 import type { Priority, Project, Subtask, Task } from "@shared/types";
 import type { SubtaskOccurrenceRow, TaskOccurrenceRow } from "./db";
 import type { TaskExportOptions, TaskExportRaw } from "./task-export-model";
+import { validateTaskExportOptions } from "./task-export-model";
 
 /**
  * 未完成任务导出的全量只读查询。
  *
  * 与 listTasks 的区别：
  * - 不调用 checkAndMarkFailed，导出不会写入 lastFailedCheckDate 或任何任务状态；
- * - 不使用当前月份/项目筛选，普通任务不限日期，逾期与远期任务都在范围内；
+ * - 普通任务不限日期，按导出选项筛选项目，逾期与远期任务都在范围内；
  * - 用一条 SELECT + UNION ALL 读取任务、项目、子任务与发生记录，同一语句内数据一致，
  *   避免多语句之间被其它窗口改动造成母子状态错配；
  * - 只读取型接口，reader 仅需提供 select。
@@ -34,6 +35,7 @@ WITH candidates AS (
   FROM tasks
   WHERE deletedAt IS NULL AND isCompleted = 0
     AND (recurrenceType IS NULL OR ? = 1)
+    AND (? IS NULL OR projectId = ?)
 ),
 template_ids AS (
   SELECT id FROM candidates WHERE recurrenceType IS NOT NULL
@@ -78,7 +80,7 @@ SELECT kind, payload FROM (
   FROM subtask_occurrences
   WHERE subtaskId IN (SELECT id FROM scope_subtasks) AND date >= ?
 ) ORDER BY kind`;
-// 参数依次为：候选任务是否包含循环模板、发生记录起始日期（今天）、子任务发生起始日期（今天）。
+// 参数依次为：是否包含循环模板、项目范围（两次）、发生记录起始日期、子任务发生起始日期。
 
 interface SqlJsonRow {
   kind: number;
@@ -138,13 +140,13 @@ export async function readTaskExportRaw(
   options: TaskExportOptions,
   capturedAt: Date,
 ): Promise<TaskExportRaw> {
-  if (typeof options.includeRecurring !== "boolean") {
-    throw new Error("导出选项 includeRecurring 必须是布尔值");
-  }
+  validateTaskExportOptions(options);
   const today = format(capturedAt, "yyyy-MM-dd");
   const includeRecurring = options.includeRecurring ? 1 : 0;
   const rows = await reader.select<SqlJsonRow[]>(EXPORT_QUERY, [
     includeRecurring,
+    options.projectId ?? null,
+    options.projectId ?? null,
     today,
     today,
   ]);
