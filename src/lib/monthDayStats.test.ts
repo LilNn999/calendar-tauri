@@ -21,6 +21,13 @@ const BASELINE = [
   { month: '2026-09', workDays: 22, restDays: 8, statutoryDays: 1, makeup: 1 },
   { month: '2026-10', workDays: 18, restDays: 13, statutoryDays: 3, makeup: 1 },
   { month: '2026-11', workDays: 21, restDays: 9, statutoryDays: 0, makeup: 0 },
+  { month: '2027-01', workDays: 21, restDays: 10, statutoryDays: 1, makeup: 1 },
+  { month: '2027-02', workDays: 15, restDays: 13, statutoryDays: 4, makeup: 1 },
+  { month: '2027-04', workDays: 21, restDays: 9, statutoryDays: 1, makeup: 0 },
+  { month: '2027-05', workDays: 19, restDays: 12, statutoryDays: 2, makeup: 1 },
+  { month: '2027-06', workDays: 21, restDays: 9, statutoryDays: 1, makeup: 0 },
+  { month: '2027-09', workDays: 22, restDays: 8, statutoryDays: 1, makeup: 1 },
+  { month: '2027-10', workDays: 17, restDays: 14, statutoryDays: 3, makeup: 1 },
 ]
 
 test('工作日/休息日/法定节假日与补班数量符合年度安排', () => {
@@ -36,7 +43,7 @@ test('工作日/休息日/法定节假日与补班数量符合年度安排', () 
 })
 
 test('工作日 + 休息日恒等于当月公历总天数', () => {
-  for (const year of [2025, 2026]) {
+  for (const year of [2025, 2026, 2027]) {
     for (let month = 1; month <= 12; month++) {
       const stats = statsOf(year, month)
       assert.equal(
@@ -50,7 +57,7 @@ test('工作日 + 休息日恒等于当月公历总天数', () => {
 })
 
 test('已收录年度全年法定节假日合计 13 天', () => {
-  for (const year of [2025, 2026]) {
+  for (const year of [2025, 2026, 2027]) {
     let sum = 0
     for (let month = 1; month <= 12; month++) {
       sum += statsOf(year, month).statutoryDays ?? 0
@@ -97,8 +104,38 @@ test('2026 年春节连休 9 天与法定 4 天分别统计', () => {
   ])
 })
 
+test('2027 年假期边界与跨月补班按官方通知显示休班角标', () => {
+  // 国办发明电〔2026〕10号；固定边界捕获漏收录、少一天或多一天的展开错误。
+  for (const date of [
+    '2027-01-01', '2027-01-03', '2027-02-05', '2027-02-13',
+    '2027-04-03', '2027-04-05', '2027-05-01', '2027-05-05',
+    '2027-06-09', '2027-09-15', '2027-10-01', '2027-10-07',
+  ]) {
+    assert.equal(getHolidayDay(date)?.isOffDay, true, `${date} 应显示休角标`)
+  }
+  for (const date of [
+    '2027-01-04', '2027-02-04', '2027-04-02', '2027-04-06',
+    '2027-05-06', '2027-06-08', '2027-06-10', '2027-09-14',
+    '2027-09-16', '2027-09-30', '2027-10-08',
+  ]) {
+    assert.equal(getHolidayDay(date), undefined, `${date} 不应误标放假或补班`)
+  }
+  const makeupDates = Array.from({ length: 12 }, (_, i) => getMonthHolidayInfo(2027, i + 1).makeupDates).flat()
+  assert.deepEqual(makeupDates, [
+    '2027-01-31', '2027-02-14', '2027-05-08', '2027-09-26', '2027-10-09',
+  ])
+  for (const date of makeupDates) {
+    assert.equal(getHolidayDay(date)?.isOffDay, false, `${date} 应显示班角标`)
+  }
+  assert.equal(getHolidayDay('2027-02-05')?.label, '除夕')
+  assert.equal(getHolidayDay('2027-02-06')?.label, '春节')
+  assert.deepEqual(statsOf(2027, 2).holidayPeriods, [
+    { name: '春节', start: '2027-02-05', end: '2027-02-13', totalDays: 9, daysInMonth: 9 },
+  ])
+})
+
 test('法定节假日都是休假日，且与补班日期不冲突', () => {
-  for (const year of [2025, 2026]) {
+  for (const year of [2025, 2026, 2027]) {
     for (let month = 1; month <= 12; month++) {
       const info = getMonthHolidayInfo(year, month)
       for (const date of info.statutoryDates) {
@@ -128,6 +165,7 @@ test('未收录年度只按周末估算，未知项为 null 而不是 0', () => 
 test('已收录年度的月份带上来源文号', () => {
   assert.equal(statsOf(2026, 10).source?.source, '国办发明电〔2025〕7号')
   assert.equal(statsOf(2025, 10).source?.source, '国办发明电〔2024〕12号')
+  assert.equal(statsOf(2027, 10).source?.source, '国办发明电〔2026〕10号')
 })
 
 test('假期区间与日期文案', () => {

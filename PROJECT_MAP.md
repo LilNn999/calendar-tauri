@@ -20,7 +20,7 @@
 | 主题 | `src/lib/theme.tsx` | next-themes 轻量替代（`ThemeProvider` + `.dark` class + 皮肤 class + 设置表持久化） |
 | 皮肤 | `src/lib/skin.ts` | Skin 类型、3 套参考稿皮肤选项、归一化与根 class |
 | 日历状态 | `src/lib/dayCellState.ts` | 选中/今天/非本月状态优先级 |
-| 节假日 | `src/lib/holidays.ts` | 法定节假日与调休静态数据（国办通知 2025–2026），含法定日期与年度来源登记；供月视图格子「休/班」角标、节日名、悬浮说明与月度统计查询 |
+| 节假日 | `src/lib/holidays.ts` | 法定节假日与调休静态数据（国办通知 2025–2027），含法定日期与年度来源登记；供普通月视图与纯日历格子「休/班」角标、节日名、悬浮说明与月度统计查询 |
 | 月度天数统计 | `src/lib/monthDayStats.ts` | 月度工作日 / 休息日 / 法定节假日统计纯函数（含假期区间与补班日期、未收录年度的估算标记），供年月标题旁的统计图标使用 |
 | 未完成任务导出 | `src/lib/task-export-model.ts`、`task-export-query.ts`、`task-export-document.ts`、`src/styles/task-export-document.css` | 导出快照 DTO 与统一选择器（普通任务不限日期、循环任务可选且只取最近一次待完成；支持全部或单个项目）、单条只读 SQL 查询（不触发失败标记等写库副作用）、唯一的静态 HTML 文档渲染器与 A4 分页样式；预览接收当前皮肤令牌，PDF 保持白底，内容与统计共用同一快照 |
 | 循环匹配规则 | `src/lib/task-recurrence.ts` | 从 `db.ts` 原样提取的 `matchesRecurrence`；`db.ts` 继续导入并重新导出，供循环展开与导出选择共用 |
@@ -90,5 +90,6 @@ npm run tauri build  # 打包 NSIS 安装包（目标 5~10 MB）
 
 | 功能 | 记录 | 状态 |
 | --- | --- | --- |
+| 2027 年假期与补班角标 | [工作交接](docs/handoffs/2026-11-05-2027-holidays.md)；[构建记录](docs/build-notes.md) | 随 0.12.1 发布：补齐 7 个假期、5 个补班日及法定日期，普通月历和纯日历沿用原有角标，月度统计同步更新；前端 132 项、浏览器 78 个日期检查通过 |
 | 未完成任务导出 | [实现验证记录](docs/task-export-validation.md)；[构建记录](docs/build-notes.md)；[快速交接](docs/handoffs/2026-10-14-task-export.md)；[需求设计](docs/superpowers/specs/2026-10-14-task-export-design.md)；[7 项实施计划](docs/superpowers/plans/2026-10-14-task-export.md)；[样式说明](docs/superpowers/plans/2026-10-14-task-export-ui.md)；[交互预览](docs/mockups/task-export.html)；[PDF 示例](output/pdf/task-export-sample.pdf)；[PDF 排版](docs/mockups/task-export-pdf.png)；[真实渲染截图](docs/mockups/task-export-live-4-11-4.png)、[长清单 PDF](docs/mockups/task-export-live-long.pdf) | 0.12.0：任务总览工具区导出未完成母任务及全部子任务，支持当前、单个或全部项目；循环任务可选且每条仅取今天或未来最近一次待完成。预览适配六套皮肤与深浅主题，PDF 保持白底。前端 131 项、Rust 18 项与浏览器 21 项检查通过；最新安装包与校验信息见构建记录，原生交互由用户安装复验 |
 | 月度天数统计图标与悬浮信息窗 | [2026-10-14 开发计划](docs/superpowers/plans/2026-10-14-monthly-day-stats.md)；[交互预览](docs/mockups/monthly-day-stats.html)；[浅色截图](docs/mockups/monthly-day-stats-live-light.png)、[深色截图](docs/mockups/monthly-day-stats-live-dark.png)、[未收录年度截图](docs/mockups/monthly-day-stats-live-estimate.png) | 已实现：悬停展开当月工作日 / 休息日 / 法定节假日与假期、补班信息，月视图与纯日历模式共用入口；`npm test` 40 项、浏览器真实界面 49 项检查通过；桌面测试窗口与发布由用户执行 |
